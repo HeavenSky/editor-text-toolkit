@@ -9,7 +9,7 @@ Editing tools merged into one VS Code extension, with zero runtime dependencies.
 
 ## Commands
 
-Five commands, all under the `Text Toolkit` category. Everything else is reachable through the two-level picker instead of flooding the Command Palette.
+Five commands in the Command Palette, all under the `Text Toolkit` category. Everything else is reachable through the two-level picker instead of flooding the palette.
 
 | Command ID | Title | Arguments (for keybindings) |
 | --- | --- | --- |
@@ -17,7 +17,13 @@ Five commands, all under the `Text Toolkit` category. Everything else is reachab
 | `textToolkit.copyPathWithLines` | Copy Path With Line Numbers | `{ "pathStyle": "absolute" \| "relative" \| "tilde" \| "fileName" }` |
 | `textToolkit.changeCase` | Change Case... | `{ "style": "camel" }` (any of the 16 styles) |
 | `textToolkit.alignByRegex` | Align by RegEx | `{ "regex": "=" }` or `{ "template": "assign" }` |
-| `textToolkit.plainText.toggle` | Toggle Plain Text Mode (Large File) | — |
+| `textToolkit.plainText.toggle` | Toggle Plain Text Mode | — |
+
+One further command is menu-only and hidden from the palette, because it needs a file to act on:
+
+| Command ID | Title | Where |
+| --- | --- | --- |
+| `textToolkit.plainText.open` | Open in Plain Text Mode | Explorer right-click, on files (not folders) |
 
 ### Two-level picker
 
@@ -46,7 +52,7 @@ This extension contributes **no default keybindings** — nothing is bound out o
 ]
 ```
 
-`Copy Path With Line Numbers` is also in the editor context menu.
+`Copy Path With Line Numbers` is also in the editor context menu, and `Open in Plain Text Mode` is in the Explorer context menu.
 
 ## Settings
 
@@ -136,14 +142,55 @@ Everything else has a built-in default and is **not** declared as its own settin
 | `alignByRegex.rememberLastInput` | boolean | `true` |
 | `plainText.applyEditorSettings` | boolean | `true` |
 | `plainText.disableLineNumbers` | boolean | `false` |
-| `plainText.editorOverrides` | object | the 29-entry `[plaintext]` table listed below |
+| `plainText.editorOverrides` | object | `{}`, merged on top of the 29-entry `[plaintext]` table below |
+
+You do not need this README to discover any of it: the Settings UI shows every key with its type, built-in default and accepted values, and in `settings.json` IntelliSense completes each key. Two snippets are offered on the value — **All built-in defaults** writes out the whole `textToolkit.advanced` object, and **All 29 built-in `[plaintext]` overrides** writes out the full override table, both ready to edit.
 
 `plainText.editorOverrides` merges into the built-in table rather than replacing it:
 
 - setting id → value: change that entry (`"editor.minimap.enabled": true` keeps the minimap on),
-- setting id → `null`: drop that entry, so the setting keeps whatever you have configured globally.
+- setting id → `null`: drop that entry, so the setting keeps whatever you have configured globally,
+- any other `editor.*` id: added to the table, even if it is not listed below.
 
 Unknown keys and values of the wrong type are ignored and the built-in default is kept, so a typo can never leave the extension in a broken state.
+
+#### The 29 built-in `[plaintext]` overrides
+
+All of them are written under the `[plaintext]` language scope, so they never affect your code files. "Other accepted values" lists what VS Code itself allows for that setting.
+
+| Setting id | Built-in value | Other accepted values |
+| --- | --- | --- |
+| `editor.minimap.enabled` | `false` | `true` |
+| `editor.wordWrap` | `"off"` | `"on"`, `"wordWrapColumn"`, `"bounded"` |
+| `editor.folding` | `false` | `true` |
+| `editor.stickyScroll.enabled` | `false` | `true` |
+| `editor.bracketPairColorization.enabled` | `false` | `true` |
+| `editor.guides.indentation` | `false` | `true` |
+| `editor.guides.bracketPairs` | `false` | `true`, `"active"` |
+| `editor.matchBrackets` | `"never"` | `"always"`, `"near"` |
+| `editor.occurrencesHighlight` | `"off"` | `"singleFile"`, `"multiFile"` |
+| `editor.selectionHighlight` | `false` | `true` |
+| `editor.renderWhitespace` | `"none"` | `"boundary"`, `"selection"`, `"trailing"`, `"all"` |
+| `editor.renderControlCharacters` | `false` | `true` |
+| `editor.codeLens` | `false` | `true` |
+| `editor.colorDecorators` | `false` | `true` |
+| `editor.links` | `false` | `true` |
+| `editor.hover.enabled` | `false` | `true` |
+| `editor.parameterHints.enabled` | `false` | `true` |
+| `editor.suggestOnTriggerCharacters` | `false` | `true` |
+| `editor.wordBasedSuggestions` | `"off"` | `"currentDocument"`, `"matchingDocuments"`, `"allDocuments"` |
+| `editor.quickSuggestions` | `{ "other": false, "comments": false, "strings": false }` | each context also takes `"on"` / `"inline"` / `"off"` |
+| `editor.formatOnType` | `false` | `true` |
+| `editor.formatOnPaste` | `false` | `true` |
+| `editor.autoClosingBrackets` | `"never"` | `"always"`, `"languageDefined"`, `"beforeWhitespace"` |
+| `editor.autoClosingQuotes` | `"never"` | same as `autoClosingBrackets` |
+| `editor.trimAutoWhitespace` | `false` | `true` |
+| `editor.semanticHighlighting.enabled` | `false` | `true`, `"configuredByTheme"` |
+| `editor.unicodeHighlight.nonBasicASCII` | `false` | `true`, `"inUntrustedWorkspace"` |
+| `editor.unicodeHighlight.invisibleCharacters` | `false` | `true` |
+| `editor.unicodeHighlight.ambiguousCharacters` | `false` | `true` |
+
+Setting `plainText.applyEditorSettings` to `false` skips this table entirely and only switches the document language.
 
 ## Align by RegEx
 
@@ -162,7 +209,12 @@ When only one line has a match in a given column, that column is left untouched 
 
 ## Plain Text Mode (large files)
 
-Run `Text Toolkit: Toggle Plain Text Mode (Large File)`, or let the extension offer it when you open a file of at least `textToolkit.plainText.promptSizeMB` MB (`Don't ask again` is remembered; undo it from the Plain Text Mode entry in the picker). Extensions listed in `textToolkit.plainText.autoApplyExtensions` switch over silently.
+Four ways in:
+
+- **Explorer right-click → `Open in Plain Text Mode`** — opens the file and enters the mode in one step, without ever rendering it normally first. Works on a multi-selection; folders in the selection are skipped.
+- `Text Toolkit: Toggle Plain Text Mode` from the Command Palette, for the file already in front of you.
+- Automatically, when you open a file of at least `textToolkit.plainText.promptSizeMB` MB and accept the prompt (`Don't ask again` is remembered; undo it from the Plain Text Mode entry in the picker).
+- Silently, for extensions listed in `textToolkit.plainText.autoApplyExtensions`.
 
 What it does:
 

@@ -1,5 +1,18 @@
 # Change Log
 
+## 0.0.2
+
+### Added
+
+- **Open in Plain Text Mode** in the Explorer context menu (`textToolkit.plainText.open`): opens the file and enters plain text mode in one step, so a large file is never rendered normally first. Accepts a multi-selection and skips folders. The command is hidden from the Command Palette, which still lists exactly five commands.
+- `textToolkit.advanced` is now self-documenting in the Settings UI. Every key lists its type, built-in default and accepted values, `plainText.editorOverrides` documents all 29 built-in `[plaintext]` overrides with their values and alternatives, and two `settings.json` snippets write out either the whole advanced object or the complete override table, ready to edit.
+- README documents the 29 built-in overrides as a table with accepted values; the previous text referred to a table that was never actually there.
+- Tests lock `package.json` against `src/shared/advanced.ts`: declared keys, schema defaults and the override snippet must match the built-in layer, and every `%placeholder%` must exist in both `package.nls.json` and `package.nls.zh-cn.json` with no unused entries (137 tests, up from 131).
+
+### Changed
+
+- Command title simplified: `Toggle Plain Text Mode (Large File)` → `Toggle Plain Text Mode` (中文: `切换纯文本模式(大文件)` → `切换纯文本模式`). The command ID is unchanged.
+
 ## 0.0.1
 
 First release. Merges three extensions into one, with zero runtime dependencies.

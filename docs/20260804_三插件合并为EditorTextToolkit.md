@@ -14,7 +14,7 @@
 | `wmaurer.change-case` | 选区或当前词的 16 种大小写风格转换 |
 | `janjoerke.align-by-regex` | 按正则对齐多行文本, 支持模板 |
 
-合并同时包含四项超出"等价迁移"的要求:
+合并同时包含五项超出"等价迁移"的要求:
 
 1. 修复 `janjoerke.align-by-regex` 在"各行匹配数不一致"时的列宽缺陷(§6.4)。
 2. 不内置任何默认快捷键。
@@ -25,10 +25,11 @@
 ### 验收标准
 
 - [x] `npm run typecheck` 无错误(strict TS)。
-- [x] `npm test` 全部通过, 覆盖四块纯逻辑(行号与路径格式化, 大小写转换, 正则对齐, 内置层配置解析)。
+- [x] `npm test` 全部通过, 覆盖四块纯逻辑(行号与路径格式化, 大小写转换, 正则对齐, 内置层配置解析)与清单一致性(D22)。
 - [x] `npm run package` 产出单个 `.vsix`, `out/extension.js` 为自包含 bundle(不含 `node_modules`, 不含 `src/`, 不含测试与脚本)。
 - [x] `package.json` 无 `contributes.keybindings`; 命令面板只出现 5 条命令; 暴露层只有 7 个配置键。
-- [x] 声明式与运行时文案的中英文条目双向无缺漏(校验脚本核对)。
+- [x] 声明式与运行时文案的中英文条目双向无缺漏(已从一次性脚本改为常驻单测, D22)。
+- [x] `textToolkit.advanced` 的全部键, 内置默认值与候选值可在设置界面内直接看到(D22)。
 - [x] alignByRegex 通过 §6.4 的用例矩阵: 匹配数少的行的行尾长度不再影响其他行的中间列; 只有一行拥有某列匹配时该列不填充; 匹配数一致时输出与上游逐字符相同。
 - [x] **手工 GUI 验收(§8.2)**: 需在扩展宿主中人工执行, 当前环境无 GUI, 未完成。
 
@@ -61,7 +62,8 @@
 **范围外**:
 
 - 不修改三份只读参考输入, 它们不参与打包。
-- 不发布到 Marketplace; 不做旧设置键与旧命令 ID 的自动迁移(README 提供迁移表)。
+- 不做旧设置键与旧命令 ID 的自动迁移(README 提供迁移表)。
+- 发布仅到 GitHub Release; 同步到 VS Code Marketplace / Open VSX 的工作流已就绪但未启用(S12, §9)。
 - 不把对齐扩展到多选区(仅主选区, 与上游一致); 不新增 `change-case@5` 独有的 `pascalSnake`/`train` 风格。
 - 大文件能力只做"纯文本模式"(方案 A); 虚拟滚动 + 流式读取 + Worker 搜索(方案 B)与流式替换(方案 C)未实现。
 
@@ -92,6 +94,9 @@
 | D19 | 默认值 `copyPath.pathStyle: absolute`, `plainText.promptSizeMB: 2` | 用户指定 |
 | D20 | 图标自绘 SVG + 自写光栅化脚本(`npm run icon`)产出 256×256 PNG | `qlmanage` 会烧进投影与留白; 环境无其他 SVG 转换工具 |
 | D21 | 许可 MIT, 附 `THIRD_PARTY_NOTICES.md` 收录三个上游与 `change-case` 的声明 | 三方许可要求 |
+| D22 | 内置层在设置界面内自文档化: 每个键写出类型, 内置默认值与候选值; `editorOverrides` 列全 29 项; 另加两个 `defaultSnippets` 直接写出整个对象 | 用户反馈"高级配置完全不知道配什么"; 内置层默认不出现在设置界面, 只靠 README 无法发现 |
+| D23 | 资源管理器右键新增 `textToolkit.plainText.open`(以纯文本模式打开), 用 `commandPalette: when false` 隐藏, 保持命令面板 5 条 | 用户要求; 大文件在被正常渲染一次之前就进入纯文本模式 |
+| D24 | 命令标题去掉"(大文件)"限定: `Toggle Plain Text Mode`; 命令 ID 不变 | 用户要求简化命名; 该模式并不限于大文件 |
 
 ## 5. 目标结构
 
@@ -116,7 +121,7 @@ editor-text-toolkit/
 
 ## 6. 接口与数据契约
 
-### 6.1 命令(5 条, category `Text Toolkit`)
+### 6.1 命令(命令面板 5 条 + 菜单专用 1 条, category `Text Toolkit`)
 
 | 命令 ID | 参数(供用户自建快捷键) |
 | --- | --- |
@@ -125,8 +130,17 @@ editor-text-toolkit/
 | `textToolkit.changeCase` | `{ style: <16 种风格之一> }`; 无参时弹风格选择器 |
 | `textToolkit.alignByRegex` | `{ regex }` 或 `{ template }`; 无参时弹输入框 |
 | `textToolkit.plainText.toggle` | — |
+| `textToolkit.plainText.open` | `(uri, uris[])` 由菜单注入; **不出现在命令面板**(D23) |
 
-菜单: `editor/context` 仅 `textToolkit.copyPathWithLines`(`when: editorTextFocus`, group `copy`)。快捷键: 无。
+菜单:
+
+| 菜单位置 | 命令 | when | group |
+| --- | --- | --- | --- |
+| `editor/context` | `textToolkit.copyPathWithLines` | `editorTextFocus` | `copy` |
+| `explorer/context` | `textToolkit.plainText.open` | `!explorerResourceIsFolder` | `navigation@100` |
+| `commandPalette` | `textToolkit.plainText.open` | `false`(即隐藏) | — |
+
+快捷键: 无。`plainText.open` 没有目标文件时无意义, 故只在菜单出现; 命令面板仍是 5 条(验收标准不变)。
 
 ### 6.2 配置两层
 
@@ -144,6 +158,14 @@ editor-text-toolkit/
 | `plainText.editorOverrides` | 29 项 `editor.*` 覆盖表(见 `src/shared/advanced.ts`) |
 
 解析规则(`resolveAdvanced`): 只有显式设置的键被改变; 类型不符或未知的键**忽略并保留内置默认值**, 不抛异常; `editorOverrides` 与内置表做浅合并, 值为 `null` 时**删除**该项。
+
+可发现性(D22): 内置层不单独声明配置键, 因此默认不出现在设置界面, 用户只能靠文档猜。为此在 schema 上补三处:
+
+1. `textToolkit.advanced` 的 `markdownDescription` 列出全部 6 个键与内置默认值;
+2. 每个子键的 `markdownDescription` 写出取值范围, 内置默认值与一个具体例子; `plainText.editorOverrides` 按渲染 / 语言功能 / 编辑 / Unicode 四组列全 29 项及各自候选值;
+3. `defaultSnippets` 两个: `textToolkit.advanced` 上一个写出全部键与内置默认值, `plainText.editorOverrides` 上一个写出完整 29 项覆盖表(与留空等价), 另一个是"改一项 + 用 `null` 移除一项"的示例。
+
+`src/test/advanced.test.ts` 把 schema 与 `advanced.ts` 锁在一起: 键集合, 每个键的 `default`, 覆盖表 snippet 逐项相等, 每个键都有 `%占位符%`; 另外做 `package.json` 占位符与两份 nls 的双向集合比对(替代原先的一次性校验脚本)。
 
 ### 6.3 行引用语法与二级 Quick Pick 规则
 
@@ -202,7 +224,11 @@ align(tabSize):
 
 - 进入: `setTextDocumentLanguage(doc, 'plaintext')` + (可选)按 `[plaintext]` 语言作用域写入生效后的覆盖表; 逐键 try/catch, 记录原值(含"原本未设置", 以 `null` 哨兵持久化到 `globalState`)。
 - 退出: 还原语言, 行号显示与全部设置原值; 仅当没有任何文档仍处于该模式时才还原设置。
-- 触发: 手动命令 / 打开文件体积 ≥ `promptSizeMB` 时询问一次(可"不再询问") / 命中 `autoApplyExtensions` 直接进入。
+- 触发, 共四条路径:
+  1. 资源管理器右键 `以纯文本模式打开`(D23): `openTextDocument` → `showTextDocument({ preview: false })` → `enter()`, 支持多选, 目录经 `fs.stat` 判定后跳过, 打不开的文件收集文件名后一次性告警; 打开前先把 uri 记入 `promptedUris`, 否则 `onDidChangeActiveTextEditor` 会先弹一次体积询问;
+  2. 手动命令 `textToolkit.plainText.toggle`;
+  3. 打开文件体积 ≥ `promptSizeMB` 时询问一次(可"不再询问");
+  4. 命中 `autoApplyExtensions` 直接进入。
 - 写入目标: 有工作区写 Workspace 设置, 否则写 User 设置。
 - **能力边界**: 只降低渲染与语言服务开销; 不改变 `TextModel` 加载与文件内查找实现, 因此 5–50 MB 区间体感明显, 数百 MB 无量级变化; 不修改 `files.maxMemoryForLargeFilesMB`。
 
@@ -228,6 +254,8 @@ align(tabSize):
 - [x] **S9 测试与打包**: 5 个测试文件接入 `build.mjs --test`; `npm run package` 全链路通过。判据: 见 §8.1。
 - [x] **S10 收尾**: 清理构建中间产物; 三份参考输入未被改动。
 - [ ] **S11 手工 GUI 验收**: 按 §8.2 在扩展宿主中逐项验证。判据: 清单全部通过。**未执行(需 GUI)**。
+- [x] **S12 发布链路**(0.0.2): 初始化 git 仓库与 remote; `.github/workflows/release.yml` 打标签即发 GitHub Release 并可选同步到 VS Code Marketplace / Open VSX。判据: v0.0.1 标签实跑成功, Release 附件为 CI 产出的 vsix。
+- [x] **S13 内置层可发现性**(0.0.2): 按 D22 补 schema 文案与 `defaultSnippets`, 按 D23/D24 加资源管理器右键入口并简化命令标题; 校验脚本改为常驻单测。判据: `npm test` 137 passing, `vsce package` 通过; 设置界面表现需 §8.2 人工确认。
 
 ### 7.1 有意的行为变更(已写入 README 与 CHANGELOG)
 
@@ -246,14 +274,17 @@ align(tabSize):
 | 检查 | 结果 |
 | --- | --- |
 | `npm run typecheck` | 通过 |
-| `npm test` | **131 passing** |
-| `npm run package` | `editor-text-toolkit-0.0.1.vsix`, 13 文件 / 31.54 KB, `out/extension.js` 22.1 KB |
+| `npm test` | **137 passing**(0.0.2; 0.0.1 时为 131) |
+| `npm run package` | `editor-text-toolkit-0.0.2.vsix`, 13 文件 / 36.53 KB, `out/extension.js` 22.83 KB |
 | `rg -n "from 'vscode'"` 于全部纯模块 | 无命中(D7) |
 | `rg -n "lodash\|maxNrParts" src/` | 无命中(D5, D9) |
 | `rg -c 'require\("change-case"\)' out/extension.js` | 无命中; unicode 属性正则命中 → ESM 已内联(不可用符号名 grep, 生产构建会 minify) |
-| 清单校验脚本 | 无 keybindings; 5 命令; 7 暴露键; 6 内置键; `dependencies` 为空 |
-| 本地化校验脚本 | 26 个 `%key%` 与 43 条运行时字符串在中英文两侧均无缺漏, 无冗余条目 |
+| 清单一致性(单测) | schema 键集合 = `ADVANCED_KEYS`; 每键 `default` = 内置默认值; 覆盖表 snippet 逐项 = `DEFAULT_EDITOR_OVERRIDES`; 每键都有 `%占位符%` |
+| 本地化一致性(单测) | `package.json` 的 `%key%` 与两份 nls 双向无缺漏, 无冗余条目 |
+| 手工核对(0.0.1 一次性) | 无 keybindings; 命令面板 5 条; 7 暴露键; 6 内置键; `dependencies` 为空; 43 条运行时字符串两侧齐全 |
 | 参考输入是否被改动 | 未改动 |
+
+产物体积从 31.54 KB 升到 36.53 KB, 增量几乎全部来自 `package.nls*.json`(自文档化文案, 两份各约 6.5 KB)与 README 新增的覆盖表, `out/extension.js` 仅因新增命令增加约 0.7 KB。
 
 ### 8.2 手工验收清单(需扩展宿主, **未执行**)
 
@@ -263,7 +294,9 @@ align(tabSize):
 - [ ] 大小写: 单词预览; 光标在 `foo_bar.baz` 中间时点号开关的差异; 多光标转换后选区仍准确; 跨行选区行数不变。
 - [ ] 对齐: `=` 对齐; 模板名对齐; §6.4 基准用例逐字符一致; 非法正则无变化; CRLF 文件行尾未被破坏。
 - [ ] 纯文本模式: 开关生效, 状态栏可点击退出; ≥2 MB 文件弹出询问且"不再询问"生效; **进入再退出后 `settings.json` 的 `[plaintext]` 段落回到原样(原本没有该段落时应消失)**。
-- [ ] 显示语言切换为简体中文后, 命令标题, 设置说明, 提示与选择器文案均为中文。
+- [ ] 资源管理器右键(D23): 文件上出现 `以纯文本模式打开` 且目录上不出现; 单个文件打开后直接处于纯文本模式; 多选文件时逐个打开且都生效; **大文件走该入口时不再额外弹出体积询问**; 混选目录时目录被跳过且不报错。
+- [ ] 设置界面(D22): 搜索 `textToolkit.advanced` 能看到 6 个键与内置默认值; `plainText.editorOverrides` 的说明列出 29 项及候选值; 在 `settings.json` 中触发补全能插入两个 snippet 且插入内容可直接保存不报错。
+- [ ] 显示语言切换为简体中文后, 命令标题(含右键菜单项), 设置说明, 提示与选择器文案均为中文。
 
 ## 9. 风险与未决项
 
@@ -277,7 +310,7 @@ align(tabSize):
 | 命令 ID 与配置键全部更名 | README 迁移表 + CHANGELOG 明示 breaking |
 | 新增语言时漏翻译 | 保留校验思路: 比对 `%key%` 与 `l10n.t` 源串两侧集合 |
 
-**未决项(非阻塞)**: 是否发布 Marketplace; 是否实现行引用的**反向解析**(粘贴 `path:12+3` 跳转并选中对应行, 需要新增解析器与命令); 大文件方案 B/C 是否推进(取决于目标文件量级与是否需要就地编辑)。
+**未决项(非阻塞)**: Marketplace 发布 —— publisher `HeavenSky` 已注册, 但 Azure DevOps PAT 尚未生成, 因此 CI 的 `marketplace` job 处于跳过状态; 当前可行路径是网页上传 Release 里的 vsix。是否实现行引用的**反向解析**(粘贴 `path:12+3` 跳转并选中对应行, 需要新增解析器与命令); 大文件方案 B/C 是否推进(取决于目标文件量级与是否需要就地编辑)。
 
 **阻塞项: 无。**
 
@@ -296,6 +329,14 @@ align(tabSize):
 4. 去掉全部默认快捷键(D11), 命令精简为 5 条并新增二级 Quick Pick(D12), 配置改为两层(D13, D14), 界面支持英语与简体中文(D15)。`npm test` 120 passing。
 5. 默认值改为 `pathStyle: absolute` 与 `promptSizeMB: 2`(D19); 行引用支持多片段与可选 `a+n` 语法(D18, 默认关闭, 放内置层)。`npm test` 131 passing, 重新打包为 31.54 KB。
 6. 打包清单修正: 首次打包误将 `scripts/render-icon.mjs` 打入 vsix, 已加入 `.vscodeignore`。
+
+### 2026-08-05 发布链路与内置层可发现性(0.0.2)
+
+1. 仓库落地: 初始化 git, remote 指向 `HeavenSky/editor-text-toolkit`, publisher 与版权人改为 `HeavenSky`; 本文档做过一次脱敏(去掉本机目录布局, 环境指纹与内部缓存路径), 测试里的 home 目录 fixture 由真实用户名改为 `/Users/username`。
+2. `.github/workflows/release.yml`: 打 `v*` 标签即校验版本一致性 → typecheck → test → `vsce package` → 抽取 CHANGELOG 对应小节 → 创建 Release 并附 vsix; `marketplace` 与 `open-vsx` 两个 job 分别按 `VSCE_PAT` / `OVSX_PAT` 是否配置开关, 且都用 `--packagePath` 发布 release job 的同一份产物。`secrets` 在 job 级 `if` 中不可用, 故经 job output 传递。v0.0.1 已实跑成功。
+3. `.gitignore` 放行三处被全局 gitignore 拦掉的路径: `.vscode/`, `.github/`, `package-lock.json`(`npm ci` 需要)。
+4. 内置层自文档化(D22)与资源管理器右键入口(D23), 命令标题简化(D24); 原先的一次性校验脚本改写为常驻单测, `npm test` 131 → 137 passing。
+5. README 补上 29 项覆盖表 —— 此前 `plainText.editorOverrides` 一行写着"table listed below"但正文里从未有过该表格, 属悬空引用。
 
 ### 未验证范围
 

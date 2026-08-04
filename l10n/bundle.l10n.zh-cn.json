@@ -20,6 +20,8 @@
   "Not now": "暂不",
   "Don't ask again": "不再询问",
   "Large file prompt re-enabled.": "已重新启用大文件提示.",
+  "No file selected.": "未选择任何文件.",
+  "Could not open in plain text mode: {0}": "无法以纯文本模式打开: {0}",
   "Plain text mode": "纯文本模式",
   "Enable plain text mode": "开启纯文本模式",
   "Disable plain text mode": "关闭纯文本模式",

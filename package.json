@@ -2,7 +2,7 @@
   "name": "editor-text-toolkit",
   "displayName": "Editor Text Toolkit",
   "description": "%extension.description%",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "publisher": "HeavenSky",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -59,14 +59,32 @@
         "command": "textToolkit.plainText.toggle",
         "title": "%command.plainTextToggle%",
         "category": "%category%"
+      },
+      {
+        "command": "textToolkit.plainText.open",
+        "title": "%command.plainTextOpen%",
+        "category": "%category%"
       }
     ],
     "menus": {
+      "commandPalette": [
+        {
+          "command": "textToolkit.plainText.open",
+          "when": "false"
+        }
+      ],
       "editor/context": [
         {
           "command": "textToolkit.copyPathWithLines",
           "when": "editorTextFocus",
           "group": "copy"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "textToolkit.plainText.open",
+          "when": "!explorerResourceIsFolder",
+          "group": "navigation@100"
         }
       ]
     },
@@ -140,36 +158,99 @@
             "copyPath.useLineCountSyntax": {
               "type": "boolean",
               "default": false,
-              "description": "%advanced.useLineCountSyntax%"
+              "markdownDescription": "%advanced.useLineCountSyntax%"
             },
             "changeCase.includeDotInCurrentWord": {
               "type": "boolean",
               "default": false,
-              "description": "%advanced.includeDotInCurrentWord%"
+              "markdownDescription": "%advanced.includeDotInCurrentWord%"
             },
             "alignByRegex.rememberLastInput": {
               "type": "boolean",
               "default": true,
-              "description": "%advanced.rememberLastInput%"
+              "markdownDescription": "%advanced.rememberLastInput%"
             },
             "plainText.applyEditorSettings": {
               "type": "boolean",
               "default": true,
-              "description": "%advanced.applyEditorSettings%"
+              "markdownDescription": "%advanced.applyEditorSettings%"
             },
             "plainText.disableLineNumbers": {
               "type": "boolean",
               "default": false,
-              "description": "%advanced.disableLineNumbers%"
+              "markdownDescription": "%advanced.disableLineNumbers%"
             },
             "plainText.editorOverrides": {
               "type": "object",
               "default": {},
               "additionalProperties": true,
-              "description": "%advanced.editorOverrides%"
+              "markdownDescription": "%advanced.editorOverrides%",
+              "defaultSnippets": [
+                {
+                  "label": "%snippet.editorOverrides.builtin%",
+                  "description": "%snippet.editorOverrides.builtinDetail%",
+                  "body": {
+                    "editor.minimap.enabled": false,
+                    "editor.wordWrap": "off",
+                    "editor.folding": false,
+                    "editor.stickyScroll.enabled": false,
+                    "editor.bracketPairColorization.enabled": false,
+                    "editor.guides.indentation": false,
+                    "editor.guides.bracketPairs": false,
+                    "editor.matchBrackets": "never",
+                    "editor.occurrencesHighlight": "off",
+                    "editor.selectionHighlight": false,
+                    "editor.renderWhitespace": "none",
+                    "editor.renderControlCharacters": false,
+                    "editor.codeLens": false,
+                    "editor.colorDecorators": false,
+                    "editor.links": false,
+                    "editor.hover.enabled": false,
+                    "editor.parameterHints.enabled": false,
+                    "editor.suggestOnTriggerCharacters": false,
+                    "editor.wordBasedSuggestions": "off",
+                    "editor.quickSuggestions": {
+                      "other": false,
+                      "comments": false,
+                      "strings": false
+                    },
+                    "editor.formatOnType": false,
+                    "editor.formatOnPaste": false,
+                    "editor.autoClosingBrackets": "never",
+                    "editor.autoClosingQuotes": "never",
+                    "editor.trimAutoWhitespace": false,
+                    "editor.semanticHighlighting.enabled": false,
+                    "editor.unicodeHighlight.nonBasicASCII": false,
+                    "editor.unicodeHighlight.invisibleCharacters": false,
+                    "editor.unicodeHighlight.ambiguousCharacters": false
+                  }
+                },
+                {
+                  "label": "%snippet.editorOverrides.restore%",
+                  "description": "%snippet.editorOverrides.restoreDetail%",
+                  "body": {
+                    "editor.wordWrap": "on",
+                    "editor.minimap.enabled": null
+                  }
+                }
+              ]
             }
           },
-          "markdownDescription": "%config.advanced%"
+          "markdownDescription": "%config.advanced%",
+          "defaultSnippets": [
+            {
+              "label": "%snippet.advanced.allDefaults%",
+              "description": "%snippet.advanced.allDefaultsDetail%",
+              "body": {
+                "copyPath.useLineCountSyntax": false,
+                "changeCase.includeDotInCurrentWord": false,
+                "alignByRegex.rememberLastInput": true,
+                "plainText.applyEditorSettings": true,
+                "plainText.disableLineNumbers": false,
+                "plainText.editorOverrides": {}
+              }
+            }
+          ]
         }
       }
     }

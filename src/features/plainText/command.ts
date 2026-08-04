@@ -11,6 +11,19 @@ import { applyOverrides, isApplied, restoreOverrides } from './settings';
 
 const NEVER_PROMPT_KEY = 'textToolkit.plainText.neverPromptForLargeFiles';
 
+function basename(uri: vscode.Uri): string {
+  return uri.path.split('/').pop() || uri.toString();
+}
+
+async function isDirectory(uri: vscode.Uri): Promise<boolean> {
+  try {
+    const { type } = await vscode.workspace.fs.stat(uri);
+    return (type & vscode.FileType.Directory) !== 0;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * 纯文本模式: 把文档语言切成 plaintext(停掉分词, 语义高亮与语言服务),
  * 并可选地按 `[plaintext]` 语言作用域关掉渲染开销较大的编辑器功能.
@@ -117,6 +130,41 @@ class PlainTextModeManager {
     }
   }
 
+  /**
+   * 资源管理器右键"以纯文本模式打开": 支持单个文件与多选, 目录被跳过.
+   * 打开前先把 uri 标记为已询问, 否则 onDidChangeActiveTextEditor 会先弹一次大文件提示.
+   */
+  async openInPlainText(uri: vscode.Uri | undefined, uris: vscode.Uri[] | undefined): Promise<void> {
+    const targets = uris && uris.length > 0 ? uris : uri ? [uri] : [];
+    if (targets.length === 0) {
+      void vscode.window.showInformationMessage(vscode.l10n.t('No file selected.'));
+      return;
+    }
+
+    const failed: string[] = [];
+    for (const target of targets) {
+      if (await isDirectory(target)) {
+        continue;
+      }
+      this.promptedUris.add(target.toString());
+      try {
+        const document = await vscode.workspace.openTextDocument(target);
+        const editor = await vscode.window.showTextDocument(document, { preview: false });
+        if (!this.isActive(document)) {
+          await this.enter(editor);
+        }
+      } catch {
+        failed.push(basename(target));
+      }
+    }
+
+    if (failed.length > 0) {
+      void vscode.window.showWarningMessage(
+        vscode.l10n.t('Could not open in plain text mode: {0}', failed.join(', '))
+      );
+    }
+  }
+
   async resetPrompt(): Promise<void> {
     await this.context.globalState.update(NEVER_PROMPT_KEY, undefined);
     this.promptedUris.clear();
@@ -184,6 +232,10 @@ export function registerPlainTextMode(context: vscode.ExtensionContext): PlainTe
 
   context.subscriptions.push(
     vscode.commands.registerCommand('textToolkit.plainText.toggle', () => manager.toggle()),
+    vscode.commands.registerCommand(
+      'textToolkit.plainText.open',
+      (uri?: vscode.Uri, uris?: vscode.Uri[]) => manager.openInPlainText(uri, uris)
+    ),
     vscode.window.onDidChangeActiveTextEditor(async (editor) => {
       manager.updateStatusBar();
       if (editor) {
