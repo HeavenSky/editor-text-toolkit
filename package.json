@@ -1,0 +1,198 @@
+{
+  "name": "editor-text-toolkit",
+  "displayName": "Editor Text Toolkit",
+  "description": "%extension.description%",
+  "version": "0.0.1",
+  "publisher": "HeavenSky",
+  "license": "MIT",
+  "icon": "media/icon.png",
+  "l10n": "./l10n",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/HeavenSky/editor-text-toolkit.git"
+  },
+  "homepage": "https://github.com/HeavenSky/editor-text-toolkit",
+  "bugs": {
+    "url": "https://github.com/HeavenSky/editor-text-toolkit/issues"
+  },
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other",
+    "Formatters"
+  ],
+  "keywords": [
+    "copy path",
+    "line numbers",
+    "change case",
+    "align",
+    "large file"
+  ],
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "textToolkit.commands",
+        "title": "%command.commands%",
+        "category": "%category%"
+      },
+      {
+        "command": "textToolkit.copyPathWithLines",
+        "title": "%command.copyPathWithLines%",
+        "category": "%category%"
+      },
+      {
+        "command": "textToolkit.changeCase",
+        "title": "%command.changeCase%",
+        "category": "%category%"
+      },
+      {
+        "command": "textToolkit.alignByRegex",
+        "title": "%command.alignByRegex%",
+        "category": "%category%"
+      },
+      {
+        "command": "textToolkit.plainText.toggle",
+        "title": "%command.plainTextToggle%",
+        "category": "%category%"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "textToolkit.copyPathWithLines",
+          "when": "editorTextFocus",
+          "group": "copy"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Editor Text Toolkit",
+      "properties": {
+        "textToolkit.copyPath.pathStyle": {
+          "type": "string",
+          "default": "absolute",
+          "enum": [
+            "absolute",
+            "relative",
+            "tilde",
+            "fileName"
+          ],
+          "enumDescriptions": [
+            "%config.pathStyle.absolute%",
+            "%config.pathStyle.relative%",
+            "%config.pathStyle.tilde%",
+            "%config.pathStyle.fileName%"
+          ],
+          "description": "%config.pathStyle%"
+        },
+        "textToolkit.copyPath.separator": {
+          "type": "string",
+          "default": ":",
+          "description": "%config.separator%"
+        },
+        "textToolkit.copyPath.multiLineFormat": {
+          "type": "string",
+          "default": "range",
+          "enum": [
+            "range",
+            "list",
+            "perLine"
+          ],
+          "enumDescriptions": [
+            "%config.multiLineFormat.range%",
+            "%config.multiLineFormat.list%",
+            "%config.multiLineFormat.perLine%"
+          ],
+          "description": "%config.multiLineFormat%"
+        },
+        "textToolkit.alignByRegex.templates": {
+          "type": "object",
+          "default": {},
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "%config.alignTemplates%"
+        },
+        "textToolkit.plainText.promptSizeMB": {
+          "type": "number",
+          "default": 2,
+          "minimum": 0,
+          "description": "%config.promptSizeMB%"
+        },
+        "textToolkit.plainText.autoApplyExtensions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "%config.autoApplyExtensions%"
+        },
+        "textToolkit.advanced": {
+          "type": "object",
+          "default": {},
+          "additionalProperties": false,
+          "properties": {
+            "copyPath.useLineCountSyntax": {
+              "type": "boolean",
+              "default": false,
+              "description": "%advanced.useLineCountSyntax%"
+            },
+            "changeCase.includeDotInCurrentWord": {
+              "type": "boolean",
+              "default": false,
+              "description": "%advanced.includeDotInCurrentWord%"
+            },
+            "alignByRegex.rememberLastInput": {
+              "type": "boolean",
+              "default": true,
+              "description": "%advanced.rememberLastInput%"
+            },
+            "plainText.applyEditorSettings": {
+              "type": "boolean",
+              "default": true,
+              "description": "%advanced.applyEditorSettings%"
+            },
+            "plainText.disableLineNumbers": {
+              "type": "boolean",
+              "default": false,
+              "description": "%advanced.disableLineNumbers%"
+            },
+            "plainText.editorOverrides": {
+              "type": "object",
+              "default": {},
+              "additionalProperties": true,
+              "description": "%advanced.editorOverrides%"
+            }
+          },
+          "markdownDescription": "%config.advanced%"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "node ./build.mjs",
+    "watch": "node ./build.mjs --watch",
+    "typecheck": "tsc --noEmit -p ./",
+    "build:test": "node ./build.mjs --test",
+    "test": "npm run build:test && mocha \"out/test/**/*.test.js\"",
+    "icon": "node ./scripts/render-icon.mjs media/icon.png",
+    "package": "npm run typecheck && npm test && vsce package",
+    "vscode:prepublish": "node ./build.mjs --production"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^20.19.0",
+    "@types/vscode": "~1.80.0",
+    "@vscode/vsce": "^3.9.2",
+    "change-case": "^5.4.4",
+    "esbuild": "^0.28.1",
+    "mocha": "^11.8.0",
+    "typescript": "^5.9.3"
+  }
+}

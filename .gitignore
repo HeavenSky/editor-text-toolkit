@@ -1,0 +1,11 @@
+node_modules/
+out/
+*.vsix
+.vscode-test/
+
+# 全局 gitignore 忽略了所有点目录, 这里恢复扩展开发与 CI 所需的配置
+!.vscode/
+!.github/
+
+# 全局 gitignore 忽略 lockfile, 但 Release 工作流用 npm ci 打包, 需要它入库
+!package-lock.json
