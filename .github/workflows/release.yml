@@ -22,11 +22,11 @@ jobs:
       version: ${{ steps.version.outputs.version }}
       has_vsce_pat: ${{ steps.secrets.outputs.has_vsce_pat }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: '20'
+          node-version: '24'
           cache: npm
 
       - name: Install dependencies
@@ -73,14 +73,14 @@ jobs:
           cat RELEASE_NOTES.md
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           name: v${{ steps.version.outputs.version }}
           tag_name: v${{ steps.version.outputs.version }}
           body_path: RELEASE_NOTES.md
           files: ${{ steps.version.outputs.vsix }}
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: ${{ steps.version.outputs.vsix }}
           path: ${{ steps.version.outputs.vsix }}
@@ -103,11 +103,11 @@ jobs:
     if: needs.release.outputs.has_vsce_pat == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: '20'
+          node-version: '24'
           cache: npm
 
       - run: npm ci
