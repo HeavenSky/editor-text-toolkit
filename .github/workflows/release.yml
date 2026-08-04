@@ -20,7 +20,9 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.version.outputs.version }}
+      vsix: ${{ steps.version.outputs.vsix }}
       has_vsce_pat: ${{ steps.secrets.outputs.has_vsce_pat }}
+      has_ovsx_pat: ${{ steps.secrets.outputs.has_ovsx_pat }}
     steps:
       - uses: actions/checkout@v7
 
@@ -90,14 +92,14 @@ jobs:
         id: secrets
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
         run: |
-          if [ -n "$VSCE_PAT" ]; then
-            echo "has_vsce_pat=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "has_vsce_pat=false" >> "$GITHUB_OUTPUT"
-          fi
+          [ -n "$VSCE_PAT" ] && echo "has_vsce_pat=true" >> "$GITHUB_OUTPUT" || echo "has_vsce_pat=false" >> "$GITHUB_OUTPUT"
+          [ -n "$OVSX_PAT" ] && echo "has_ovsx_pat=true" >> "$GITHUB_OUTPUT" || echo "has_ovsx_pat=false" >> "$GITHUB_OUTPUT"
 
   # 仅在仓库配置了 VSCE_PAT 后运行; 未配置时跳过, 只发 GitHub Release.
+  # 发布 release job 已校验并附到 Release 的那个 vsix(--packagePath), 不重新构建,
+  # 保证市场上的产物与 Release 附件逐字节一致.
   marketplace:
     needs: release
     if: needs.release.outputs.has_vsce_pat == 'true'
@@ -110,9 +112,33 @@ jobs:
           node-version: '24'
           cache: npm
 
+      # 只为拿到 vsce 可执行文件; 打包已在 release job 完成.
       - run: npm ci
 
+      - uses: actions/download-artifact@v8
+        with:
+          name: ${{ needs.release.outputs.vsix }}
+
       - name: Publish to VS Code Marketplace
-        run: npx --no-install vsce publish
+        run: npx --no-install vsce publish --packagePath "${{ needs.release.outputs.vsix }}"
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
+
+  # Open VSX(VSCodium / Cursor / Windsurf 等非官方发行版的市场), 同样按 secret 存在与否开关.
+  open-vsx:
+    needs: release
+    if: needs.release.outputs.has_ovsx_pat == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: ${{ needs.release.outputs.vsix }}
+
+      - name: Publish to Open VSX
+        run: npx --yes ovsx publish "${{ needs.release.outputs.vsix }}"
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
