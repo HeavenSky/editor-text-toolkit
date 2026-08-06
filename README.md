@@ -19,10 +19,9 @@ Zero runtime dependencies. English and 简体中文 UI, following the VS Code di
 - [Compare (Diff)](#compare-diff)
 - [Commands and keybindings](#commands-and-keybindings)
 - [Settings](#settings)
-- [Migrating](#migrating)
 - [Localization](#localization)
 - [Development](#development)
-- [Credits and license](#credits-and-license)
+- [License](#license)
 
 ---
 
@@ -119,16 +118,23 @@ From a keybinding, pass either form directly: `{ "regex": "=" }` or `{ "template
 
 It aligns whole lines covered by the primary selection; a selection that stops at column 0 of the following line does not drag that line in. Column widths use your `editor.tabSize`. The input box pre-fills with your last expression — turn that off with `{ "textToolkit.advanced": { "alignByRegex.rememberLastInput": false } }`.
 
-**Uneven lines are handled correctly.** When the selected lines contain different numbers of matches, each column's width is computed only among the lines that still have a match in that column, so a short line can no longer widen an unrelated column:
+Three lines aligned on `=`:
 
 ```text
-# input                     # before (upstream)          # now
-x = 111111111;              x  = 111111111;              x  = 111111111;
-yy = 2; zzz = 3;            yy = 2; zzz    = 3;          yy = 2; zzz   = 3;
-w = 4; vvvvv = 5;           w  = 4; vvvvv  = 5;          w  = 4; vvvvv = 5;
+# before                # after
+const a = 1;            const a  = 1;
+let bbbb = 22;          let bbbb = 22;
+var cc = 333;           var cc   = 333;
 ```
 
-A column matched by only one line is left untouched instead of being padded to an unrelated width. Selections where every line has the same number of matches align exactly as before.
+**The lines do not have to contain the same number of matches.** Each column's width is computed only among the lines that actually have a match in that column, so a short line never widens an unrelated column, and a column matched by a single line is left untouched:
+
+```text
+# before                # after
+x = 111111111;          x  = 111111111;
+yy = 2; zzz = 3;        yy = 2; zzz   = 3;
+w = 4; vvvvv = 5;       w  = 4; vvvvv = 5;
+```
 
 ---
 
@@ -407,68 +413,6 @@ Setting `plainText.applyEditorSettings` to `false` skips this table entirely and
 
 ---
 
-## Migrating
-
-Old settings are **never** migrated automatically, and no command aliases are provided — update `keybindings.json` and re-set the settings once.
-
-### From Partial Diff
-
-Uninstall or disable [ryu1kn/vscode-partial-diff](https://github.com/ryu1kn/vscode-partial-diff) first, otherwise both extensions add their own entries to the editor context menu.
-
-| Old command ID | New command ID |
-| --- | --- |
-| `extension.partialDiff.markSection1` | `textToolkit.diff.markSelection` |
-| `extension.partialDiff.markSection2AndTakeDiff` | `textToolkit.diff.compareWithMarked` |
-| `extension.partialDiff.diffSelectionWithClipboard` | `textToolkit.diff.compareWithClipboard` |
-| `extension.partialDiff.diffVisibleEditors` | `textToolkit.diff.compareVisibleEditors` |
-| `extension.partialDiff.togglePreComparisonTextNormalizationRules` | `textToolkit.diff.toggleNormalizationRules` |
-
-| Old setting | New setting | Note |
-| --- | --- | --- |
-| `partialDiff.preComparisonTextNormalizationRules` | `textToolkit.diff.normalizationRules` | element fields (`name`, `match`, `replaceWith`, `enableOnStart`) are unchanged — copy the array as is |
-| `partialDiff.commandsOnContextMenu` | `textToolkit.diff.contextMenu` | one enum instead of five booleans: `both`, `markOnly`, `none` |
-| `partialDiff.hideCommandsOnContextMenu` | `textToolkit.diff.contextMenu: "none"` | the upstream setting was already deprecated |
-| `partialDiff.enableTelemetry` | — | **this extension has no telemetry**, so there is nothing to turn off |
-
-What you gain:
-
-- Toggling normalization rules refreshes comparisons that are already open ([#24](https://github.com/ryu1kn/vscode-partial-diff/issues/24)).
-- Both sides inherit the source language instead of falling back to plain text ([#38](https://github.com/ryu1kn/vscode-partial-diff/issues/38), [#28](https://github.com/ryu1kn/vscode-partial-diff/issues/28)).
-- The URI and tab title carry the source file name and line range instead of `reg1` / `reg2` ([#66](https://github.com/ryu1kn/vscode-partial-diff/issues/66)).
-- Any two open tabs can be compared, not only two visible editors ([#33](https://github.com/ryu1kn/vscode-partial-diff/issues/33)).
-- The sides can be swapped, and the clipboard side is configurable ([#96](https://github.com/ryu1kn/vscode-partial-diff/issues/96)).
-- A status bar item shows the current mark and the number of active rules.
-- An empty clipboard read reports itself instead of opening a diff with one blank side.
-
-### From the three original extensions
-
-Uninstall `turweet.copy-path-line-numbers-flexible`, `wmaurer.change-case` and `janjoerke.align-by-regex` first.
-
-| Old command ID | New command ID |
-| --- | --- |
-| `copyPath.lineNumber.copy` | `textToolkit.copyPathWithLines` |
-| `extension.changeCase.commands` | `textToolkit.changeCase` (no arguments) |
-| `extension.changeCase.<style>` | `textToolkit.changeCase` with `{ "style": "<style>" }` |
-| `align.by.regex` | `textToolkit.alignByRegex` |
-
-| Old setting | New setting | Note |
-| --- | --- | --- |
-| `copyPath.lineNumber.pathStyle` | `textToolkit.copyPath.pathStyle` | values changed: `absolute (full path)` → `absolute`, `relative` → `relative`, `tilde (~)` → `tilde`, `fileName (name only)` → `fileName` |
-| `copyPath.lineNumber.separatorBetweenPathAndLine` | `textToolkit.copyPath.separator` | — |
-| `copyPath.lineNumber.selectionMultiLineFormat` | `textToolkit.copyPath.multiLineFormat` | — |
-| `changeCase.includeDotInCurrentWord` | `textToolkit.advanced` → `changeCase.includeDotInCurrentWord` | moved into the built-in layer; the upstream setting was never registered at all, having been declared outside `contributes` |
-| `align.by.regex.templates` | `textToolkit.alignByRegex.templates` | — |
-
-### Behaviour differences from the originals
-
-1. `sentence` now capitalises the first letter (`testString` → `Test string`); the old `sentence-case@2` produced all lower case.
-2. `title` maps to `capitalCase`, so every word is capitalised — the old `title-case@2` kept small words such as `a`, `of`, `the` lower case.
-3. Letter/digit boundaries are no longer split: `fooBarBaz42Quux` → `foo bar baz42 quux`.
-4. `Align by RegEx` column widths changed for selections whose lines have different match counts (see [Align by RegEx](#align-by-regex)). Uniform selections are unchanged.
-5. Multi-line Change Case splits on the document's own end-of-line sequence instead of `os.EOL`, which upstream got wrong whenever the platform EOL differed from the document EOL.
-
----
-
 ## Localization
 
 - Command titles and setting descriptions: `package.nls.json` (English) and `package.nls.zh-cn.json`.
@@ -494,13 +438,6 @@ npm run package     # vsce package into artifacts/, then assert the VSIX content
 
 Each feature lives in `src/features/<name>/`, with the pure logic in files that never import `vscode` so they can be unit-tested directly. `change-case@5` is pure ESM, so the extension is bundled to CJS with esbuild; the packaged `.vsix` contains no `node_modules`.
 
-## Credits and license
+## License
 
-MIT. This extension merges and adapts:
-
-- [wmaurer/vscode-change-case](https://github.com/wmaurer/vscode-change-case) (MIT)
-- [janjoerke/vscode-align-by-regex](https://github.com/janjoerke/vscode-align-by-regex) (MIT)
-- Copy Path Line Numbers Flexible (MIT)
-- [ryu1kn/vscode-partial-diff](https://github.com/ryu1kn/vscode-partial-diff) (MIT) — Compare (Diff) is a reimplementation of its feature set, not a code port
-
-See `NOTICE.md`.
+MIT. Parts of this extension adapt earlier MIT-licensed work; the full third-party notices ship with the extension in `NOTICE.md`.
