@@ -58,5 +58,13 @@
   "The clipboard has no text to compare. Images and other non-text content cannot be compared.": "剪贴板没有可比较的文本内容. 图片等非文本内容无法比较.",
   "nothing marked yet": "尚未标记",
   "clipboard on the left": "剪贴板在左",
-  "clipboard on the right": "剪贴板在右"
+  "clipboard on the right": "剪贴板在右",
+  "Compare Text in Visible Editors": "比较两个可见编辑器",
+  "Compare Text in Two Open Tabs": "比较两个已打开的标签页",
+  "Swap Diff Sides": "交换比较两侧",
+  "This command needs exactly 2 visible editors, but {0} are visible. Split the editor to show 2 files and try again.": "该命令需要恰好 2 个可见编辑器, 当前可见 {0} 个. 请拆分编辑器让 2 个文件同时可见后重试.",
+  "Open at least 2 text tabs to compare.": "请先打开至少 2 个文本标签页.",
+  "Pick the left side": "选择左侧",
+  "Pick the right side": "选择右侧",
+  "No comparison to swap. Run a compare command first.": "没有可交换的比较结果, 请先执行一次比较."
 }

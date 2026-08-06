@@ -82,6 +82,21 @@
         "category": "%category%"
       },
       {
+        "command": "textToolkit.diff.compareVisibleEditors",
+        "title": "%command.diffCompareVisibleEditors%",
+        "category": "%category%"
+      },
+      {
+        "command": "textToolkit.diff.compareTabs",
+        "title": "%command.diffCompareTabs%",
+        "category": "%category%"
+      },
+      {
+        "command": "textToolkit.diff.swapSides",
+        "title": "%command.diffSwapSides%",
+        "category": "%category%"
+      },
+      {
         "command": "textToolkit.diff.showMenu",
         "title": "%command.diffShowMenu%",
         "category": "%category%"
@@ -91,6 +106,18 @@
       "commandPalette": [
         {
           "command": "textToolkit.plainText.open",
+          "when": "false"
+        },
+        {
+          "command": "textToolkit.diff.compareVisibleEditors",
+          "when": "false"
+        },
+        {
+          "command": "textToolkit.diff.compareTabs",
+          "when": "false"
+        },
+        {
+          "command": "textToolkit.diff.swapSides",
           "when": "false"
         },
         {

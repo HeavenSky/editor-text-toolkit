@@ -222,6 +222,114 @@ class CompareFeature {
       : this.openDiff(clipboard, selection));
   }
 
+  private async infoFromUri(uri: vscode.Uri): Promise<SelectionInfo> {
+    const document = await vscode.workspace.openTextDocument(uri);
+    return {
+      text: document.getText(),
+      baseName: basename(uri),
+      rangeLabel: FULL_RANGE_LABEL,
+      languageId: document.languageId
+    };
+  }
+
+  /** 左右顺序按 viewColumn, 与用户看到的排布一致. */
+  async compareVisibleEditors(): Promise<void> {
+    // 已经打开的比较结果本身也是"可见编辑器", 不排除掉的话数量永远凑不齐 2 个.
+    const editors = vscode.window.visibleTextEditors.filter(
+      (editor) => editor.document.uri.scheme !== DIFF_SCHEME
+    );
+    if (editors.length !== 2) {
+      void vscode.window.showInformationMessage(
+        vscode.l10n.t(
+          'This command needs exactly 2 visible editors, but {0} are visible. Split the editor to show 2 files and try again.',
+          editors.length
+        )
+      );
+      return;
+    }
+
+    const [first, second] = [...editors].sort(
+      (a, b) => (a.viewColumn ?? 0) - (b.viewColumn ?? 0)
+    );
+    await this.openDiff(captureSelection(first), captureSelection(second));
+  }
+
+  /**
+   * 比较任意两个已打开的标签页, 不要求它们同时可见(上游 issue #33).
+   * 上游只能比较可见编辑器, 是因为它写于 Tab API 出现之前.
+   */
+  async compareTabs(): Promise<void> {
+    const seen = new Set<string>();
+    const candidates: vscode.Uri[] = [];
+    for (const group of vscode.window.tabGroups.all) {
+      for (const tab of group.tabs) {
+        // TabInputTextDiff 等非纯文本输入天然不满足这个判断, 无需单独排除.
+        if (!(tab.input instanceof vscode.TabInputText)) {
+          continue;
+        }
+        const { uri } = tab.input;
+        const key = uri.toString();
+        // 比较结果自身不能再作为比较对象; 同一文件在多个编辑器组里只列一次.
+        if (uri.scheme === DIFF_SCHEME || seen.has(key)) {
+          continue;
+        }
+        seen.add(key);
+        candidates.push(uri);
+      }
+    }
+
+    if (candidates.length < 2) {
+      void vscode.window.showInformationMessage(
+        vscode.l10n.t('Open at least 2 text tabs to compare.')
+      );
+      return;
+    }
+
+    const left = await this.pickTab(candidates, vscode.l10n.t('Pick the left side'));
+    if (!left) {
+      return;
+    }
+    const right = await this.pickTab(
+      candidates.filter((uri) => uri.toString() !== left.toString()),
+      vscode.l10n.t('Pick the right side')
+    );
+    if (!right) {
+      return;
+    }
+
+    await this.openDiff(await this.infoFromUri(left), await this.infoFromUri(right));
+  }
+
+  private async pickTab(
+    candidates: vscode.Uri[],
+    placeHolder: string
+  ): Promise<vscode.Uri | undefined> {
+    const items = candidates.map((uri) => {
+      const label = basename(uri);
+      const relative = vscode.workspace.asRelativePath(uri, false);
+      return { label, description: relative === label ? undefined : relative, uri };
+    });
+    const picked = await vscode.window.showQuickPick(items, {
+      placeHolder,
+      matchOnDescription: true
+    });
+    return picked?.uri;
+  }
+
+  /** 交换最近一次比较的两侧(上游 issue #96). 生成新 session, 原标签页内容不受影响. */
+  async swapSides(): Promise<void> {
+    const sessionId = this.registry.lastSessionId;
+    const left = sessionId ? this.registry.getSlot(sessionId, 'left') : undefined;
+    const right = sessionId ? this.registry.getSlot(sessionId, 'right') : undefined;
+    if (!left || !right) {
+      void vscode.window.showInformationMessage(
+        vscode.l10n.t('No comparison to swap. Run a compare command first.')
+      );
+      return;
+    }
+    await this.openDiff(right, left);
+  }
+
   /** 一级菜单里这一类的 description, 显示当前生效的关键设置. */
   categoryDescription(): string {
     return getDiffConfig().clipboardSide === 'right'
@@ -245,6 +353,18 @@ class CompareFeature {
         id: 'compareWithClipboard',
         label: `$(clippy) ${vscode.l10n.t('Compare Text with Clipboard')}`,
         description: this.categoryDescription()
+      },
+      {
+        id: 'compareVisibleEditors',
+        label: `$(split-horizontal) ${vscode.l10n.t('Compare Text in Visible Editors')}`
+      },
+      {
+        id: 'compareTabs',
+        label: `$(files) ${vscode.l10n.t('Compare Text in Two Open Tabs')}`
+      },
+      {
+        id: 'swapSides',
+        label: `$(arrow-swap) ${vscode.l10n.t('Swap Diff Sides')}`
       }
     ];
     if (marked) {
@@ -270,6 +390,15 @@ class CompareFeature {
         break;
       case 'compareWithClipboard':
         await this.compareWithClipboard();
+        break;
+      case 'compareVisibleEditors':
+        await this.compareVisibleEditors();
+        break;
+      case 'compareTabs':
+        await this.compareTabs();
+        break;
+      case 'swapSides':
+        await this.swapSides();
         break;
       case 'clearMark':
         this.clearMark();
@@ -297,6 +426,11 @@ export function registerDiffFeature(context: vscode.ExtensionContext): DiffFeatu
     vscode.commands.registerCommand('textToolkit.diff.compareWithClipboard', () =>
       feature.compareWithClipboard()
     ),
+    vscode.commands.registerCommand('textToolkit.diff.compareVisibleEditors', () =>
+      feature.compareVisibleEditors()
+    ),
+    vscode.commands.registerCommand('textToolkit.diff.compareTabs', () => feature.compareTabs()),
+    vscode.commands.registerCommand('textToolkit.diff.swapSides', () => feature.swapSides()),
     vscode.commands.registerCommand('textToolkit.diff.showMenu', () => feature.showMenu(false))
   );
 
