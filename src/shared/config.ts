@@ -39,6 +39,26 @@ export function getPlainTextPromptConfig(): PlainTextPromptConfig {
   };
 }
 
+export type DiffContextMenu = 'both' | 'markOnly' | 'none';
+export type ClipboardSide = 'left' | 'right';
+
+export interface DiffConfig {
+  contextMenu: DiffContextMenu;
+  clipboardSide: ClipboardSide;
+}
+
+/**
+ * `contextMenu` 用单个枚举而不是每条命令一个布尔: `when` 子句只能读取嵌套对象属性,
+ * 而本扩展的内置层 `textToolkit.advanced` 用的是扁平点号键, 无法在 `when` 中引用.
+ */
+export function getDiffConfig(): DiffConfig {
+  const config = vscode.workspace.getConfiguration('textToolkit.diff');
+  return {
+    contextMenu: config.get<DiffContextMenu>('contextMenu', 'both'),
+    clipboardSide: config.get<ClipboardSide>('clipboardSide', 'left')
+  };
+}
+
 /** 内置层: 只通过 `textToolkit.advanced` 这一个对象做增量覆盖. */
 export function getAdvanced(): AdvancedSettings {
   return resolveAdvanced(vscode.workspace.getConfiguration().get<unknown>('textToolkit.advanced'));

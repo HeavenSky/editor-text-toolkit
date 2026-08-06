@@ -4,6 +4,7 @@ import { isBackItem, showMenu, type MenuItem, type PickOutcome } from '../../sha
 import { showAlignMenu } from '../alignByRegex/command';
 import { showCaseStylePicker } from '../changeCase/command';
 import { copyPathWithLines, PATH_STYLES } from '../copyPath/command';
+import type { DiffFeature } from '../diff/command';
 import type { PlainTextFeature } from '../plainText/command';
 import type { PathStyle } from '../../shared/config';
 
@@ -52,7 +53,8 @@ async function showCopyPathMenu(withBack: boolean): Promise<PickOutcome> {
 
 export function registerMenuCommand(
   context: vscode.ExtensionContext,
-  plainText: PlainTextFeature
+  plainText: PlainTextFeature,
+  diff: DiffFeature
 ): void {
   const categories = (): MenuItem[] => {
     const copyPath = getCopyPathConfig();
@@ -78,6 +80,12 @@ export function registerMenuCommand(
         label: `$(text-size) ${vscode.l10n.t('Plain Text Mode')}`,
         description: plainText.isActiveForActiveEditor() ? vscode.l10n.t('active') : undefined,
         detail: vscode.l10n.t('Strip highlighting and rendering work for large files')
+      },
+      {
+        id: 'diff',
+        label: `$(diff) ${vscode.l10n.t('Compare (Diff)')}`,
+        description: diff.categoryDescription(),
+        detail: vscode.l10n.t('Compare text selections, editors or the clipboard')
       }
     ];
   };
@@ -92,6 +100,8 @@ export function registerMenuCommand(
         return showAlignMenu(true);
       case 'plainText':
         return plainText.showMenu(true);
+      case 'diff':
+        return diff.showMenu(true);
       default:
         return 'done';
     }

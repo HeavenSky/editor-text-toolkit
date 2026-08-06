@@ -65,12 +65,36 @@
         "command": "textToolkit.plainText.open",
         "title": "%command.plainTextOpen%",
         "category": "%category%"
+      },
+      {
+        "command": "textToolkit.diff.markSelection",
+        "title": "%command.diffMarkSelection%",
+        "category": "%category%"
+      },
+      {
+        "command": "textToolkit.diff.compareWithMarked",
+        "title": "%command.diffCompareWithMarked%",
+        "category": "%category%"
+      },
+      {
+        "command": "textToolkit.diff.compareWithClipboard",
+        "title": "%command.diffCompareWithClipboard%",
+        "category": "%category%"
+      },
+      {
+        "command": "textToolkit.diff.showMenu",
+        "title": "%command.diffShowMenu%",
+        "category": "%category%"
       }
     ],
     "menus": {
       "commandPalette": [
         {
           "command": "textToolkit.plainText.open",
+          "when": "false"
+        },
+        {
+          "command": "textToolkit.diff.showMenu",
           "when": "false"
         }
       ],
@@ -79,6 +103,16 @@
           "command": "textToolkit.copyPathWithLines",
           "when": "editorTextFocus",
           "group": "copy"
+        },
+        {
+          "command": "textToolkit.diff.markSelection",
+          "when": "editorTextFocus && config.textToolkit.diff.contextMenu != none",
+          "group": "compare@1"
+        },
+        {
+          "command": "textToolkit.diff.compareWithMarked",
+          "when": "editorTextFocus && config.textToolkit.diff.contextMenu == both && textToolkit.diff.hasMark",
+          "group": "compare@2"
         }
       ],
       "explorer/context": [
@@ -150,6 +184,34 @@
           },
           "default": [],
           "description": "%config.autoApplyExtensions%"
+        },
+        "textToolkit.diff.contextMenu": {
+          "type": "string",
+          "default": "both",
+          "enum": [
+            "both",
+            "markOnly",
+            "none"
+          ],
+          "enumDescriptions": [
+            "%config.diffContextMenu.both%",
+            "%config.diffContextMenu.markOnly%",
+            "%config.diffContextMenu.none%"
+          ],
+          "description": "%config.diffContextMenu%"
+        },
+        "textToolkit.diff.clipboardSide": {
+          "type": "string",
+          "default": "left",
+          "enum": [
+            "left",
+            "right"
+          ],
+          "enumDescriptions": [
+            "%config.diffClipboardSide.left%",
+            "%config.diffClipboardSide.right%"
+          ],
+          "description": "%config.diffClipboardSide%"
         },
         "textToolkit.advanced": {
           "type": "object",

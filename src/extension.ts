@@ -11,8 +11,8 @@ export function activate(context: vscode.ExtensionContext): void {
   registerChangeCaseCommands(context);
   registerAlignByRegexCommand(context);
   const plainText = registerPlainTextMode(context);
-  registerMenuCommand(context, plainText);
-  registerDiffFeature(context);
+  const diff = registerDiffFeature(context);
+  registerMenuCommand(context, plainText, diff);
 }
 
 export function deactivate(): void {

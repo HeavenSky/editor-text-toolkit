@@ -44,5 +44,19 @@
   "Plain Text Mode": "纯文本模式",
   "Strip highlighting and rendering work for large files": "为大文件关闭高亮与额外渲染开销",
   "active": "已开启",
-  "This comparison is no longer available. Please run the compare command again.": "该比较结果已失效, 请重新执行比较命令."
+  "This comparison is no longer available. Please run the compare command again.": "该比较结果已失效, 请重新执行比较命令.",
+  "Compare (Diff)": "比较 (Diff)",
+  "Compare text selections, editors or the clipboard": "比较文本选区, 编辑器或剪贴板",
+  "Select Text for Compare": "标记待比较文本",
+  "Compare Text with Marked Selection": "与标记的文本比较",
+  "Compare Text with Clipboard": "与剪贴板比较",
+  "Clear the comparison mark": "清除比较标记",
+  "Marked for comparison.": "已标记待比较文本.",
+  "Comparison mark cleared.": "已清除比较标记.",
+  "Marked for comparison - click to open the compare menu": "已标记待比较文本 - 点击打开比较菜单",
+  "Select text for compare first.": "请先执行「标记待比较文本」.",
+  "The clipboard has no text to compare. Images and other non-text content cannot be compared.": "剪贴板没有可比较的文本内容. 图片等非文本内容无法比较.",
+  "nothing marked yet": "尚未标记",
+  "clipboard on the left": "剪贴板在左",
+  "clipboard on the right": "剪贴板在右"
 }
