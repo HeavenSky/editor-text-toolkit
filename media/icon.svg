@@ -5,21 +5,16 @@
       <stop offset="0" stop-color="#2E3547" />
       <stop offset="1" stop-color="#171B26" />
     </linearGradient>
-    <linearGradient id="g1" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#6FD6FF" />
-      <stop offset="1" stop-color="#3E8BFF" />
-    </linearGradient>
   </defs>
   <rect x="0" y="0" width="256" height="256" rx="56" fill="url(#g0)" />
   <rect x="3" y="3" width="250" height="250" rx="53" fill="none" stroke="#3C4459" stroke-width="3" />
-  <circle cx="46" cy="88" r="4.5" fill="#5D6880" />
-  <circle cx="46" cy="128" r="4.5" fill="#5D6880" />
-  <circle cx="46" cy="168" r="4.5" fill="#5D6880" />
-  <rect x="68" y="80" width="46" height="16" rx="8" fill="#9AA6BF" />
-  <rect x="68" y="120" width="30" height="16" rx="8" fill="#9AA6BF" />
-  <rect x="68" y="160" width="38" height="16" rx="8" fill="#9AA6BF" />
-  <rect x="122" y="62" width="10" height="132" rx="5" fill="url(#g1)" />
-  <rect x="145" y="80" width="52" height="16" rx="8" fill="#E6EBF5" />
-  <rect x="145" y="120" width="66" height="16" rx="8" fill="#6FD6FF" />
-  <rect x="145" y="160" width="40" height="16" rx="8" fill="#E6EBF5" />
+  <path d="M58 112 L78 60 L98 112" fill="none" stroke="#6FD6FF" stroke-width="11" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M66.8 94.32 L89.2 94.32" fill="none" stroke="#6FD6FF" stroke-width="8.8" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M104 96 a22 22 0 1 0 44 0 a22 22 0 1 0 -44 0 Z M114 96 a12 12 0 1 0 24 0 a12 12 0 1 0 -24 0 Z" fill-rule="evenodd" fill="#FFC145" />
+  <path d="M143 79 L143 113" fill="none" stroke="#FFC145" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M104 134 L104 198" fill="none" stroke="#C792EA" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M52 148 L88 148" fill="none" stroke="#FF6B60" stroke-width="11" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M120 148 L204 148" fill="none" stroke="#4EDD6E" stroke-width="11" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M52 176 L74 176" fill="none" stroke="#FFC145" stroke-width="11" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M120 176 L204 176" fill="none" stroke="#4EDD6E" stroke-width="11" stroke-linecap="round" stroke-linejoin="round" />
 </svg>
