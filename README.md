@@ -1,5 +1,7 @@
 # Editor Text Toolkit
 
+**English** · [简体中文](README.zh-cn.md)
+
 Five everyday editing tools in one VS Code extension — copy a `path:12-14` reference, convert case, align by a regex, tame a huge log file, and diff two text fragments.
 
 Zero runtime dependencies. English and 简体中文 UI, following the VS Code display language. No telemetry. No default keybindings, so nothing collides with what you already have.
@@ -219,7 +221,7 @@ An entry with an invalid `match` regex, or missing `match` / `replaceWith`, is s
 
 ### What VS Code already does
 
-The comparison is a stock VS Code diff editor, so these are already yours and this extension deliberately does not reimplement them:
+The comparison opens in a stock VS Code diff editor, so everything the diff editor can do is already yours:
 
 | Want | Use |
 | --- | --- |
