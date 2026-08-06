@@ -66,5 +66,10 @@
   "Open at least 2 text tabs to compare.": "请先打开至少 2 个文本标签页.",
   "Pick the left side": "选择左侧",
   "Pick the right side": "选择右侧",
-  "No comparison to swap. Run a compare command first.": "没有可交换的比较结果, 请先执行一次比较."
+  "No comparison to swap. Run a compare command first.": "没有可交换的比较结果, 请先执行一次比较.",
+  "Toggle Normalization Rules": "切换归一化规则",
+  "No normalization rules configured. Add them in textToolkit.diff.normalizationRules.": "尚未配置归一化规则, 请先在 textToolkit.diff.normalizationRules 中添加.",
+  "(rule without a name)": "(未命名规则)",
+  "Pick the normalization rules to apply": "选择要生效的归一化规则",
+  "Normalization is on. The ~ in a diff title is a snapshot from when it opened; this count is always current.": "归一化已生效. diff 标题里的 ~ 是打开那一刻的快照, 这里的计数才始终准确."
 }

@@ -45,6 +45,8 @@ export type ClipboardSide = 'left' | 'right';
 export interface DiffConfig {
   contextMenu: DiffContextMenu;
   clipboardSide: ClipboardSide;
+  /** 原始值; 校验与丢弃非法条目由 features/diff/core.ts 的 loadRules 负责. */
+  normalizationRules: unknown;
 }
 
 /**
@@ -55,7 +57,8 @@ export function getDiffConfig(): DiffConfig {
   const config = vscode.workspace.getConfiguration('textToolkit.diff');
   return {
     contextMenu: config.get<DiffContextMenu>('contextMenu', 'both'),
-    clipboardSide: config.get<ClipboardSide>('clipboardSide', 'left')
+    clipboardSide: config.get<ClipboardSide>('clipboardSide', 'left'),
+    normalizationRules: config.get<unknown>('normalizationRules', [])
   };
 }
 

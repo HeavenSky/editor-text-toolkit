@@ -97,6 +97,11 @@
         "category": "%category%"
       },
       {
+        "command": "textToolkit.diff.toggleNormalizationRules",
+        "title": "%command.diffToggleNormalizationRules%",
+        "category": "%category%"
+      },
+      {
         "command": "textToolkit.diff.showMenu",
         "title": "%command.diffShowMenu%",
         "category": "%category%"
@@ -118,6 +123,10 @@
         },
         {
           "command": "textToolkit.diff.swapSides",
+          "when": "false"
+        },
+        {
+          "command": "textToolkit.diff.toggleNormalizationRules",
           "when": "false"
         },
         {
@@ -211,6 +220,81 @@
           },
           "default": [],
           "description": "%config.autoApplyExtensions%"
+        },
+        "textToolkit.diff.normalizationRules": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "%config.diffNormalizationRules.name%"
+              },
+              "match": {
+                "type": "string",
+                "description": "%config.diffNormalizationRules.match%"
+              },
+              "replaceWith": {
+                "description": "%config.diffNormalizationRules.replaceWith%",
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "letterCase": {
+                        "enum": [
+                          "upper",
+                          "lower"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "letterCase"
+                    ]
+                  }
+                ]
+              },
+              "enableOnStart": {
+                "type": "boolean",
+                "default": true,
+                "description": "%config.diffNormalizationRules.enableOnStart%"
+              }
+            },
+            "required": [
+              "match",
+              "replaceWith"
+            ]
+          },
+          "markdownDescription": "%config.diffNormalizationRules%",
+          "defaultSnippets": [
+            {
+              "label": "%snippet.diffNormalizationRules.example%",
+              "description": "%snippet.diffNormalizationRules.exampleDetail%",
+              "body": [
+                {
+                  "name": "Replace tabs with spaces",
+                  "match": "\\t",
+                  "replaceWith": "  "
+                },
+                {
+                  "name": "One space after a comma",
+                  "match": ",\\s*([^,\\n]+)",
+                  "replaceWith": ", $1"
+                },
+                {
+                  "name": "Ignore letter case",
+                  "match": ".*",
+                  "replaceWith": {
+                    "letterCase": "upper"
+                  },
+                  "enableOnStart": false
+                }
+              ]
+            }
+          ]
         },
         "textToolkit.diff.contextMenu": {
           "type": "string",

@@ -13,6 +13,7 @@ import {
   type SelectionInfo
 } from './core';
 import { DiffRegistry } from './registry';
+import { NormalizationRuleStore } from './rules';
 
 /**
  * Compare (Diff): 在文件内, 跨文件或与剪贴板之间比较文本片段.
@@ -58,12 +59,15 @@ function captureSelection(editor: vscode.TextEditor): SelectionInfo {
 
 class CompareFeature {
   private readonly registry = new DiffRegistry();
+  private readonly rules = new NormalizationRuleStore(
+    () => getDiffConfig().normalizationRules
+  );
   private readonly provider: DiffContentProvider;
   private readonly statusBarItem: vscode.StatusBarItem;
 
   constructor(context: vscode.ExtensionContext) {
-    // 归一化规则的运行时开关尚未接入, 此处等价于"没有任何规则".
-    this.provider = new DiffContentProvider(this.registry, () => []);
+    // 规则在渲染时才套用, 因此切换启停只需重新触发一次 provide 就能刷新已打开的比较.
+    this.provider = new DiffContentProvider(this.registry, () => this.rules.activeRules);
     // 优先级 99: 纯文本模式的状态栏项已经占用了 100.
     this.statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 99);
     this.statusBarItem.command = 'textToolkit.diff.showMenu';
@@ -76,7 +80,12 @@ class CompareFeature {
     this.updateStatusBar();
   }
 
-  /** 有标记时常驻显示来源与行号; 上游没有任何反馈, 标记完就无从确认. */
+  /**
+   * 常驻显示当前标记与激活的规则数.
+   *
+   * 上游没有任何反馈, 标记完就无从确认; 而 diff 标题里的 `~` 只是打开那一刻的快照,
+   * 之后切换规则也不会变, 所以需要一个始终准确的指示器.
+   */
   private updateStatusBar(): void {
     const marked = this.registry.marked;
     void vscode.commands.executeCommand(
@@ -85,15 +94,37 @@ class CompareFeature {
       Boolean(marked)
     );
 
-    if (!marked) {
+    const activeRules = this.rules.activeRules.length;
+    const segments: string[] = [];
+    const tips: string[] = [];
+    if (marked) {
+      segments.push(`$(diff) ${sideLabel(marked)}`);
+      tips.push(vscode.l10n.t('Marked for comparison - click to open the compare menu'));
+    }
+    if (activeRules > 0) {
+      segments.push(`$(filter)${activeRules}`);
+      tips.push(
+        vscode.l10n.t(
+          'Normalization is on. The ~ in a diff title is a snapshot from when it opened; this count is always current.'
+        )
+      );
+    }
+
+    if (segments.length === 0) {
       this.statusBarItem.hide();
       return;
     }
-    this.statusBarItem.text = `$(diff) ${sideLabel(marked)}`;
-    this.statusBarItem.tooltip = vscode.l10n.t(
-      'Marked for comparison - click to open the compare menu'
-    );
+    this.statusBarItem.text = segments.join(' · ');
+    this.statusBarItem.tooltip = tips.join('\n');
     this.statusBarItem.show();
+  }
+
+  /** `激活数/总数`, 没有配置任何规则时返回 undefined. */
+  private ruleSummary(): string | undefined {
+    const all = this.rules.getAll();
+    return all.length === 0
+      ? undefined
+      : `${all.filter((rule) => rule.active).length}/${all.length}`;
   }
 
   private activeEditor(): vscode.TextEditor | undefined {
@@ -134,7 +165,7 @@ class CompareFeature {
       'vscode.diff',
       leftUri,
       rightUri,
-      buildDiffTitle(left, right, false)
+      buildDiffTitle(left, right, this.rules.hasActiveRules)
     );
   }
 
@@ -330,11 +361,51 @@ class CompareFeature {
     await this.openDiff(right, left);
   }
 
+  /**
+   * 切换归一化规则的启停(上游 issue #24 的落点).
+   *
+   * 启停只改内存状态, 不写回 settings.json; 改完立刻刷新所有仍然有效的比较,
+   * 因此不需要关掉 diff 再重新比较一次.
+   */
+  async toggleNormalizationRules(): Promise<void> {
+    const all = this.rules.getAll();
+    if (all.length === 0) {
+      void vscode.window.showInformationMessage(
+        vscode.l10n.t(
+          'No normalization rules configured. Add them in textToolkit.diff.normalizationRules.'
+        )
+      );
+      return;
+    }
+
+    const items = all.map((rule, index) => ({
+      label: rule.name ?? vscode.l10n.t('(rule without a name)'),
+      description: rule.match,
+      picked: rule.active,
+      index
+    }));
+    const picked = await vscode.window.showQuickPick(items, {
+      canPickMany: true,
+      placeHolder: vscode.l10n.t('Pick the normalization rules to apply')
+    });
+    if (!picked) {
+      // 取消不改变任何状态, 与上游 normalisation-rule-picker.ts:16 的语义一致.
+      return;
+    }
+
+    this.rules.setActive(picked.map((item) => item.index));
+    this.provider.refreshAll();
+    this.updateStatusBar();
+  }
+
   /** 一级菜单里这一类的 description, 显示当前生效的关键设置. */
   categoryDescription(): string {
-    return getDiffConfig().clipboardSide === 'right'
-      ? vscode.l10n.t('clipboard on the right')
-      : vscode.l10n.t('clipboard on the left');
+    const side =
+      getDiffConfig().clipboardSide === 'right'
+        ? vscode.l10n.t('clipboard on the right')
+        : vscode.l10n.t('clipboard on the left');
+    const rules = this.ruleSummary();
+    return rules ? `${side} · $(filter) ${rules}` : side;
   }
 
   async showMenu(withBack = false): Promise<PickOutcome> {
@@ -365,6 +436,11 @@ class CompareFeature {
       {
         id: 'swapSides',
         label: `$(arrow-swap) ${vscode.l10n.t('Swap Diff Sides')}`
+      },
+      {
+        id: 'toggleNormalizationRules',
+        label: `$(filter) ${vscode.l10n.t('Toggle Normalization Rules')}`,
+        description: this.ruleSummary()
       }
     ];
     if (marked) {
@@ -400,6 +476,9 @@ class CompareFeature {
       case 'swapSides':
         await this.swapSides();
         break;
+      case 'toggleNormalizationRules':
+        await this.toggleNormalizationRules();
+        break;
       case 'clearMark':
         this.clearMark();
         break;
@@ -431,6 +510,9 @@ export function registerDiffFeature(context: vscode.ExtensionContext): DiffFeatu
     ),
     vscode.commands.registerCommand('textToolkit.diff.compareTabs', () => feature.compareTabs()),
     vscode.commands.registerCommand('textToolkit.diff.swapSides', () => feature.swapSides()),
+    vscode.commands.registerCommand('textToolkit.diff.toggleNormalizationRules', () =>
+      feature.toggleNormalizationRules()
+    ),
     vscode.commands.registerCommand('textToolkit.diff.showMenu', () => feature.showMenu(false))
   );
 
