@@ -1,5 +1,6 @@
-import * as assert from 'assert';
-import { CASE_COMMANDS, getCaseCommand } from '../features/changeCase/transforms';
+import { describe, it } from 'vitest';
+import * as assert from 'node:assert';
+import { CASE_COMMANDS, getCaseCommand } from '../src/features/changeCase/transforms';
 
 const EXPECTED_LABELS = [
   'camel',

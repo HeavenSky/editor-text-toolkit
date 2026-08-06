@@ -1,6 +1,7 @@
-import * as assert from 'assert';
-import { Block, type Eol } from '../features/alignByRegex/block';
-import type { Line } from '../features/alignByRegex/line';
+import { describe, it } from 'vitest';
+import * as assert from 'node:assert';
+import { Block, type Eol } from '../src/features/alignByRegex/block';
+import type { Line } from '../src/features/alignByRegex/line';
 
 const TAB_SIZE = 4;
 

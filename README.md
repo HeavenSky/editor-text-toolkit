@@ -289,4 +289,4 @@ MIT. This extension merges and adapts:
 - [janjoerke/vscode-align-by-regex](https://github.com/janjoerke/vscode-align-by-regex) (MIT)
 - Copy Path Line Numbers Flexible (MIT)
 
-See `THIRD_PARTY_NOTICES.md`.
+See `NOTICE.md`.

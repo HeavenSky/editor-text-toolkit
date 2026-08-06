@@ -1,4 +1,5 @@
-import * as assert from 'assert';
+import { describe, it } from 'vitest';
+import * as assert from 'node:assert';
 import {
   applyTilde,
   collectLineNumbers,
@@ -7,7 +8,7 @@ import {
   formatResult,
   toLineRanges,
   type LineSpan
-} from '../features/copyPath/core';
+} from '../src/features/copyPath/core';
 
 function span(startLine: number, endLine: number, endCharacter: number): LineSpan {
   return {

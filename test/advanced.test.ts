@@ -1,4 +1,5 @@
-import * as assert from 'assert';
+import { describe, it } from 'vitest';
+import * as assert from 'node:assert';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import {
@@ -7,10 +8,10 @@ import {
   DEFAULT_EDITOR_OVERRIDES,
   mergeEditorOverrides,
   resolveAdvanced
-} from '../shared/advanced';
+} from '../src/shared/advanced';
 
 /** 测试产物在 out/test/ 下, 上溯两级即仓库根. */
-const REPO_ROOT = path.resolve(__dirname, '../..');
+const REPO_ROOT = path.resolve(import.meta.dirname, '..');
 
 function readJson(relativePath: string): Record<string, any> {
   return JSON.parse(fs.readFileSync(path.join(REPO_ROOT, relativePath), 'utf8'));

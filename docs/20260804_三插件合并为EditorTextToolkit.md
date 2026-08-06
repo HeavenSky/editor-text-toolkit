@@ -332,7 +332,7 @@ align(tabSize):
 
 ### 2026-08-05 发布链路与内置层可发现性(0.0.2)
 
-1. 仓库落地: 初始化 git, remote 指向 `HeavenSky/editor-text-toolkit`, publisher 与版权人改为 `HeavenSky`; 本文档做过一次脱敏(去掉本机目录布局, 环境指纹与内部缓存路径), 测试里的 home 目录 fixture 由真实用户名改为 `/Users/username`。
+1. 仓库落地: 初始化 git, remote 指向 `HeavenSky/editor-text-toolkit`, publisher 与版权人改为 `HeavenSky`;
 2. `.github/workflows/release.yml`: 打 `v*` 标签即校验版本一致性 → typecheck → test → `vsce package` → 抽取 CHANGELOG 对应小节 → 创建 Release 并附 vsix; `marketplace` 与 `open-vsx` 两个 job 分别按 `VSCE_PAT` / `OVSX_PAT` 是否配置开关, 且都用 `--packagePath` 发布 release job 的同一份产物。`secrets` 在 job 级 `if` 中不可用, 故经 job output 传递。v0.0.1 已实跑成功。
 3. `.gitignore` 放行三处被全局 gitignore 拦掉的路径: `.vscode/`, `.github/`, `package-lock.json`(`npm ci` 需要)。
 4. 内置层自文档化(D22)与资源管理器右键入口(D23), 命令标题简化(D24); 原先的一次性校验脚本改写为常驻单测, `npm test` 131 → 137 passing。

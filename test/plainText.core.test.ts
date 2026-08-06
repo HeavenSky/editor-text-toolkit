@@ -1,10 +1,11 @@
-import * as assert from 'assert';
+import { describe, it } from 'vitest';
+import * as assert from 'node:assert';
 import {
   formatFileSize,
   matchesAutoApplyExtension,
   normalizeExtension,
   shouldPromptForSize
-} from '../features/plainText/core';
+} from '../src/features/plainText/core';
 
 const MB = 1024 * 1024;
 
