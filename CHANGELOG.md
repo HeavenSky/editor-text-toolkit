@@ -21,6 +21,7 @@
 - The Command Palette now lists eight commands instead of five: the three core compare commands are on it, the other five compare commands are menu-only and still bindable.
 - The two-level picker has a fifth category, `Compare (Diff)`.
 - The exposed settings layer grows from seven entries to ten. `textToolkit.advanced` is unchanged.
+- New icon. The previous one showed only the alignment feature; the new one carries three of the five: `Aa` for case conversion, ragged-left-to-flush-right rows for regex alignment, and the vertical rule between them for the diff gutter. The left column uses a different colour per row for the "before" state and the right column a single colour for the "after", so the colours carry part of the meaning.
 
 ## 0.0.2
 
