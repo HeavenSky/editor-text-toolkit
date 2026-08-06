@@ -43,5 +43,6 @@
   "Align the selected lines by a regular expression or a template": "按正则表达式或模板对齐选中的行",
   "Plain Text Mode": "纯文本模式",
   "Strip highlighting and rendering work for large files": "为大文件关闭高亮与额外渲染开销",
-  "active": "已开启"
+  "active": "已开启",
+  "This comparison is no longer available. Please run the compare command again.": "该比较结果已失效, 请重新执行比较命令."
 }
