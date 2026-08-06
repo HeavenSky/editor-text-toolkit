@@ -386,11 +386,16 @@ To add a language, copy either file to the matching locale suffix (for example `
 ```bash
 npm install
 npm run typecheck   # tsc --noEmit
-npm test            # esbuild + mocha over the pure logic
-npm run compile     # bundle to out/extension.js
-npm run icon        # re-rasterize media/icon.png from the shapes in scripts/render-icon.mjs
-npm run package     # typecheck + test + vsce package
+npm test            # vitest run, over the pure logic in test/*.test.ts
+npm run check       # consistency gates: icon vs spec, package.nls parity, l10n bundle parity
+npm run compile     # bundle to out/extension.js with a sourcemap
+npm run build       # same but minified and without a sourcemap (what vscode:prepublish runs)
+npm run watch       # rebuild on change
+npm run gen:icon    # regenerate media/icon.svg and media/icon.png from scripts/icon-spec.mjs
+npm run package     # vsce package into artifacts/, then assert the VSIX contents against an allowlist
 ```
+
+`npm run package` does **not** run the checks for you — run `typecheck`, `test` and `check` first. `npm run check` is the gate that catches the failures a build cannot: a missing `package.nls` entry silently renders as `%config.foo%`, and a missing `l10n` entry silently falls back to English, so both directions are asserted (missing entries *and* unused ones).
 
 `change-case@5` is pure ESM, so the extension is bundled to CJS with esbuild; the packaged `.vsix` contains no `node_modules`.
 
