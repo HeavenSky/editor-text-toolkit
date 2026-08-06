@@ -1,6 +1,6 @@
 # Change Log
 
-## 0.0.3
+## v0.0.3 2026-08-07 Compare (Diff)
 
 ### Added
 
@@ -23,7 +23,7 @@
 - The exposed settings layer grows from seven entries to ten. `textToolkit.advanced` is unchanged.
 - New icon. The previous one showed only the alignment feature; the new one carries three of the five: `Aa` for case conversion, ragged-left-to-flush-right rows for regex alignment, and the vertical rule between them for the diff gutter. The left column uses a different colour per row for the "before" state and the right column a single colour for the "after", so the colours carry part of the meaning.
 
-## 0.0.2
+## v0.0.2 2026-08-05
 
 ### Added
 
@@ -36,7 +36,7 @@
 
 - Command title simplified: `Toggle Plain Text Mode (Large File)` → `Toggle Plain Text Mode` (中文: `切换纯文本模式(大文件)` → `切换纯文本模式`). The command ID is unchanged.
 
-## 0.0.1
+## v0.0.1 2026-08-05
 
 First release. Merges three extensions into one, with zero runtime dependencies.
 
