@@ -1,5 +1,27 @@
 # Change Log
 
+## 0.0.3
+
+### Added
+
+- **Compare (Diff)** — a fifth feature, reimplementing the capabilities of [ryu1kn/vscode-partial-diff](https://github.com/ryu1kn/vscode-partial-diff) (MIT, see `NOTICE.md`) on this extension's own conventions, with no telemetry and still zero runtime dependencies. Diff two selections across files, a selection against the clipboard, two visible editors, or any two open tabs. No selection compares the whole file; multiple cursors are joined by document position.
+- Pre-comparison normalization rules (`textToolkit.diff.normalizationRules`) rewrite only what the diff shows, never the files. Same element fields as upstream (`name`, `match`, `replaceWith` as text or `{ "letterCase": ... }`, `enableOnStart`), so the array can be copied over as is.
+- `Toggle Normalization Rules` turns rules on and off at runtime and **refreshes comparisons that are already open** — upstream requires closing the diff and re-running it ([#24](https://github.com/ryu1kn/vscode-partial-diff/issues/24)).
+- Each side inherits the language of the file it came from, and the clipboard side inherits the other side's language, so a clipboard diff against a `.ts` selection is highlighted as TypeScript ([#38](https://github.com/ryu1kn/vscode-partial-diff/issues/38), [#28](https://github.com/ryu1kn/vscode-partial-diff/issues/28)).
+- The virtual document URI and the tab title carry the source file name and line range instead of a fixed `reg1` / `reg2`, so other extensions can read where a side came from ([#66](https://github.com/ryu1kn/vscode-partial-diff/issues/66)).
+- `Compare Text in Two Open Tabs` works on tabs that are not visible, which upstream cannot do ([#33](https://github.com/ryu1kn/vscode-partial-diff/issues/33)).
+- `Swap Diff Sides` exchanges the two sides of the most recent comparison, and `textToolkit.diff.clipboardSide` sets the default side for clipboard diffs ([#96](https://github.com/ryu1kn/vscode-partial-diff/issues/96)).
+- A status bar item shows the current comparison mark with its line range, plus the number of active normalization rules; clicking it opens the Compare picker. The `~` in a diff title stays a snapshot of the moment it opened, so the status bar count is the accurate indicator.
+- `Compare Text with Clipboard` reports that there is nothing to compare when the clipboard holds no text — copying only an image yields an empty string through the VS Code clipboard API — instead of opening a diff with one blank side. Clipboard content that mixes an image with text compares the text.
+- `textToolkit.diff.contextMenu` controls the editor context menu with one enum (`both` / `markOnly` / `none`) in place of upstream's five booleans; `Compare Text with Marked Selection` only appears once something is marked.
+- 58 new tests covering the normalization rules, diff titles, URI encoding, selection aggregation and language resolution (195 tests, up from 137).
+
+### Changed
+
+- The Command Palette now lists eight commands instead of five: the three core compare commands are on it, the other five compare commands are menu-only and still bindable.
+- The two-level picker has a fifth category, `Compare (Diff)`.
+- The exposed settings layer grows from seven entries to ten. `textToolkit.advanced` is unchanged.
+
 ## 0.0.2
 
 ### Added

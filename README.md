@@ -6,10 +6,11 @@ Editing tools merged into one VS Code extension, with zero runtime dependencies.
 2. **Change Case** — convert the selection(s) or the word under the cursor between 16 case styles, with a preview picker.
 3. **Align by RegEx** — align selected lines by a regular expression, with reusable named templates.
 4. **Plain Text Mode** — strip highlighting, minimap, folding, hovers and suggestions so large text/log files stay responsive for reading, searching and replacing.
+5. **Compare (Diff)** — diff two selections, a selection against the clipboard, two visible editors or any two open tabs, with optional pre-comparison normalization rules.
 
 ## Commands
 
-Five commands in the Command Palette, all under the `Text Toolkit` category. Everything else is reachable through the two-level picker instead of flooding the palette.
+Eight commands in the Command Palette, all under the `Text Toolkit` category. Everything else is reachable through the two-level picker instead of flooding the palette.
 
 | Command ID | Title | Arguments (for keybindings) |
 | --- | --- | --- |
@@ -18,16 +19,24 @@ Five commands in the Command Palette, all under the `Text Toolkit` category. Eve
 | `textToolkit.changeCase` | Change Case... | `{ "style": "camel" }` (any of the 16 styles) |
 | `textToolkit.alignByRegex` | Align by RegEx | `{ "regex": "=" }` or `{ "template": "assign" }` |
 | `textToolkit.plainText.toggle` | Toggle Plain Text Mode | — |
+| `textToolkit.diff.markSelection` | Select Text for Compare | — |
+| `textToolkit.diff.compareWithMarked` | Compare Text with Marked Selection | — |
+| `textToolkit.diff.compareWithClipboard` | Compare Text with Clipboard | — |
 
-One further command is menu-only and hidden from the palette, because it needs a file to act on:
+Six further commands are menu-only and hidden from the palette — either they need a file to act on, or they are low-frequency enough that the picker is the better home. All of them still accept keybindings:
 
 | Command ID | Title | Where |
 | --- | --- | --- |
 | `textToolkit.plainText.open` | Open in Plain Text Mode | Explorer right-click, on files (not folders) |
+| `textToolkit.diff.compareVisibleEditors` | Compare Text in Visible Editors | Compare (Diff) picker |
+| `textToolkit.diff.compareTabs` | Compare Text in Two Open Tabs | Compare (Diff) picker |
+| `textToolkit.diff.swapSides` | Swap Diff Sides | Compare (Diff) picker |
+| `textToolkit.diff.toggleNormalizationRules` | Toggle Normalization Rules | Compare (Diff) picker |
+| `textToolkit.diff.showMenu` | Show Compare Menu | Compare status bar item |
 
 ### Two-level picker
 
-`Text Toolkit: Show All Commands` opens a first level of four categories, each showing the settings currently in effect. Picking one opens the second level:
+`Text Toolkit: Show All Commands` opens a first level of five categories, each showing the settings currently in effect. Picking one opens the second level:
 
 | Category | Second level |
 | --- | --- |
@@ -35,6 +44,7 @@ One further command is menu-only and hidden from the palette, because it needs a
 | Change Case | The 16 styles; with a single-line selection each entry previews the converted text |
 | Align by RegEx | `Enter a regular expression...`, plus every saved template listed with its pattern |
 | Plain Text Mode | Enable / Disable (whichever applies), and Re-enable large file prompt |
+| Compare (Diff) | Mark, compare with the mark, compare with the clipboard, compare visible editors, compare two open tabs, swap sides, toggle normalization rules, and clear the mark when one is set |
 
 Rules that hold everywhere: the second level always starts with `← Back`, which returns to the first level; `Esc` cancels the whole flow without changing anything; the first level never performs an action by itself.
 
@@ -48,17 +58,20 @@ This extension contributes **no default keybindings** — nothing is bound out o
   { "key": "shift+alt+p", "command": "textToolkit.copyPathWithLines", "args": { "pathStyle": "absolute" }, "when": "editorTextFocus" },
   { "key": "ctrl+alt+k", "command": "textToolkit.changeCase", "args": { "style": "kebab" }, "when": "editorTextFocus" },
   { "key": "ctrl+alt+a", "command": "textToolkit.alignByRegex", "args": { "template": "assign" }, "when": "editorHasSelection" },
-  { "key": "ctrl+alt+t", "command": "textToolkit.commands" }
+  { "key": "ctrl+alt+t", "command": "textToolkit.commands" },
+  { "key": "ctrl+1", "command": "textToolkit.diff.markSelection", "when": "editorTextFocus" },
+  { "key": "ctrl+2", "command": "textToolkit.diff.compareWithMarked", "when": "editorTextFocus" },
+  { "key": "ctrl+3", "command": "textToolkit.diff.compareWithClipboard", "when": "editorTextFocus" }
 ]
 ```
 
-`Copy Path With Line Numbers` is also in the editor context menu, and `Open in Plain Text Mode` is in the Explorer context menu.
+`Copy Path With Line Numbers`, `Select Text for Compare` and `Compare Text with Marked Selection` are in the editor context menu, and `Open in Plain Text Mode` is in the Explorer context menu.
 
 ## Settings
 
 Settings come in two layers, so the Settings UI stays short.
 
-### Exposed layer — the seven settings you actually tune
+### Exposed layer — the ten settings you actually tune
 
 ```json
 {
@@ -68,6 +81,9 @@ Settings come in two layers, so the Settings UI stays short.
   "textToolkit.alignByRegex.templates": { "assign": "=|,|:" },
   "textToolkit.plainText.promptSizeMB": 2,
   "textToolkit.plainText.autoApplyExtensions": [".log", ".csv"],
+  "textToolkit.diff.normalizationRules": [],
+  "textToolkit.diff.contextMenu": "both",
+  "textToolkit.diff.clipboardSide": "left",
   "textToolkit.advanced": {}
 }
 ```
@@ -80,6 +96,9 @@ Settings come in two layers, so the Settings UI stays short.
 | `textToolkit.alignByRegex.templates` | object | `{}` | `{ "name": "regex" }` |
 | `textToolkit.plainText.promptSizeMB` | number | `2` | `0` disables the prompt |
 | `textToolkit.plainText.autoApplyExtensions` | string[] | `[]` | e.g. `[".log", ".csv"]` |
+| `textToolkit.diff.normalizationRules` | array | `[]` | see [Compare (Diff)](#compare-diff) |
+| `textToolkit.diff.contextMenu` | string | `both` | `both`, `markOnly`, `none` |
+| `textToolkit.diff.clipboardSide` | string | `left` | `left`, `right` |
 | `textToolkit.advanced` | object | `{}` | see below |
 
 Notes:
@@ -228,6 +247,100 @@ Scope and limits — read before relying on it:
 - Settings are written to your Workspace settings when a workspace is open, otherwise to User settings. Original values (including "was not set") are recorded and restored on exit.
 - Files VS Code refuses to open at all are unaffected by this mode; that limit is `files.maxMemoryForLargeFilesMB`, which this extension deliberately does not touch (raising it trades stalls for out-of-memory crashes).
 
+## Compare (Diff)
+
+Five ways to start a comparison:
+
+- **Two selections** — `Select Text for Compare` on the first one, then `Compare Text with Marked Selection` on the second. The two can live in different files; the mark survives until you replace or clear it.
+- **Selection against the clipboard** — `Compare Text with Clipboard`.
+- **Two visible editors** — `Compare Text in Visible Editors`, with exactly two files split on screen. Left/right follow what you see; already-open comparisons are not counted.
+- **Any two open tabs** — `Compare Text in Two Open Tabs`, which does *not* require them to be visible. Pick the left side, then the right.
+- **Swap** — `Swap Diff Sides` re-opens the most recent comparison with the sides exchanged, without touching your `clipboardSide` setting.
+
+Running a compare command with **no selection** uses the whole file. **Multiple cursors** are supported: the non-empty selections are sorted by document position and joined with newlines before comparing.
+
+While a mark is set, a status bar item on the right shows its source and line range; click it to open the Compare picker (mark, compare, swap, toggle rules, clear).
+
+The two sides are read-only virtual documents, so the diff itself is rendered by VS Code's own diff editor — see [Left to VS Code](#left-to-vs-code) below. Each side inherits the language of the file it came from, and the clipboard side inherits the language of the other side, so a clipboard comparison against a `.ts` selection is highlighted as TypeScript.
+
+**Non-text clipboard content:** the VS Code clipboard API only exposes text. Copying an image *and* text gives you the text, which is what gets compared. Copying only an image yields an empty string that is indistinguishable from an empty clipboard, so the command reports that there is nothing to compare instead of opening a diff with one empty side.
+
+### Pre-comparison normalization rules
+
+`textToolkit.diff.normalizationRules` keeps predictable noise out of a diff — timestamps, tabs, inconsistent spacing — **without touching the files**. Only what the diff shows is rewritten.
+
+```json
+{
+  "textToolkit.diff.normalizationRules": [
+    { "name": "Replace tabs with spaces", "match": "\t", "replaceWith": "  " },
+    { "name": "One space after a comma", "match": ",\\s*([^,\n]+)", "replaceWith": ", $1" },
+    { "name": "Ignore letter case", "match": ".*", "replaceWith": { "letterCase": "upper" }, "enableOnStart": false }
+  ]
+}
+```
+
+| Field | Required | Meaning |
+| --- | --- | --- |
+| `match` | yes | Regular expression; the global flag is applied automatically |
+| `replaceWith` | yes | Replacement text (`$1`, `$2` … refer to capture groups), or `{ "letterCase": "upper" \| "lower" }` |
+| `name` | no | Shown in the toggle picker |
+| `enableOnStart` | no | `false` keeps the rule off until you enable it; defaults to `true` |
+
+Rules apply in array order. `Toggle Normalization Rules` turns them on and off at runtime without editing your settings, and **refreshes every comparison that is already open** — you do not have to close and re-run the diff. Editing the rules array in `settings.json` resets each rule to its own `enableOnStart`.
+
+Two indicators, with different meanings:
+
+- The `~` in a diff title (instead of `↔`) says that comparison *was opened* with at least one rule active. It is a snapshot and does not change afterwards.
+- The `$(filter)N` in the status bar is the current number of active rules, and is always accurate.
+
+Entries with an invalid `match` regex, or missing `match` / `replaceWith`, are skipped with a note in the extension log rather than breaking the whole feature.
+
+### Left to VS Code
+
+The comparison itself is a stock VS Code diff editor, so these are already yours and this extension deliberately does not reimplement them:
+
+| Want | Use |
+| --- | --- |
+| Character-level highlighting inside a changed line | On by default in the diff editor |
+| Jump to the next/previous difference | `F7` / `Shift+F7` |
+| Collapse the unchanged regions | `diffEditor.hideUnchangedRegions.enabled` |
+| Inline (single-column) instead of side-by-side | `diffEditor.renderSideBySide`, or the `⋯` menu in the diff editor |
+| Different diff colours | Your colour theme, or `workbench.colorCustomizations` → `diffEditor.*` |
+| Compare two **files** from the Explorer | Built-in `Select for Compare` / `Compare with Selected` (editable, Git-aware) |
+| Compare against the version on disk | Built-in `File: Compare Active File with Saved` |
+| The diff at full width | Drag the diff tab into its own editor group |
+
+## Migrating from Partial Diff
+
+If you are coming from [ryu1kn/vscode-partial-diff](https://github.com/ryu1kn/vscode-partial-diff), uninstall or disable it first — otherwise both extensions add their own entries to the editor context menu.
+
+| Old command ID | New command ID |
+| --- | --- |
+| `extension.partialDiff.markSection1` | `textToolkit.diff.markSelection` |
+| `extension.partialDiff.markSection2AndTakeDiff` | `textToolkit.diff.compareWithMarked` |
+| `extension.partialDiff.diffSelectionWithClipboard` | `textToolkit.diff.compareWithClipboard` |
+| `extension.partialDiff.diffVisibleEditors` | `textToolkit.diff.compareVisibleEditors` |
+| `extension.partialDiff.togglePreComparisonTextNormalizationRules` | `textToolkit.diff.toggleNormalizationRules` |
+
+| Old setting | New setting | Note |
+| --- | --- | --- |
+| `partialDiff.preComparisonTextNormalizationRules` | `textToolkit.diff.normalizationRules` | element fields (`name`, `match`, `replaceWith`, `enableOnStart`) are unchanged — copy the array as is |
+| `partialDiff.commandsOnContextMenu` | `textToolkit.diff.contextMenu` | one enum instead of five booleans: `both`, `markOnly`, `none` |
+| `partialDiff.hideCommandsOnContextMenu` | `textToolkit.diff.contextMenu: "none"` | the upstream setting was already deprecated |
+| `partialDiff.enableTelemetry` | — | **this extension has no telemetry**, so there is nothing to turn off |
+
+No command aliases are provided, so update `keybindings.json` rather than expecting the old IDs to keep working. Old settings are **not** migrated automatically.
+
+What is new relative to Partial Diff:
+
+- Toggling normalization rules refreshes comparisons that are already open ([#24](https://github.com/ryu1kn/vscode-partial-diff/issues/24)).
+- Both sides inherit the source language instead of falling back to plain text ([#38](https://github.com/ryu1kn/vscode-partial-diff/issues/38), [#28](https://github.com/ryu1kn/vscode-partial-diff/issues/28)).
+- The URI and tab title carry the source file name and line range instead of `reg1` / `reg2` ([#66](https://github.com/ryu1kn/vscode-partial-diff/issues/66)).
+- Any two open tabs can be compared, not only two visible editors ([#33](https://github.com/ryu1kn/vscode-partial-diff/issues/33)).
+- The sides can be swapped, and the clipboard side is configurable ([#96](https://github.com/ryu1kn/vscode-partial-diff/issues/96)).
+- A status bar item shows the current mark and the number of active rules.
+- An empty clipboard read reports itself instead of opening a diff with one blank side.
+
 ## Migrating from the three original extensions
 
 Uninstall the originals first: `turweet.copy-path-line-numbers-flexible`, `wmaurer.change-case`, `janjoerke.align-by-regex`.
@@ -288,5 +401,6 @@ MIT. This extension merges and adapts:
 - [wmaurer/vscode-change-case](https://github.com/wmaurer/vscode-change-case) (MIT)
 - [janjoerke/vscode-align-by-regex](https://github.com/janjoerke/vscode-align-by-regex) (MIT)
 - Copy Path Line Numbers Flexible (MIT)
+- [ryu1kn/vscode-partial-diff](https://github.com/ryu1kn/vscode-partial-diff) (MIT) — Compare (Diff) is a reimplementation of its feature set, not a code port
 
 See `NOTICE.md`.

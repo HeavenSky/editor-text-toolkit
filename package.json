@@ -2,7 +2,7 @@
   "name": "editor-text-toolkit",
   "displayName": "Editor Text Toolkit",
   "description": "%extension.description%",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "publisher": "HeavenSky",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -28,7 +28,9 @@
     "line numbers",
     "change case",
     "align",
-    "large file"
+    "large file",
+    "diff",
+    "compare"
   ],
   "main": "./out/extension.js",
   "activationEvents": [
