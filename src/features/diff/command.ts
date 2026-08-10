@@ -122,10 +122,23 @@ class CompareFeature {
         isCaseSensitive: true
       }),
       // 副本内容跟着标签页走: 文档关掉就释放, 内存不会随比较次数增长.
+      //
+      // 推迟一个微任务再释放, 并复查文档是否真的不在了: 切换语言时 VS Code 会把同一个
+      // 文档先关闭再重开(ext host 的 $acceptModelLanguageChanged 连续 fire 移除与新增),
+      // 立即释放会让紧接着的重新读取只剩占位文案. 交换两侧时旧标签页也是这样被关掉的.
       vscode.workspace.onDidCloseTextDocument((document) => {
-        if (document.uri.scheme === DIFF_EDIT_SCHEME) {
-          this.editable.release(document.uri.toString());
+        if (document.uri.scheme !== DIFF_EDIT_SCHEME) {
+          return;
         }
+        const key = document.uri.toString();
+        void Promise.resolve().then(() => {
+          const stillOpen = vscode.workspace.textDocuments.some(
+            (open) => open.uri.toString() === key
+          );
+          if (!stillOpen) {
+            this.editable.release(key);
+          }
+        });
       })
     );
     this.updateStatusBar();
