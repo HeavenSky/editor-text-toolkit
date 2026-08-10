@@ -7,16 +7,16 @@ import {
   applyRules,
   bothSidesEditableInPlace,
   buildDiffTitle,
+  copyFileName,
   decodeDiffPath,
   encodeDiffPath,
+  extensionOf,
   formatRangeLabel,
   FULL_RANGE_LABEL,
   resolveLanguages,
   type DiffSlot,
   type SelectionInfo
 } from './core';
-import { DIFF_EDIT_SCHEME, EditableCopyFileSystem } from './editableFileSystem';
-import { EditableCopyStore } from './editableStore';
 import { DiffRegistry } from './registry';
 import { NormalizationRuleStore } from './rules';
 
@@ -40,29 +40,19 @@ function sideLabel(info: SelectionInfo): string {
     : `${info.baseName} (${info.rangeLabel})`;
 }
 
-/** 本扩展打开的比较结果自身不能再成为比较对象, 两个 scheme 都要排除. */
-function isDiffScheme(scheme: string): boolean {
-  return scheme === DIFF_SCHEME || scheme === DIFF_EDIT_SCHEME;
-}
+/** 副本目录名里的这个记号既保证同一次比较可以做多份副本, 也让菜单的 when 子句能认出副本. */
+const COPY_MARK = '.copy';
 
-/**
- * 活动标签页若是本扩展打开的一次比较, 返回它的两侧 URI 与所属 scheme.
- *
- * 不依赖 `editor/title` 菜单传给命令的参数 —— 那个参数在 diff 编辑器里指向哪一侧
- * 没有明确承诺, 而标签页的输入是确定的.
- */
+/** 活动标签页若是一个 diff, 返回它的两侧 URI; 不是则 undefined. */
 function activeDiffTab():
-  | { tab: vscode.Tab; original: vscode.Uri; modified: vscode.Uri; scheme: string }
+  | { tab: vscode.Tab; original: vscode.Uri; modified: vscode.Uri }
   | undefined {
   const tab = vscode.window.tabGroups.activeTabGroup.activeTab;
   if (!tab || !(tab.input instanceof vscode.TabInputTextDiff)) {
     return undefined;
   }
   const { original, modified } = tab.input;
-  if (original.scheme !== modified.scheme || !isDiffScheme(original.scheme)) {
-    return undefined;
-  }
-  return { tab, original, modified, scheme: original.scheme };
+  return { tab, original, modified };
 }
 
 /**
@@ -92,7 +82,9 @@ function captureSelection(editor: vscode.TextEditor): SelectionInfo {
     baseName: basename(document.uri),
     rangeLabel: formatRangeLabel(aggregated?.ranges ?? null),
     languageId: document.languageId,
-    sourceScheme: document.uri.scheme
+    sourceScheme: document.uri.scheme,
+    sourceUri: document.uri.toString(),
+    ...(aggregated ? { sourceRange: aggregated.ranges[0] } : {})
   };
 }
 
@@ -102,13 +94,21 @@ class CompareFeature {
     () => getDiffConfig().normalizationRules
   );
   private readonly provider: DiffContentProvider;
-  private readonly editable = new EditableCopyStore();
   private readonly statusBarItem: vscode.StatusBarItem;
+  /**
+   * 可编辑副本的存放位置. 副本是真实文件, 因此可编辑, 可保存, 可另存, 名字与路径都能看懂,
+   * 全部由 VS Code 原生处理; 扩展只负责把内容写进去.
+   *
+   * 放在扩展自己的全局存储目录下, 不碰用户的工作区. 扩展不自动删除任何副本 ——
+   * 用户随时可以执行「清理比较副本」命令, 见 cleanUpCopies().
+   */
+  private readonly copyRoot: vscode.Uri;
+  private copyCounter = 0;
 
   constructor(context: vscode.ExtensionContext) {
     // 规则在渲染时才套用, 因此切换启停只需重新触发一次 provide 就能刷新已打开的比较.
     this.provider = new DiffContentProvider(this.registry, () => this.rules.activeRules);
-    const editableFileSystem = new EditableCopyFileSystem(this.editable);
+    this.copyRoot = vscode.Uri.joinPath(context.globalStorageUri, 'compare');
     // 优先级 99: 纯文本模式的状态栏项已经占用了 100.
     this.statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 99);
     this.statusBarItem.command = 'textToolkit.diff.showMenu';
@@ -116,30 +116,7 @@ class CompareFeature {
     context.subscriptions.push(
       this.provider,
       this.statusBarItem,
-      vscode.workspace.registerTextDocumentContentProvider(DIFF_SCHEME, this.provider),
-      editableFileSystem,
-      vscode.workspace.registerFileSystemProvider(DIFF_EDIT_SCHEME, editableFileSystem, {
-        isCaseSensitive: true
-      }),
-      // 副本内容跟着标签页走: 文档关掉就释放, 内存不会随比较次数增长.
-      //
-      // 推迟一个微任务再释放, 并复查文档是否真的不在了: 切换语言时 VS Code 会把同一个
-      // 文档先关闭再重开(ext host 的 $acceptModelLanguageChanged 连续 fire 移除与新增),
-      // 立即释放会让紧接着的重新读取只剩占位文案. 交换两侧时旧标签页也是这样被关掉的.
-      vscode.workspace.onDidCloseTextDocument((document) => {
-        if (document.uri.scheme !== DIFF_EDIT_SCHEME) {
-          return;
-        }
-        const key = document.uri.toString();
-        void Promise.resolve().then(() => {
-          const stillOpen = vscode.workspace.textDocuments.some(
-            (open) => open.uri.toString() === key
-          );
-          if (!stillOpen) {
-            this.editable.release(key);
-          }
-        });
-      })
+      vscode.workspace.registerTextDocumentContentProvider(DIFF_SCHEME, this.provider)
     );
     this.updateStatusBar();
   }
@@ -262,62 +239,51 @@ class CompareFeature {
     return opened?.getText() ?? applyRules(info.text, this.rules.activeRules);
   }
 
-  /**
-   * 打开一份可编辑副本. 内容只存在内存里, 保存也只写内存, 不回写任何源文件.
-   * 归一化规则在这里就被烘焙进内容, 之后切换规则不会再改动它 —— 否则会覆盖用户的编辑.
-   */
-  private async openEditableDiff(
-    left: SelectionInfo,
-    right: SelectionInfo,
-    texts: readonly [string, string],
-    viewColumn?: vscode.ViewColumn
-  ): Promise<void> {
-    const sessionId = this.editable.nextSessionId(Date.now());
-    const uriOf = (slot: DiffSlot, info: SelectionInfo): vscode.Uri =>
-      vscode.Uri.from({
-        scheme: DIFF_EDIT_SCHEME,
-        path: encodeDiffPath({
-          sessionId,
-          slot,
-          rangeLabel: info.rangeLabel,
-          baseName: info.baseName
-        })
-      });
+  /** 该 URI 是不是本扩展写出来的副本文件. */
+  private isCopy(uri: vscode.Uri): boolean {
+    return uri.path.startsWith(`${this.copyRoot.path}/`);
+  }
 
-    const leftUri = uriOf('left', left);
-    const rightUri = uriOf('right', right);
-    // 先登记内容: 设置语言会打开文档, 那时文件系统提供器就已经要能读到内容.
-    this.editable.register([leftUri.toString(), rightUri.toString()], texts);
-
-    const languages = resolveLanguages(left.languageId, right.languageId);
-    await this.applyLanguage(leftUri, languages.left);
-    await this.applyLanguage(rightUri, languages.right);
-
-    await vscode.commands.executeCommand(
-      'vscode.diff',
-      leftUri,
-      rightUri,
-      buildDiffTitle(left, right, this.rules.hasActiveRules, true),
-      viewColumn === undefined ? undefined : { viewColumn, preview: false }
+  /** 把一侧内容写成一个真实文件, 返回它的 URI. */
+  private async writeCopy(
+    directory: string,
+    slot: DiffSlot,
+    info: SelectionInfo,
+    fallbackExtension: string,
+    text: string
+  ): Promise<vscode.Uri> {
+    // 两侧各占一个子目录: 同一文件同一范围自比较时, 两侧文件名相同也不会互相覆盖.
+    const uri = vscode.Uri.joinPath(
+      this.copyRoot,
+      directory,
+      slot,
+      copyFileName(info.baseName, info.rangeLabel, fallbackExtension)
     );
+    await vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(this.copyRoot, directory, slot));
+    await vscode.workspace.fs.writeFile(uri, new TextEncoder().encode(text));
+    return uri;
   }
 
   /**
-   * 把当前这次比较换成一份两侧都可编辑的副本.
+   * 把当前这次比较换成两侧都可编辑的形态.
    *
-   * 从 diff 编辑器触发时原地替换: 副本开在同一编辑器组, 随后关掉原来的只读标签页.
-   * 从选择器在别处触发时, 退回到最近一次比较另开一份副本, 不动任何已有标签页.
+   * 两侧本来就是完整的可写文件时, 直接用真实文件打开一个原生可编辑 diff —— 那样改动能
+   * 直接存回源文件, 还带 Git 集成. 否则(至少一侧是选区片段或剪贴板)写出两个副本文件,
+   * 副本里的编辑不会回写任何源文件.
+   *
+   * 从 diff 编辑器触发时原地替换: 新 diff 开在同一编辑器组, 随后关掉原来的只读标签页.
+   * 从选择器在别处触发时, 退回到最近一次比较, 不动任何已有标签页.
    */
   async openEditableCopy(): Promise<void> {
     const source = activeDiffTab();
-    if (source?.scheme === DIFF_EDIT_SCHEME) {
+    if (source && this.isCopy(source.original)) {
       void vscode.window.showInformationMessage(
         vscode.l10n.t('This comparison is already an editable copy.')
       );
       return;
     }
 
-    const uris = source
+    const uris = source?.original.scheme === DIFF_SCHEME
       ? [source.original, source.modified]
       : (this.registry.getUris(this.registry.lastSessionId ?? '') ?? []).map((uri) =>
           vscode.Uri.parse(uri)
@@ -331,10 +297,7 @@ class CompareFeature {
       return;
     }
 
-    const [left, right] = uris.map((uri) => {
-      const parts = decodeDiffPath(uri.path);
-      return parts ? this.registry.getSlot(parts.sessionId, parts.slot) : undefined;
-    });
+    const [left, right] = uris.map((uri) => this.slotOf(uri));
     if (!left || !right) {
       void vscode.window.showInformationMessage(
         vscode.l10n.t(
@@ -344,26 +307,109 @@ class CompareFeature {
       return;
     }
 
-    // 两侧本来就是完整的可写文件时, 原生的 Select for Compare 更好: 它可编辑且带 Git 集成.
-    if (bothSidesEditableInPlace(left, right, isWritableScheme)) {
+    const replaces = source?.original.scheme === DIFF_SCHEME ? source : undefined;
+    const viewColumn = replaces?.tab.group.viewColumn;
+    const title = buildDiffTitle(left, right, this.rules.hasActiveRules, true);
+    const options = viewColumn === undefined ? undefined : { viewColumn, preview: false };
+
+    const nativelyEditable =
+      bothSidesEditableInPlace(left, right, isWritableScheme) &&
+      left.sourceUri !== undefined &&
+      right.sourceUri !== undefined;
+
+    if (nativelyEditable) {
+      // 两侧都是完整的可写文件: 交给 VS Code 原生比较真实文件, 改动可以直接存盘.
+      await vscode.commands.executeCommand(
+        'vscode.diff',
+        vscode.Uri.parse(left.sourceUri as string),
+        vscode.Uri.parse(right.sourceUri as string),
+        title,
+        options
+      );
+    } else {
+      this.copyCounter += 1;
+      const sessionId = decodeDiffPath(uris[0].path)?.sessionId ?? 'unknown';
+      const directory = `${sessionId}${COPY_MARK}${this.copyCounter}`;
+      const [leftUri, rightUri] = await Promise.all([
+        this.writeCopy(directory, 'left', left, extensionOf(right.baseName), this.renderedText(uris[0], left)),
+        this.writeCopy(directory, 'right', right, extensionOf(left.baseName), this.renderedText(uris[1], right))
+      ]);
+      await vscode.commands.executeCommand('vscode.diff', leftUri, rightUri, title, options);
+    }
+
+    if (replaces) {
+      // 先开新的再关旧的. 只读文档没有未保存内容, 因此关闭不会有任何询问.
+      await vscode.window.tabGroups.close(replaces.tab);
+    }
+  }
+
+  /** 只读 URI 与副本 URI 都能定位到它那一侧的会话数据. */
+  private slotOf(uri: vscode.Uri): SelectionInfo | undefined {
+    if (uri.scheme === DIFF_SCHEME) {
+      const parts = decodeDiffPath(uri.path);
+      return parts ? this.registry.getSlot(parts.sessionId, parts.slot) : undefined;
+    }
+    if (!this.isCopy(uri)) {
+      return undefined;
+    }
+    // 副本路径形如 `<copyRoot>/<sessionId>.copy<n>/<slot>/<文件名>`.
+    const segments = uri.path.slice(this.copyRoot.path.length + 1).split('/');
+    const sessionId = segments[0]?.split(COPY_MARK)[0];
+    const slot = segments[1];
+    return sessionId && (slot === 'left' || slot === 'right')
+      ? this.registry.getSlot(sessionId, slot)
+      : undefined;
+  }
+
+  /** 打开一侧的来源文件, 并选中当初参与比较的那几行. */
+  async openSource(): Promise<void> {
+    const diff = activeDiffTab();
+    const sides = diff ? [this.slotOf(diff.original), this.slotOf(diff.modified)] : [];
+    const candidates = sides.filter(
+      (info): info is SelectionInfo => info?.sourceUri !== undefined
+    );
+    if (candidates.length === 0) {
       void vscode.window.showInformationMessage(
-        vscode.l10n.t(
-          'Both sides are whole files you can already edit. Use the built-in Select for Compare / Compare with Selected instead.'
-        )
+        vscode.l10n.t('Neither side of this comparison came from a file.')
       );
       return;
     }
 
-    await this.openEditableDiff(
-      left,
-      right,
-      [this.renderedText(uris[0], left), this.renderedText(uris[1], right)],
-      source?.tab.group.viewColumn
-    );
-    if (source) {
-      // 先开新的再关旧的. 只读文档没有未保存内容, 因此关闭不会有任何询问.
-      await vscode.window.tabGroups.close(source.tab);
+    // 同一文件的两段选区也要给选择, 因此比较的是"文件加起始行"而不只是文件.
+    const sameSide =
+      candidates.length > 1 &&
+      candidates[0].sourceUri === candidates[1].sourceUri &&
+      candidates[0].sourceRange?.start === candidates[1].sourceRange?.start;
+
+    let picked = candidates[0];
+    if (candidates.length > 1 && !sameSide) {
+      const choice = await vscode.window.showQuickPick(
+        candidates.map((info) => ({ label: sideLabel(info), info })),
+        { placeHolder: vscode.l10n.t('Pick the source file to open') }
+      );
+      if (!choice) {
+        return;
+      }
+      picked = choice.info;
     }
+
+    const range = picked.sourceRange;
+    await vscode.window.showTextDocument(vscode.Uri.parse(picked.sourceUri as string), {
+      ...(range ? { selection: new vscode.Range(range.start, 0, range.end, 0) } : {})
+    });
+  }
+
+  /**
+   * 删掉全部副本文件. 扩展不自动清理, 因为用户可能刚在副本里按过保存;
+   * 什么时候不再需要它们只有用户知道.
+   */
+  async cleanUpCopies(): Promise<void> {
+    try {
+      await vscode.workspace.fs.delete(this.copyRoot, { recursive: true, useTrash: false });
+    } catch {
+      // 目录不存在(从没做过副本, 或已经清理过)也算清理完成.
+    }
+    vscode.window.setStatusBarMessage(vscode.l10n.t('Comparison copies cleaned up.'), 2000);
   }
 
   markSelection(): void {
@@ -439,7 +485,8 @@ class CompareFeature {
       baseName: basename(uri),
       rangeLabel: FULL_RANGE_LABEL,
       languageId: document.languageId,
-      sourceScheme: uri.scheme
+      sourceScheme: uri.scheme,
+      sourceUri: uri.toString()
     };
   }
 
@@ -447,7 +494,7 @@ class CompareFeature {
   async compareVisibleEditors(): Promise<void> {
     // 已经打开的比较结果本身也是"可见编辑器", 不排除掉的话数量永远凑不齐 2 个.
     const editors = vscode.window.visibleTextEditors.filter(
-      (editor) => !isDiffScheme(editor.document.uri.scheme)
+      (editor) => editor.document.uri.scheme !== DIFF_SCHEME
     );
     if (editors.length !== 2) {
       void vscode.window.showInformationMessage(
@@ -481,7 +528,7 @@ class CompareFeature {
         const { uri } = tab.input;
         const key = uri.toString();
         // 比较结果自身不能再作为比较对象; 同一文件在多个编辑器组里只列一次.
-        if (isDiffScheme(uri.scheme) || seen.has(key)) {
+        if (uri.scheme === DIFF_SCHEME || seen.has(key)) {
           continue;
         }
         seen.add(key);
@@ -530,7 +577,7 @@ class CompareFeature {
   /** 交换最近一次比较的两侧(上游 issue #96). 生成新 session, 原标签页内容不受影响. */
   async swapSides(): Promise<void> {
     const copy = activeDiffTab();
-    if (copy?.scheme === DIFF_EDIT_SCHEME) {
+    if (copy && this.isCopy(copy.original)) {
       await this.reopenSwapped(copy);
       return;
     }
@@ -550,18 +597,19 @@ class CompareFeature {
   /**
    * 把一份已打开的可编辑副本左右互换.
    *
-   * 反序重开同两个文档而不是复制一份新副本, 因此用户尚未保存的编辑不会丢. 标题从 URI 还原,
-   * 不查 registry —— 可编辑副本刻意不登记在那里(内容按 URI 存, 见 editableStore.ts).
+   * 反序重开同两个文件而不是再写一份副本, 因此用户尚未保存的编辑不会丢. 标题直接用副本的
+   * 文件名 —— 副本名里已经带着来源与行号范围.
    */
   private async reopenSwapped(copy: {
     tab: vscode.Tab;
     original: vscode.Uri;
     modified: vscode.Uri;
   }): Promise<void> {
-    const labelOf = (uri: vscode.Uri): SelectionInfo | null => {
-      const parts = decodeDiffPath(uri.path);
-      return parts ? { text: '', baseName: parts.baseName, rangeLabel: parts.rangeLabel } : null;
-    };
+    const labelOf = (uri: vscode.Uri): SelectionInfo => ({
+      text: '',
+      baseName: basename(uri),
+      rangeLabel: FULL_RANGE_LABEL
+    });
 
     await vscode.commands.executeCommand(
       'vscode.diff',
@@ -660,9 +708,17 @@ class CompareFeature {
         label: `$(edit) ${vscode.l10n.t('Edit This Comparison as a Copy')}`
       },
       {
+        id: 'openSource',
+        label: `$(go-to-file) ${vscode.l10n.t('Open the Source File')}`
+      },
+      {
         id: 'toggleNormalizationRules',
         label: `$(filter) ${vscode.l10n.t('Toggle Normalization Rules')}`,
         description: this.ruleSummary()
+      },
+      {
+        id: 'cleanUpCopies',
+        label: `$(trash) ${vscode.l10n.t('Clean Up Comparison Copies')}`
       }
     ];
     if (marked) {
@@ -701,6 +757,12 @@ class CompareFeature {
       case 'editableCopy':
         await this.openEditableCopy();
         break;
+      case 'openSource':
+        await this.openSource();
+        break;
+      case 'cleanUpCopies':
+        await this.cleanUpCopies();
+        break;
       case 'toggleNormalizationRules':
         await this.toggleNormalizationRules();
         break;
@@ -737,6 +799,10 @@ export function registerDiffFeature(context: vscode.ExtensionContext): DiffFeatu
     vscode.commands.registerCommand('textToolkit.diff.swapSides', () => feature.swapSides()),
     vscode.commands.registerCommand('textToolkit.diff.editableCopy', () =>
       feature.openEditableCopy()
+    ),
+    vscode.commands.registerCommand('textToolkit.diff.openSource', () => feature.openSource()),
+    vscode.commands.registerCommand('textToolkit.diff.cleanUpCopies', () =>
+      feature.cleanUpCopies()
     ),
     vscode.commands.registerCommand('textToolkit.diff.toggleNormalizationRules', () =>
       feature.toggleNormalizationRules()

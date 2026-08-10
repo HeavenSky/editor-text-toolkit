@@ -32,6 +32,10 @@ export interface SelectionInfo {
   languageId?: string;
   /** 来源文档的 URI scheme. 剪贴板没有来源文档, 因此这一侧不填. */
   sourceScheme?: string;
+  /** 来源文档 URI 的字符串形式, 供「打开来源文件」回跳; 剪贴板一侧不填. */
+  sourceUri?: string;
+  /** 第一段选区的行范围, 回跳时用来定位; 取了整个文档时不填. */
+  sourceRange?: LineRange;
 }
 
 /** 单个非空选区的位置与内容, 由调用方从 vscode.Selection 摘出后传入. */
@@ -251,6 +255,46 @@ export function decodeDiffPath(path: string): DiffPathParts | null {
     return null;
   }
   return { sessionId, slot, rangeLabel, baseName };
+}
+
+/** 以最后一个 `.` 切出主干与扩展名; 点开头的名字(`.gitignore`)整体算主干. */
+function splitName(baseName: string): { stem: string; extension: string } {
+  const dot = baseName.lastIndexOf('.');
+  return dot <= 0
+    ? { stem: baseName, extension: '' }
+    : { stem: baseName.slice(0, dot), extension: baseName.slice(dot) };
+}
+
+/** 多光标会产生任意多段的标签; 超过两段就只留第一段并记下剩余段数, 免得文件名无界增长. */
+function compactLabel(rangeLabel: string): string {
+  const parts = rangeLabel.split(',');
+  return parts.length <= 2 ? rangeLabel : `${parts[0]},+${parts.length - 1}`;
+}
+
+/**
+ * 可编辑副本的文件名. 副本是扩展存储目录下的真实文件, 因此这个名字就是用户在标签页,
+ * 面包屑和另存对话框里看到的东西, 要一眼看出"哪个文件的哪几行".
+ *
+ * `fallbackExtension` 让没有扩展名的一侧(典型是剪贴板)借用另一侧的扩展名: 语法高亮因此
+ * 由 VS Code 按扩展名自动判定, 不需要再调 `setTextDocumentLanguage` —— 那个 API 会让
+ * VS Code 关闭并重开文档, 是副本机制里最容易出错的一环.
+ */
+export function copyFileName(
+  baseName: string,
+  rangeLabel: string,
+  fallbackExtension: string
+): string {
+  const { stem, extension } = splitName(baseName);
+  // 点开头的名字(`.gitignore`)本身就决定了语言, 借来的扩展名只会破坏判定.
+  const suffix = extension || (baseName.startsWith('.') ? '' : fallbackExtension);
+  return rangeLabel === FULL_RANGE_LABEL
+    ? `${stem}${suffix}`
+    : `${stem} (${compactLabel(rangeLabel)})${suffix}`;
+}
+
+/** 从文件名取扩展名, 供另一侧继承; 没有扩展名时返回空串. */
+export function extensionOf(baseName: string): string {
+  return splitName(baseName).extension;
 }
 
 /**

@@ -4,17 +4,17 @@
 
 ### Added
 
-- **Editable copies** — `Edit This Comparison as a Copy` (`textToolkit.diff.editableCopy`) turns the comparison you are looking at into a copy whose **both sides you can type into**. It appears as a `✎` button in the top-right corner of any diff this extension opened, and in the Compare picker. Triggered from a diff editor it replaces that tab in place, in the same editor group.
-- Copies live in memory behind a new writable scheme, `text-toolkit-diff-edit`, with the same URI path format as the read-only one. Edits are **never written back** to the selection or file they came from; `Ctrl+S` writes to memory only and never touches disk, so use `File: Save As` to keep a result. A copy starts clean and only becomes dirty once you change something — closing it then asks whether to save.
-- Normalization rules are baked into a copy at the moment it is created, so toggling rules afterwards can never overwrite your edits. The read-only comparisons still refresh as before.
-- `Swap Diff Sides` on a copy flips the same two documents instead of making a second copy, so unsaved edits survive the swap.
-- When both sides are whole files on a writable file system, the command declines and points at the built-in `Select for Compare` / `Compare with Selected`, which already give an editable, Git-aware diff of the real files. Selections, the clipboard and read-only virtual documents (`git:`, `output:`) have no native equivalent, so copies stay available there.
-- 11 new tests covering the copy store and the two new pure functions in the diff core (235 tests, up from 224).
+- **Editable comparisons** — `Edit This Comparison as a Copy` (`textToolkit.diff.editableCopy`) makes the comparison you are looking at editable on **both** sides. It appears as a `✎` button in the top-right corner of a comparison this extension opened, and in the Compare picker; triggered from the diff editor it replaces that tab in place, in the same editor group.
+- Two whole files open directly as a **native editable diff of the real files**, so edits save straight back to disk with Git integration intact. Everything else — a selection, the clipboard, a read-only virtual document — is written to two real copy files named after their origin (`service (ll.3-7).ts`, `Clipboard.ts`) under the extension's storage directory. Copies are editable on both sides and are **never written back** to the selection they came from; `Ctrl+S` saves the copy file itself, and a side without an extension borrows the other side's so syntax highlighting still works.
+- `Open the Source File` (`textToolkit.diff.openSource`) jumps from either kind of comparison back to the file a side came from, selecting the lines that took part in the comparison. Also available as a title-bar button.
+- `Clean Up Comparison Copies` (`textToolkit.diff.cleanUpCopies`) deletes all copy files. **Nothing is cleaned up automatically** — the extension never deletes a copy behind your back, because you may have just saved into it.
+- Normalization rules are applied once, when a copy is written, so toggling rules afterwards can never overwrite your edits. Read-only comparisons still refresh as before.
+- `Swap Diff Sides` on a copy flips the same two files instead of writing a second copy, so unsaved edits survive the swap.
+- 13 new tests covering copy file naming and the two new pure functions in the diff core (237 tests, up from 224).
 
 ### Changed
 
-- The Command Palette still lists eight commands; the new one is menu-only and, like the other six hidden commands, still bindable to a key.
-- `Compare Text in Visible Editors` and `Compare Text in Two Open Tabs` also skip editable copies when collecting candidates, so a copy cannot become the input of another comparison.
+- The Command Palette now lists nine commands instead of eight: `Clean Up Comparison Copies` is on it, while `Edit This Comparison as a Copy` and `Open the Source File` are menu- and button-only, and still bindable to a key.
 
 ## v0.0.3 2026-08-07 Compare (Diff)
 

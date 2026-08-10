@@ -14,6 +14,8 @@
   "command.diffCompareTabs": "比较两个已打开的标签页",
   "command.diffSwapSides": "交换比较两侧",
   "command.diffEditableCopy": "把当前比较改成可编辑副本",
+  "command.diffOpenSource": "打开来源文件",
+  "command.diffCleanUpCopies": "清理比较副本文件",
   "command.diffToggleNormalizationRules": "切换归一化规则",
   "command.diffShowMenu": "显示比较菜单",
   "config.pathStyle": "复制路径与行号时使用的路径格式.",

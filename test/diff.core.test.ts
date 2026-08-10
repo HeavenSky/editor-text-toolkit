@@ -5,6 +5,8 @@ import {
   applyRules,
   bothSidesEditableInPlace,
   buildDiffTitle,
+  copyFileName,
+  extensionOf,
   decodeDiffPath,
   encodeDiffPath,
   formatRangeLabel,
@@ -189,6 +191,42 @@ describe('diff core (比较模块纯逻辑)', () => {
         buildDiffTitle(left, right, false),
         buildDiffTitle(left, right, false, false)
       );
+    });
+  });
+
+  describe('copyFileName / extensionOf', () => {
+    it('取整个文件时不加括号', () => {
+      assert.strictEqual(copyFileName('service.ts', 'full', ''), 'service.ts');
+    });
+
+    it('带行号范围时括号在扩展名之前', () => {
+      assert.strictEqual(copyFileName('service.ts', 'll.3-7', ''), 'service (ll.3-7).ts');
+    });
+
+    it('自己没有扩展名时借用另一侧的', () => {
+      assert.strictEqual(copyFileName('Clipboard', 'full', '.ts'), 'Clipboard.ts');
+    });
+
+    it('两侧都没有扩展名时不加扩展名', () => {
+      assert.strictEqual(copyFileName('Clipboard', 'l.4', ''), 'Clipboard (l.4)');
+    });
+
+    it('点开头的名字整体作为主干, 也不借扩展名', () => {
+      assert.strictEqual(copyFileName('.gitignore', 'full', '.ts'), '.gitignore');
+      assert.strictEqual(copyFileName('.gitignore', 'l.2', ''), '.gitignore (l.2)');
+    });
+
+    it('标签超过两段时压缩为第一段加剩余段数', () => {
+      assert.strictEqual(copyFileName('a.ts', 'l.1,l.3', ''), 'a (l.1,l.3).ts');
+      assert.strictEqual(copyFileName('a.ts', 'l.1,l.3,l.5', ''), 'a (l.1,+2).ts');
+      assert.strictEqual(copyFileName('a.ts', 'l.1,l.3,l.5,l.7', ''), 'a (l.1,+3).ts');
+    });
+
+    it('extensionOf 只认最后一个点, 点开头的名字没有扩展名', () => {
+      assert.strictEqual(extensionOf('service.ts'), '.ts');
+      assert.strictEqual(extensionOf('archive.tar.gz'), '.gz');
+      assert.strictEqual(extensionOf('Clipboard'), '');
+      assert.strictEqual(extensionOf('.gitignore'), '');
     });
   });
 

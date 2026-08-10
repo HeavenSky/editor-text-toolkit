@@ -105,6 +105,17 @@
         "icon": "$(edit)"
       },
       {
+        "command": "textToolkit.diff.openSource",
+        "title": "%command.diffOpenSource%",
+        "category": "%category%",
+        "icon": "$(go-to-file)"
+      },
+      {
+        "command": "textToolkit.diff.cleanUpCopies",
+        "title": "%command.diffCleanUpCopies%",
+        "category": "%category%"
+      },
+      {
         "command": "textToolkit.diff.toggleNormalizationRules",
         "title": "%command.diffToggleNormalizationRules%",
         "category": "%category%"
@@ -138,6 +149,10 @@
           "when": "false"
         },
         {
+          "command": "textToolkit.diff.openSource",
+          "when": "false"
+        },
+        {
           "command": "textToolkit.diff.toggleNormalizationRules",
           "when": "false"
         },
@@ -151,6 +166,11 @@
           "command": "textToolkit.diff.editableCopy",
           "when": "isInDiffEditor && resourceScheme == text-toolkit-diff",
           "group": "navigation@1"
+        },
+        {
+          "command": "textToolkit.diff.openSource",
+          "when": "isInDiffEditor && (resourceScheme == text-toolkit-diff || resourcePath =~ /\\/compare\\/[^\\/]+\\.copy[0-9]+\\//)",
+          "group": "navigation@2"
         }
       ],
       "editor/context": [

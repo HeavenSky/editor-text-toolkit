@@ -14,6 +14,8 @@
   "command.diffCompareTabs": "Compare Text in Two Open Tabs",
   "command.diffSwapSides": "Swap Diff Sides",
   "command.diffEditableCopy": "Edit This Comparison as a Copy",
+  "command.diffOpenSource": "Open the Source File",
+  "command.diffCleanUpCopies": "Clean Up Comparison Copies",
   "command.diffToggleNormalizationRules": "Toggle Normalization Rules",
   "command.diffShowMenu": "Show Compare Menu",
   "config.pathStyle": "Path format used when copying path with line numbers.",
