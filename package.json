@@ -2,7 +2,7 @@
   "name": "editor-text-toolkit",
   "displayName": "Editor Text Toolkit",
   "description": "%extension.description%",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "publisher": "HeavenSky",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -99,6 +99,12 @@
         "category": "%category%"
       },
       {
+        "command": "textToolkit.diff.editableCopy",
+        "title": "%command.diffEditableCopy%",
+        "category": "%category%",
+        "icon": "$(edit)"
+      },
+      {
         "command": "textToolkit.diff.toggleNormalizationRules",
         "title": "%command.diffToggleNormalizationRules%",
         "category": "%category%"
@@ -128,12 +134,23 @@
           "when": "false"
         },
         {
+          "command": "textToolkit.diff.editableCopy",
+          "when": "false"
+        },
+        {
           "command": "textToolkit.diff.toggleNormalizationRules",
           "when": "false"
         },
         {
           "command": "textToolkit.diff.showMenu",
           "when": "false"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "textToolkit.diff.editableCopy",
+          "when": "isInDiffEditor && resourceScheme == text-toolkit-diff",
+          "group": "navigation@1"
         }
       ],
       "editor/context": [

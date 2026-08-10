@@ -1,5 +1,21 @@
 # Change Log
 
+## v0.0.4 2026-08-10 Editable comparison copies
+
+### Added
+
+- **Editable copies** — `Edit This Comparison as a Copy` (`textToolkit.diff.editableCopy`) turns the comparison you are looking at into a copy whose **both sides you can type into**. It appears as a `✎` button in the top-right corner of any diff this extension opened, and in the Compare picker. Triggered from a diff editor it replaces that tab in place, in the same editor group.
+- Copies live in memory behind a new writable scheme, `text-toolkit-diff-edit`, with the same URI path format as the read-only one. Edits are **never written back** to the selection or file they came from; `Ctrl+S` writes to memory only and never touches disk, so use `File: Save As` to keep a result. A copy starts clean and only becomes dirty once you change something — closing it then asks whether to save.
+- Normalization rules are baked into a copy at the moment it is created, so toggling rules afterwards can never overwrite your edits. The read-only comparisons still refresh as before.
+- `Swap Diff Sides` on a copy flips the same two documents instead of making a second copy, so unsaved edits survive the swap.
+- When both sides are whole files on a writable file system, the command declines and points at the built-in `Select for Compare` / `Compare with Selected`, which already give an editable, Git-aware diff of the real files. Selections, the clipboard and read-only virtual documents (`git:`, `output:`) have no native equivalent, so copies stay available there.
+- 11 new tests covering the copy store and the two new pure functions in the diff core (235 tests, up from 224).
+
+### Changed
+
+- The Command Palette still lists eight commands; the new one is menu-only and, like the other six hidden commands, still bindable to a key.
+- `Compare Text in Visible Editors` and `Compare Text in Two Open Tabs` also skip editable copies when collecting candidates, so a copy cannot become the input of another comparison.
+
 ## v0.0.3 2026-08-07 Compare (Diff)
 
 ### Added

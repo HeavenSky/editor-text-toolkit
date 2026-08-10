@@ -3,6 +3,7 @@ import * as assert from 'node:assert';
 import {
   aggregateSelections,
   applyRules,
+  bothSidesEditableInPlace,
   buildDiffTitle,
   decodeDiffPath,
   encodeDiffPath,
@@ -173,6 +174,69 @@ describe('diff core (比较模块纯逻辑)', () => {
 
     it('两侧缺失都写成 N/A', () => {
       assert.strictEqual(buildDiffTitle(null, null, false), 'N/A ↔ N/A');
+    });
+
+    it('可编辑副本加 ✎ 前缀, 中缀仍按 normalized 取值', () => {
+      const sides = [side({ baseName: 'a.ts' }), side({ baseName: 'b.ts' })] as const;
+      assert.strictEqual(buildDiffTitle(sides[0], sides[1], false, true), '✎ a.ts ↔ b.ts');
+      assert.strictEqual(buildDiffTitle(sides[0], sides[1], true, true), '✎ a.ts ~ b.ts');
+    });
+
+    it('省略第 4 参数与显式传 false 完全一致', () => {
+      const left = side({ baseName: 'a.ts' });
+      const right = side({ baseName: 'b.ts' });
+      assert.strictEqual(
+        buildDiffTitle(left, right, false),
+        buildDiffTitle(left, right, false, false)
+      );
+    });
+  });
+
+  describe('bothSidesEditableInPlace', () => {
+    const writable = () => true;
+
+    it('两侧都是整个可写文件时为真', () => {
+      assert.strictEqual(
+        bothSidesEditableInPlace(
+          side({ rangeLabel: 'full', sourceScheme: 'file' }),
+          side({ rangeLabel: 'full', sourceScheme: 'file' }),
+          writable
+        ),
+        true
+      );
+    });
+
+    it('一侧是选区片段时为假', () => {
+      assert.strictEqual(
+        bothSidesEditableInPlace(
+          side({ rangeLabel: 'll.3-7', sourceScheme: 'file' }),
+          side({ rangeLabel: 'full', sourceScheme: 'file' }),
+          writable
+        ),
+        false
+      );
+    });
+
+    it('一侧没有来源(剪贴板)时为假', () => {
+      assert.strictEqual(
+        bothSidesEditableInPlace(
+          side({ baseName: 'Clipboard', rangeLabel: 'full' }),
+          side({ rangeLabel: 'full', sourceScheme: 'file' }),
+          writable
+        ),
+        false
+      );
+    });
+
+    it('来源文件系统不可写(例如 git:)时为假', () => {
+      assert.strictEqual(
+        bothSidesEditableInPlace(
+          side({ rangeLabel: 'full', sourceScheme: 'git' }),
+          side({ rangeLabel: 'full', sourceScheme: 'git' }),
+          (scheme) => scheme === 'file'
+        ),
+        false
+      );
     });
   });
 

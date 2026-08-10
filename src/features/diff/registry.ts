@@ -75,6 +75,14 @@ export class DiffRegistry {
     return this.sessions.get(sessionId)?.[slot];
   }
 
+  /**
+   * 某次比较发放的两个 URI. 供「在非 diff 编辑器上下文里做可编辑副本」时
+   * 回退到最近一次比较使用 —— 那种情况下拿不到活动 diff 标签页的两侧 URI.
+   */
+  getUris(sessionId: string): readonly string[] | undefined {
+    return this.sessions.get(sessionId)?.uris;
+  }
+
   /** 最近一次比较, 供「交换两侧」使用; 已被淘汰时为 undefined. */
   get lastSessionId(): string | undefined {
     return this.last;

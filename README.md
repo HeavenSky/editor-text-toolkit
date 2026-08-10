@@ -169,7 +169,7 @@ Set `{ "textToolkit.advanced": { "plainText.applyEditorSettings": false } }` to 
 
 ## Compare (Diff)
 
-Diff two pieces of text without saving either of them to a file.
+Diff two pieces of text without saving either of them to a file. Both sides are read-only, unless you ask for an [editable copy](#editable-copies).
 
 **Five ways to start a comparison:**
 
@@ -188,6 +188,22 @@ Diff two pieces of text without saving either of them to a file.
 **Syntax highlighting:** each side inherits the language of the file it came from, and the clipboard side inherits the language of the other side — so a clipboard diff against a `.ts` selection is highlighted as TypeScript.
 
 **Non-text clipboard content:** the VS Code clipboard API only exposes text. Copying an image *and* text gives you the text, which is what gets compared. Copying only an image yields an empty string, indistinguishable from an empty clipboard, so the command tells you there is nothing to compare instead of opening a diff with one blank side.
+
+### Editable copies
+
+A comparison is read-only by default. To edit one, click the `✎` button in the top-right corner of the diff editor — or pick `Edit This Comparison as a Copy` from the Compare picker. The comparison is replaced in place by a copy whose **both sides you can type into**.
+
+| | |
+| --- | --- |
+| What you edit | An in-memory copy. Edits are **never written back** to the selection or the file they came from |
+| Dirty state | The copy starts clean; it only becomes dirty once you actually change something, and closing it then asks whether to save |
+| `Ctrl+S` | Writes to memory only, never to disk, and never fails. To keep the result, use `File: Save As` |
+| Title | Starts with `✎ `, so an editable copy is never mistaken for a read-only comparison |
+| Normalization rules | Baked in at the moment the copy is created. Toggling rules afterwards leaves open copies alone, so a rule switch can never overwrite your edits |
+| `Swap Diff Sides` | On a copy, it flips the same two documents instead of making a second copy, so unsaved edits survive |
+| Window reload | Copies are memory-only; a restored tab shows a placeholder instead of its former content |
+
+When **both** sides are whole files on a writable file system, the command declines and points you at the built-in `Select for Compare` / `Compare with Selected` — those give you an editable, Git-aware diff of the real files. A side that is a selection, the clipboard, or a read-only virtual document (`git:`, `output:`) has no such native equivalent, so copies stay available there.
 
 ### Normalization rules
 
@@ -248,7 +264,7 @@ The comparison opens in a stock VS Code diff editor, so everything the diff edit
 | Change Case | The 16 styles; with a single-line selection each entry previews the converted text |
 | Align by RegEx | `Enter a regular expression...`, plus every saved template listed with its pattern |
 | Plain Text Mode | Enable / Disable (whichever applies), and Re-enable large file prompt |
-| Compare (Diff) | Mark, compare with the mark, compare with the clipboard, compare visible editors, compare two open tabs, swap sides, toggle normalization rules, and clear the mark when one is set |
+| Compare (Diff) | Mark, compare with the mark, compare with the clipboard, compare visible editors, compare two open tabs, swap sides, turn the comparison into an editable copy, toggle normalization rules, and clear the mark when one is set |
 
 Three rules hold everywhere: the second level always starts with `← Back`; `Esc` cancels the whole flow without changing anything; the first level never performs an action by itself.
 
@@ -267,7 +283,7 @@ Eight commands appear in the Command Palette, all under the `Text Toolkit` categ
 | `textToolkit.diff.compareWithMarked` | Compare Text with Marked Selection | — |
 | `textToolkit.diff.compareWithClipboard` | Compare Text with Clipboard | — |
 
-Six more are hidden from the palette — they either need a file to act on, or are low-frequency enough that the picker is the better home. **All of them still accept keybindings:**
+Seven more are hidden from the palette — they either need a file to act on, or are low-frequency enough that the picker is the better home. **All of them still accept keybindings:**
 
 | Command ID | Title | Where |
 | --- | --- | --- |
@@ -275,6 +291,7 @@ Six more are hidden from the palette — they either need a file to act on, or a
 | `textToolkit.diff.compareVisibleEditors` | Compare Text in Visible Editors | Compare (Diff) picker |
 | `textToolkit.diff.compareTabs` | Compare Text in Two Open Tabs | Compare (Diff) picker |
 | `textToolkit.diff.swapSides` | Swap Diff Sides | Compare (Diff) picker |
+| `textToolkit.diff.editableCopy` | Edit This Comparison as a Copy | `✎` in the diff editor title bar, Compare (Diff) picker |
 | `textToolkit.diff.toggleNormalizationRules` | Toggle Normalization Rules | Compare (Diff) picker |
 | `textToolkit.diff.showMenu` | Show Compare Menu | Compare status bar item |
 

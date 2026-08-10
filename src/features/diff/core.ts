@@ -30,6 +30,8 @@ export interface SelectionInfo {
   baseName: string;
   rangeLabel: string;
   languageId?: string;
+  /** 来源文档的 URI scheme. 剪贴板没有来源文档, 因此这一侧不填. */
+  sourceScheme?: string;
 }
 
 /** 单个非空选区的位置与内容, 由调用方从 vscode.Selection 摘出后传入. */
@@ -178,13 +180,44 @@ function sideTitle(info: SelectionInfo | null): string {
 /**
  * diff 标签页标题. 中缀沿用上游语义: `~` 表示内容经过归一化, `↔` 表示原样比较.
  * 该符号是打开那一刻的快照, 之后切换规则不会更新 —— 常驻的状态栏计数才是准确指示.
+ *
+ * `editable` 的 `✎` 前缀与中缀正交: 前者说明这是一份可编辑副本, 后者说明打开时是否套了规则.
  */
 export function buildDiffTitle(
   left: SelectionInfo | null,
   right: SelectionInfo | null,
-  normalized: boolean
+  normalized: boolean,
+  editable = false
 ): string {
-  return `${sideTitle(left)} ${normalized ? '~' : '↔'} ${sideTitle(right)}`;
+  const title = `${sideTitle(left)} ${normalized ? '~' : '↔'} ${sideTitle(right)}`;
+  return editable ? `✎ ${title}` : title;
+}
+
+/** 该侧是「整个文件」且其来源文件系统可写, 即用户本来就能直接编辑它. */
+function editableInPlace(
+  info: SelectionInfo,
+  isWritable: (scheme: string) => boolean
+): boolean {
+  return (
+    info.rangeLabel === FULL_RANGE_LABEL &&
+    info.sourceScheme !== undefined &&
+    isWritable(info.sourceScheme)
+  );
+}
+
+/**
+ * 两侧是否都已经能被原生编辑. 为真时做可编辑副本没有意义: VS Code 自带的
+ * Select for Compare / Compare with Selected 就能给出可编辑且带 Git 集成的 diff.
+ *
+ * 只要有一侧是选区片段, 或来自剪贴板(没有 sourceScheme), 或来自只读的虚拟文档
+ * (例如 `git:` / `output:`), 原生就给不出等价的可编辑比较, 因此仍然允许做副本.
+ */
+export function bothSidesEditableInPlace(
+  left: SelectionInfo,
+  right: SelectionInfo,
+  isWritable: (scheme: string) => boolean
+): boolean {
+  return editableInPlace(left, isWritable) && editableInPlace(right, isWritable);
 }
 
 /**

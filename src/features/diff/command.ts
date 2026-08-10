@@ -4,7 +4,10 @@ import { isBackItem, showMenu, type MenuItem, type PickOutcome } from '../../sha
 import { DIFF_SCHEME, DiffContentProvider } from './contentProvider';
 import {
   aggregateSelections,
+  applyRules,
+  bothSidesEditableInPlace,
   buildDiffTitle,
+  decodeDiffPath,
   encodeDiffPath,
   formatRangeLabel,
   FULL_RANGE_LABEL,
@@ -12,6 +15,8 @@ import {
   type DiffSlot,
   type SelectionInfo
 } from './core';
+import { DIFF_EDIT_SCHEME, EditableCopyFileSystem } from './editableFileSystem';
+import { EditableCopyStore } from './editableStore';
 import { DiffRegistry } from './registry';
 import { NormalizationRuleStore } from './rules';
 
@@ -35,6 +40,39 @@ function sideLabel(info: SelectionInfo): string {
     : `${info.baseName} (${info.rangeLabel})`;
 }
 
+/** 本扩展打开的比较结果自身不能再成为比较对象, 两个 scheme 都要排除. */
+function isDiffScheme(scheme: string): boolean {
+  return scheme === DIFF_SCHEME || scheme === DIFF_EDIT_SCHEME;
+}
+
+/**
+ * 活动标签页若是本扩展打开的一次比较, 返回它的两侧 URI 与所属 scheme.
+ *
+ * 不依赖 `editor/title` 菜单传给命令的参数 —— 那个参数在 diff 编辑器里指向哪一侧
+ * 没有明确承诺, 而标签页的输入是确定的.
+ */
+function activeDiffTab():
+  | { tab: vscode.Tab; original: vscode.Uri; modified: vscode.Uri; scheme: string }
+  | undefined {
+  const tab = vscode.window.tabGroups.activeTabGroup.activeTab;
+  if (!tab || !(tab.input instanceof vscode.TabInputTextDiff)) {
+    return undefined;
+  }
+  const { original, modified } = tab.input;
+  if (original.scheme !== modified.scheme || !isDiffScheme(original.scheme)) {
+    return undefined;
+  }
+  return { tab, original, modified, scheme: original.scheme };
+}
+
+/**
+ * 该 scheme 的文件系统是否可写. `untitled` 不是注册过的文件系统提供器,
+ * 但 untitled 编辑器本来就能改, 因此显式当作可写.
+ */
+function isWritableScheme(scheme: string): boolean {
+  return scheme === 'untitled' ? true : vscode.workspace.fs.isWritableFileSystem(scheme) === true;
+}
+
 /** 多光标的各段选区按位置拼成一段; 完全没有选区时退回整个文档, 与上游行为一致. */
 function captureSelection(editor: vscode.TextEditor): SelectionInfo {
   const document = editor.document;
@@ -53,7 +91,8 @@ function captureSelection(editor: vscode.TextEditor): SelectionInfo {
     text: aggregated ? aggregated.text : document.getText(),
     baseName: basename(document.uri),
     rangeLabel: formatRangeLabel(aggregated?.ranges ?? null),
-    languageId: document.languageId
+    languageId: document.languageId,
+    sourceScheme: document.uri.scheme
   };
 }
 
@@ -63,11 +102,13 @@ class CompareFeature {
     () => getDiffConfig().normalizationRules
   );
   private readonly provider: DiffContentProvider;
+  private readonly editable = new EditableCopyStore();
   private readonly statusBarItem: vscode.StatusBarItem;
 
   constructor(context: vscode.ExtensionContext) {
     // 规则在渲染时才套用, 因此切换启停只需重新触发一次 provide 就能刷新已打开的比较.
     this.provider = new DiffContentProvider(this.registry, () => this.rules.activeRules);
+    const editableFileSystem = new EditableCopyFileSystem(this.editable);
     // 优先级 99: 纯文本模式的状态栏项已经占用了 100.
     this.statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 99);
     this.statusBarItem.command = 'textToolkit.diff.showMenu';
@@ -75,7 +116,17 @@ class CompareFeature {
     context.subscriptions.push(
       this.provider,
       this.statusBarItem,
-      vscode.workspace.registerTextDocumentContentProvider(DIFF_SCHEME, this.provider)
+      vscode.workspace.registerTextDocumentContentProvider(DIFF_SCHEME, this.provider),
+      editableFileSystem,
+      vscode.workspace.registerFileSystemProvider(DIFF_EDIT_SCHEME, editableFileSystem, {
+        isCaseSensitive: true
+      }),
+      // 副本内容跟着标签页走: 文档关掉就释放, 内存不会随比较次数增长.
+      vscode.workspace.onDidCloseTextDocument((document) => {
+        if (document.uri.scheme === DIFF_EDIT_SCHEME) {
+          this.editable.release(document.uri.toString());
+        }
+      })
     );
     this.updateStatusBar();
   }
@@ -187,6 +238,121 @@ class CompareFeature {
     }
   }
 
+  /**
+   * 副本的初始内容取"屏幕上正在显示的文本": 已打开的只读文档优先, 读不到时按当前规则重算.
+   * 用户手改过 settings.json 时前者才准确 —— 那种情况下已打开的 diff 并没有收到刷新事件.
+   */
+  private renderedText(uri: vscode.Uri, info: SelectionInfo): string {
+    const opened = vscode.workspace.textDocuments.find(
+      (document) => document.uri.toString() === uri.toString()
+    );
+    return opened?.getText() ?? applyRules(info.text, this.rules.activeRules);
+  }
+
+  /**
+   * 打开一份可编辑副本. 内容只存在内存里, 保存也只写内存, 不回写任何源文件.
+   * 归一化规则在这里就被烘焙进内容, 之后切换规则不会再改动它 —— 否则会覆盖用户的编辑.
+   */
+  private async openEditableDiff(
+    left: SelectionInfo,
+    right: SelectionInfo,
+    texts: readonly [string, string],
+    viewColumn?: vscode.ViewColumn
+  ): Promise<void> {
+    const sessionId = this.editable.nextSessionId(Date.now());
+    const uriOf = (slot: DiffSlot, info: SelectionInfo): vscode.Uri =>
+      vscode.Uri.from({
+        scheme: DIFF_EDIT_SCHEME,
+        path: encodeDiffPath({
+          sessionId,
+          slot,
+          rangeLabel: info.rangeLabel,
+          baseName: info.baseName
+        })
+      });
+
+    const leftUri = uriOf('left', left);
+    const rightUri = uriOf('right', right);
+    // 先登记内容: 设置语言会打开文档, 那时文件系统提供器就已经要能读到内容.
+    this.editable.register([leftUri.toString(), rightUri.toString()], texts);
+
+    const languages = resolveLanguages(left.languageId, right.languageId);
+    await this.applyLanguage(leftUri, languages.left);
+    await this.applyLanguage(rightUri, languages.right);
+
+    await vscode.commands.executeCommand(
+      'vscode.diff',
+      leftUri,
+      rightUri,
+      buildDiffTitle(left, right, this.rules.hasActiveRules, true),
+      viewColumn === undefined ? undefined : { viewColumn, preview: false }
+    );
+  }
+
+  /**
+   * 把当前这次比较换成一份两侧都可编辑的副本.
+   *
+   * 从 diff 编辑器触发时原地替换: 副本开在同一编辑器组, 随后关掉原来的只读标签页.
+   * 从选择器在别处触发时, 退回到最近一次比较另开一份副本, 不动任何已有标签页.
+   */
+  async openEditableCopy(): Promise<void> {
+    const source = activeDiffTab();
+    if (source?.scheme === DIFF_EDIT_SCHEME) {
+      void vscode.window.showInformationMessage(
+        vscode.l10n.t('This comparison is already an editable copy.')
+      );
+      return;
+    }
+
+    const uris = source
+      ? [source.original, source.modified]
+      : (this.registry.getUris(this.registry.lastSessionId ?? '') ?? []).map((uri) =>
+          vscode.Uri.parse(uri)
+        );
+    if (uris.length !== 2) {
+      void vscode.window.showInformationMessage(
+        vscode.l10n.t(
+          'No comparison to edit. Run a compare command first, then use this from its diff editor.'
+        )
+      );
+      return;
+    }
+
+    const [left, right] = uris.map((uri) => {
+      const parts = decodeDiffPath(uri.path);
+      return parts ? this.registry.getSlot(parts.sessionId, parts.slot) : undefined;
+    });
+    if (!left || !right) {
+      void vscode.window.showInformationMessage(
+        vscode.l10n.t(
+          'This comparison is no longer available. Please run the compare command again.'
+        )
+      );
+      return;
+    }
+
+    // 两侧本来就是完整的可写文件时, 原生的 Select for Compare 更好: 它可编辑且带 Git 集成.
+    if (bothSidesEditableInPlace(left, right, isWritableScheme)) {
+      void vscode.window.showInformationMessage(
+        vscode.l10n.t(
+          'Both sides are whole files you can already edit. Use the built-in Select for Compare / Compare with Selected instead.'
+        )
+      );
+      return;
+    }
+
+    await this.openEditableDiff(
+      left,
+      right,
+      [this.renderedText(uris[0], left), this.renderedText(uris[1], right)],
+      source?.tab.group.viewColumn
+    );
+    if (source) {
+      // 先开新的再关旧的. 只读文档没有未保存内容, 因此关闭不会有任何询问.
+      await vscode.window.tabGroups.close(source.tab);
+    }
+  }
+
   markSelection(): void {
     const editor = this.activeEditor();
     if (!editor) {
@@ -259,7 +425,8 @@ class CompareFeature {
       text: document.getText(),
       baseName: basename(uri),
       rangeLabel: FULL_RANGE_LABEL,
-      languageId: document.languageId
+      languageId: document.languageId,
+      sourceScheme: uri.scheme
     };
   }
 
@@ -267,7 +434,7 @@ class CompareFeature {
   async compareVisibleEditors(): Promise<void> {
     // 已经打开的比较结果本身也是"可见编辑器", 不排除掉的话数量永远凑不齐 2 个.
     const editors = vscode.window.visibleTextEditors.filter(
-      (editor) => editor.document.uri.scheme !== DIFF_SCHEME
+      (editor) => !isDiffScheme(editor.document.uri.scheme)
     );
     if (editors.length !== 2) {
       void vscode.window.showInformationMessage(
@@ -301,7 +468,7 @@ class CompareFeature {
         const { uri } = tab.input;
         const key = uri.toString();
         // 比较结果自身不能再作为比较对象; 同一文件在多个编辑器组里只列一次.
-        if (uri.scheme === DIFF_SCHEME || seen.has(key)) {
+        if (isDiffScheme(uri.scheme) || seen.has(key)) {
           continue;
         }
         seen.add(key);
@@ -349,6 +516,12 @@ class CompareFeature {
 
   /** 交换最近一次比较的两侧(上游 issue #96). 生成新 session, 原标签页内容不受影响. */
   async swapSides(): Promise<void> {
+    const copy = activeDiffTab();
+    if (copy?.scheme === DIFF_EDIT_SCHEME) {
+      await this.reopenSwapped(copy);
+      return;
+    }
+
     const sessionId = this.registry.lastSessionId;
     const left = sessionId ? this.registry.getSlot(sessionId, 'left') : undefined;
     const right = sessionId ? this.registry.getSlot(sessionId, 'right') : undefined;
@@ -359,6 +532,38 @@ class CompareFeature {
       return;
     }
     await this.openDiff(right, left);
+  }
+
+  /**
+   * 把一份已打开的可编辑副本左右互换.
+   *
+   * 反序重开同两个文档而不是复制一份新副本, 因此用户尚未保存的编辑不会丢. 标题从 URI 还原,
+   * 不查 registry —— 可编辑副本刻意不登记在那里(内容按 URI 存, 见 editableStore.ts).
+   */
+  private async reopenSwapped(copy: {
+    tab: vscode.Tab;
+    original: vscode.Uri;
+    modified: vscode.Uri;
+  }): Promise<void> {
+    const labelOf = (uri: vscode.Uri): SelectionInfo | null => {
+      const parts = decodeDiffPath(uri.path);
+      return parts ? { text: '', baseName: parts.baseName, rangeLabel: parts.rangeLabel } : null;
+    };
+
+    await vscode.commands.executeCommand(
+      'vscode.diff',
+      copy.modified,
+      copy.original,
+      buildDiffTitle(
+        labelOf(copy.modified),
+        labelOf(copy.original),
+        this.rules.hasActiveRules,
+        true
+      ),
+      { viewColumn: copy.tab.group.viewColumn, preview: false }
+    );
+    // 两个文档已经被新标签页持有, 因此关掉旧标签页不会触发保存询问.
+    await vscode.window.tabGroups.close(copy.tab);
   }
 
   /**
@@ -438,6 +643,10 @@ class CompareFeature {
         label: `$(arrow-swap) ${vscode.l10n.t('Swap Diff Sides')}`
       },
       {
+        id: 'editableCopy',
+        label: `$(edit) ${vscode.l10n.t('Edit This Comparison as a Copy')}`
+      },
+      {
         id: 'toggleNormalizationRules',
         label: `$(filter) ${vscode.l10n.t('Toggle Normalization Rules')}`,
         description: this.ruleSummary()
@@ -476,6 +685,9 @@ class CompareFeature {
       case 'swapSides':
         await this.swapSides();
         break;
+      case 'editableCopy':
+        await this.openEditableCopy();
+        break;
       case 'toggleNormalizationRules':
         await this.toggleNormalizationRules();
         break;
@@ -510,6 +722,9 @@ export function registerDiffFeature(context: vscode.ExtensionContext): DiffFeatu
     ),
     vscode.commands.registerCommand('textToolkit.diff.compareTabs', () => feature.compareTabs()),
     vscode.commands.registerCommand('textToolkit.diff.swapSides', () => feature.swapSides()),
+    vscode.commands.registerCommand('textToolkit.diff.editableCopy', () =>
+      feature.openEditableCopy()
+    ),
     vscode.commands.registerCommand('textToolkit.diff.toggleNormalizationRules', () =>
       feature.toggleNormalizationRules()
     ),
