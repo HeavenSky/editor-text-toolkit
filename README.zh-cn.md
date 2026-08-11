@@ -144,24 +144,26 @@ w = 4; vvvvv = 5;      w  = 4; vvvvv = 5;
 
 去掉 VS Code 本会施加在文件上的渲染与语言服务开销, 让大文本或日志文件恢复到可读, 可搜索, 可编辑的流畅程度.
 
-**四种进入方式:**
+**五种进入方式:**
 
 - **资源管理器右键 → `以纯文本模式打开`** —— 一步完成打开与进入, 文件不会先被正常渲染一次. 支持多选; 目录会被跳过.
 - `Text Toolkit: 切换纯文本模式`, 作用于当前打开的文件.
 - **自动询问**: 打开体积达到 `textToolkit.plainText.promptSizeMB` MB(默认 2)的文件时弹出提示, 接受即进入. 选择 `不再询问` 会被记住; 在选择器的纯文本模式一项中可以恢复. 设为 `0` 表示永不询问.
+- **VS Code 根本不显示该文件时**: 超过 `workbench.editorLargeFileConfirmation` MB 的文件, 编辑器会被换成 *"The file is not displayed in the text editor because it is very large"* 占位页. 扩展会认出这类标签页并提示以纯文本模式打开; 打开走的是扩展宿主, 不受该上限约束, 因此不必先点 `Open Anyway` 就能看到内容. 这里是通知而不是占位页上的按钮: 那个页面的按钮由 VS Code 写死, 唯一能往里加按钮的 `editor/content` 菜单仍是 proposed API, 正式发布的扩展用不了. 与上一条共用 `不再询问` 开关.
 - **静默进入**: 扩展名列在 `textToolkit.plainText.autoApplyExtensions` 中的文件, 例如 `[".log", ".csv"]`.
 
 **它做了什么:**
 
 - 把文档语言切换为 `plaintext`, 从而停掉分词, 语义高亮以及该文档上的全部语言相关能力.
-- 写入 29 项 `[plaintext]` 作用域的编辑器覆盖 —— minimap, 折叠, 粘性滚动, 括号着色, 缩进参考线, 悬停, 建议, code lens, 链接, unicode 扫描等. 完整表格见[设置参考](#29-项内置-plaintext-覆盖). 由于这些覆盖限定在语言作用域内, **你的代码文件完全不受影响**.
+- **不让语言扩展被惊动**(经资源管理器命令打开时). VS Code 在文本模型建好那一刻就触发 `onLanguage:<id>`, 因此正常打开一个大 `.ts` 会拉起 TypeScript 扩展, 后者加载整个项目并抓取 types, 编辑器则一直停在 *"Activating Extensions..."*; 等模型建好再切语言已经晚了. 为此扩展会临时往用户设置里写一条只匹配该文件的 `files.associations`, 以 `plaintext` 打开, 把语言钉死, 然后删掉这条设置 —— 文本模型自始至终都是纯文本. 退出模式时会还原该文件本应使用的语言. 设 `"plainText.suppressLanguageActivation": false` 可关闭此行为.
+- 写入 29 项 `[plaintext]` 作用域的编辑器覆盖 —— 打开自动换行, 关掉 minimap, 折叠, 粘性滚动, 括号着色, 缩进参考线, 悬停, 建议, code lens, 链接, unicode 扫描等. 完整表格见[设置参考](#29-项内置-plaintext-覆盖). 由于这些覆盖限定在语言作用域内, **你的代码文件完全不受影响**.
 - 显示一个 `纯文本` 状态栏项. 点击它, 或再次切换, 即可还原原始语言以及每一个被替换过的设置值.
 
 **适用范围与限制 —— 依赖它之前请先读:**
 
 - 它消除的是**渲染与语言服务**开销, **不改变** VS Code 加载文件的方式: 整个文档仍然存在于 `TextModel` 中, 文件内查找替换也仍然跑在该模型上. 在 5–50 MB 区间会有明显改善, 几百 MB 的文件不会有数量级变化.
-- 打开工作区时设置写入工作区设置, 否则写入用户设置. 原值(包括"原本未设置"这一情况)会被记录, 退出时还原.
-- VS Code 根本拒绝打开的文件不在本模式的作用范围内. 那个上限由 `files.maxMemoryForLargeFilesMB` 决定, 本扩展刻意不去改动它 —— 调高它等于用卡顿换内存溢出崩溃.
+- 打开工作区时设置写入工作区设置, 否则写入用户设置. 原值(包括"原本未设置"这一情况)会被记录, 退出时还原. 上面那条临时 `files.associations` 是唯一的例外: 它固定写入用户设置, 绝不会动到仓库里的 `.vscode/settings.json`; 会话异常结束留下的残条目会在下次激活时清理.
+- `workbench.editorLargeFileConfirmation` 这个上限不影响本模式, 见上面的第四种进入方式. 仍然生效的上限是 `files.maxMemoryForLargeFilesMB`, 本扩展刻意不去改动它 —— 调高它等于用卡顿换内存溢出崩溃.
 
 设 `{ "textToolkit.advanced": { "plainText.applyEditorSettings": false } }` 可以只切换语言而完全跳过这些覆盖; 设 `"plainText.disableLineNumbers": true` 则在模式生效期间一并隐藏行号.
 
@@ -384,6 +386,7 @@ w = 4; vvvvv = 5;      w  = 4; vvvvv = 5;
 | `alignByRegex.rememberLastInput` | boolean | `true` |
 | `plainText.applyEditorSettings` | boolean | `true` |
 | `plainText.disableLineNumbers` | boolean | `false` |
+| `plainText.suppressLanguageActivation` | boolean | `true`(用临时 `files.associations` 让文件从一开始就是 plaintext, 语言扩展不会被激活) |
 | `plainText.editorOverrides` | object | `{}`, 叠加在下面 29 项 `[plaintext]` 覆盖表之上 |
 
 这些内容不必靠本文档去发现: 设置界面会列出每个键的类型, 内置默认值与可接受取值, 在 `settings.json` 中输入时也会自动补全. 值的位置还提供两个代码片段 —— **全部内置默认值**写出整个 `textToolkit.advanced` 对象, **29 项内置 `[plaintext]` 覆盖**写出完整的覆盖表, 均可直接修改.
@@ -403,7 +406,7 @@ w = 4; vvvvv = 5;      w  = 4; vvvvv = 5;
 | 设置 id | 内置值 | 其他可接受取值 |
 | --- | --- | --- |
 | `editor.minimap.enabled` | `false` | `true` |
-| `editor.wordWrap` | `"off"` | `"on"`, `"wordWrapColumn"`, `"bounded"` |
+| `editor.wordWrap` | `"on"` | `"off"`, `"wordWrapColumn"`, `"bounded"` |
 | `editor.folding` | `false` | `true` |
 | `editor.stickyScroll.enabled` | `false` | `true` |
 | `editor.bracketPairColorization.enabled` | `false` | `true` |

@@ -2,7 +2,7 @@
   "name": "editor-text-toolkit",
   "displayName": "Editor Text Toolkit",
   "description": "%extension.description%",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "publisher": "HeavenSky",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -393,6 +393,11 @@
               "default": false,
               "markdownDescription": "%advanced.disableLineNumbers%"
             },
+            "plainText.suppressLanguageActivation": {
+              "type": "boolean",
+              "default": true,
+              "markdownDescription": "%advanced.suppressLanguageActivation%"
+            },
             "plainText.editorOverrides": {
               "type": "object",
               "default": {},
@@ -404,7 +409,7 @@
                   "description": "%snippet.editorOverrides.builtinDetail%",
                   "body": {
                     "editor.minimap.enabled": false,
-                    "editor.wordWrap": "off",
+                    "editor.wordWrap": "on",
                     "editor.folding": false,
                     "editor.stickyScroll.enabled": false,
                     "editor.bracketPairColorization.enabled": false,
@@ -442,7 +447,7 @@
                   "label": "%snippet.editorOverrides.restore%",
                   "description": "%snippet.editorOverrides.restoreDetail%",
                   "body": {
-                    "editor.wordWrap": "on",
+                    "editor.wordWrap": "off",
                     "editor.minimap.enabled": null
                   }
                 }
@@ -460,6 +465,7 @@
                 "alignByRegex.rememberLastInput": true,
                 "plainText.applyEditorSettings": true,
                 "plainText.disableLineNumbers": false,
+                "plainText.suppressLanguageActivation": true,
                 "plainText.editorOverrides": {}
               }
             }

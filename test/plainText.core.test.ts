@@ -1,10 +1,12 @@
 import { describe, it } from 'vitest';
 import * as assert from 'node:assert';
 import {
+  exceedsEditorSizeLimit,
   formatFileSize,
   matchesAutoApplyExtension,
   normalizeExtension,
-  shouldPromptForSize
+  shouldPromptForSize,
+  toFileAssociationPattern
 } from '../src/features/plainText/core';
 
 const MB = 1024 * 1024;
@@ -70,4 +72,35 @@ describe('plainText core', () => {
     });
   });
 
+  describe('exceedsEditorSizeLimit', () => {
+    it('与 VS Code 一致用严格大于', () => {
+      assert.ok(exceedsEditorSizeLimit(3 * MB + 1, 3));
+      assert.strictEqual(exceedsEditorSizeLimit(3 * MB, 3), false);
+    });
+
+    it('上限 <= 0 或非法时视为没有上限', () => {
+      assert.strictEqual(exceedsEditorSizeLimit(500 * MB, 0), false);
+      assert.strictEqual(exceedsEditorSizeLimit(500 * MB, -1), false);
+      assert.strictEqual(exceedsEditorSizeLimit(500 * MB, Number.NaN), false);
+    });
+  });
+
+  describe('toFileAssociationPattern', () => {
+    it('绝对路径原样用作 glob, 反斜杠归一为正斜杠', () => {
+      assert.strictEqual(toFileAssociationPattern('/tmp/big.ts'), '/tmp/big.ts');
+      assert.strictEqual(toFileAssociationPattern('C:\\logs\\big.ts'), 'C:/logs/big.ts');
+    });
+
+    it('含 glob 元字符的路径无法安全表达, 返回 undefined', () => {
+      assert.strictEqual(toFileAssociationPattern('/tmp/a*b.ts'), undefined);
+      assert.strictEqual(toFileAssociationPattern('/tmp/a?b.ts'), undefined);
+      assert.strictEqual(toFileAssociationPattern('/tmp/[x]/a.ts'), undefined);
+      assert.strictEqual(toFileAssociationPattern('/tmp/{x}/a.ts'), undefined);
+    });
+
+    it('不含路径分隔符时无法只匹配这一个文件, 返回 undefined', () => {
+      assert.strictEqual(toFileAssociationPattern('big.ts'), undefined);
+      assert.strictEqual(toFileAssociationPattern(''), undefined);
+    });
+  });
 });

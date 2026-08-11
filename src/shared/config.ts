@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import type { MultiLineFormat } from '../features/copyPath/core';
+import { DEFAULT_LARGE_FILE_LIMIT_MB } from '../features/plainText/core';
 import { resolveAdvanced, type AdvancedSettings } from './advanced';
 
 export type PathStyle = 'absolute' | 'relative' | 'tilde' | 'fileName';
@@ -37,6 +38,17 @@ export function getPlainTextPromptConfig(): PlainTextPromptConfig {
     promptSizeMB: config.get<number>('promptSizeMB', 2),
     autoApplyExtensions: config.get<string[]>('autoApplyExtensions', [])
   };
+}
+
+/**
+ * 文件超过它就不再显示在编辑器里, 而是换成"文件过大"占位页.
+ * VS Code 自己的设置, 我们只读: 用它判断某个标签页是不是打不开的大文件.
+ */
+export function getLargeFileLimitMB(resource: vscode.Uri): number {
+  const value = vscode.workspace
+    .getConfiguration('workbench', resource)
+    .get<number>('editorLargeFileConfirmation');
+  return typeof value === 'number' && value > 0 ? value : DEFAULT_LARGE_FILE_LIMIT_MB;
 }
 
 export type DiffContextMenu = 'both' | 'markOnly' | 'none';

@@ -144,24 +144,26 @@ w = 4; vvvvv = 5;       w  = 4; vvvvv = 5;
 
 Makes a large text or log file responsive to read, search and edit, by removing the rendering and language-service work VS Code would otherwise do on it.
 
-**Four ways in:**
+**Five ways in:**
 
 - **Explorer right-click → `Open in Plain Text Mode`** — opens the file and enters the mode in one step, so it is never rendered normally first. Accepts a multi-selection; folders are skipped.
 - `Text Toolkit: Toggle Plain Text Mode` for the file already in front of you.
 - **Automatically**, when you open a file of at least `textToolkit.plainText.promptSizeMB` MB (default 2) and accept the prompt. `Don't ask again` is remembered; undo it from the Plain Text Mode entry in the picker. Set the value to `0` to never be asked.
+- **When VS Code will not display the file at all** — above `workbench.editorLargeFileConfirmation` MB the editor is replaced by a *"The file is not displayed in the text editor because it is very large"* placeholder. The extension spots that tab and offers plain text mode for it; opening goes through the extension host, which is not bound by that limit, so you get the content without pressing `Open Anyway` first. It is a notification rather than a button on the placeholder itself, because VS Code hardcodes the buttons there and the `editor/content` menu that could add one is still proposed API. Same `Don't ask again` switch as above.
 - **Silently**, for extensions listed in `textToolkit.plainText.autoApplyExtensions`, for example `[".log", ".csv"]`.
 
 **What it does:**
 
 - Sets the document language to `plaintext`, which stops tokenization, semantic highlighting and every language-specific provider for that document.
-- Writes 29 `[plaintext]`-scoped editor overrides — minimap, folding, sticky scroll, bracket colorization, guides, hovers, suggestions, code lens, links, the unicode scanners and more. The full table is [in the settings reference](#the-29-built-in-plaintext-overrides). Because they are language-scoped, **your code files are unaffected** while the mode is on.
+- **Keeps language extensions from ever waking up** when the file is opened by the explorer command. VS Code fires `onLanguage:<id>` the moment a text model is created, so opening a large `.ts` normally pulls in the TypeScript extension, which loads the whole project and fetches types while the editor sits on *"Activating Extensions..."*; switching the language afterwards is too late. The extension therefore writes one `files.associations` entry matching exactly that file into your user settings, opens it as `plaintext`, pins the language and removes the entry again — the model is never anything but plain text. Leaving the mode restores the language the file would otherwise have had. Turn it off with `"plainText.suppressLanguageActivation": false`.
+- Writes 29 `[plaintext]`-scoped editor overrides — word wrap on, and minimap, folding, sticky scroll, bracket colorization, guides, hovers, suggestions, code lens, links, the unicode scanners and more off. The full table is [in the settings reference](#the-29-built-in-plaintext-overrides). Because they are language-scoped, **your code files are unaffected** while the mode is on.
 - Shows a `Plain Text` status bar item. Click it, or toggle again, to restore the original language and every setting value that was replaced.
 
 **Scope and limits — read before relying on it:**
 
 - This removes **rendering and language-service** cost. It does **not** change how VS Code loads files: the whole document still lives in a `TextModel`, and in-file find/replace still runs on that model. Expect a solid improvement in the 5–50 MB range, and no order-of-magnitude change for hundreds of MB.
-- Settings are written to Workspace settings when a workspace is open, otherwise to User settings. Original values — including "was not set" — are recorded and restored on exit.
-- Files VS Code refuses to open at all are unaffected by this mode. That limit is `files.maxMemoryForLargeFilesMB`, which this extension deliberately does not touch, because raising it trades stalls for out-of-memory crashes.
+- Settings are written to Workspace settings when a workspace is open, otherwise to User settings. Original values — including "was not set" — are recorded and restored on exit. The temporary `files.associations` entry described above is the one exception: it always goes to User settings, so nothing is ever written to a repository's `.vscode/settings.json` for it, and a leftover entry from a crashed session is cleaned up on the next activation.
+- The `workbench.editorLargeFileConfirmation` limit does not apply to this mode — see the fourth way in above. The one limit that still does is `files.maxMemoryForLargeFilesMB`, which this extension deliberately does not touch, because raising it trades stalls for out-of-memory crashes.
 
 Set `{ "textToolkit.advanced": { "plainText.applyEditorSettings": false } }` to only switch the language and skip the overrides entirely, or `"plainText.disableLineNumbers": true` to also hide line numbers while the mode is on.
 
@@ -384,6 +386,7 @@ Everything else has a built-in default and is **not** declared as its own settin
 | `alignByRegex.rememberLastInput` | boolean | `true` |
 | `plainText.applyEditorSettings` | boolean | `true` |
 | `plainText.disableLineNumbers` | boolean | `false` |
+| `plainText.suppressLanguageActivation` | boolean | `true` (open files as plaintext through a temporary `files.associations` entry, so language extensions never activate) |
 | `plainText.editorOverrides` | object | `{}`, merged on top of the 29-entry `[plaintext]` table below |
 
 You do not need this README to discover any of it: the Settings UI shows every key with its type, built-in default and accepted values, and `settings.json` completes each key as you type. Two snippets are offered on the value — **All built-in defaults** writes out the whole `textToolkit.advanced` object, and **All 29 built-in `[plaintext]` overrides** writes out the full override table, both ready to edit.
@@ -403,7 +406,7 @@ All of them are written under the `[plaintext]` language scope, so they never af
 | Setting id | Built-in value | Other accepted values |
 | --- | --- | --- |
 | `editor.minimap.enabled` | `false` | `true` |
-| `editor.wordWrap` | `"off"` | `"on"`, `"wordWrapColumn"`, `"bounded"` |
+| `editor.wordWrap` | `"on"` | `"off"`, `"wordWrapColumn"`, `"bounded"` |
 | `editor.folding` | `false` | `true` |
 | `editor.stickyScroll.enabled` | `false` | `true` |
 | `editor.bracketPairColorization.enabled` | `false` | `true` |

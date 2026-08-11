@@ -1,5 +1,22 @@
 # Change Log
 
+## v0.0.5 2026-08-12 Plain text mode opens large files without waking language extensions
+
+### Fixed
+
+- `Open in Plain Text Mode` no longer waits for language extensions. VS Code fires `onLanguage:<id>` the moment a text model is created, so opening a large `.ts` first pulled in the TypeScript extension, which loaded the whole project and fetched types while the editor sat on *"Activating Extensions..."* — switching the language afterwards was too late. The command now writes one `files.associations` entry matching exactly that file into User settings, opens it as `plaintext`, pins the language, and removes the entry again, so the model is never anything but plain text. A multi-selection writes that setting once for the whole batch, and a leftover entry from a crashed session is cleaned up on the next activation. Set `{ "textToolkit.advanced": { "plainText.suppressLanguageActivation": false } }` to opt out.
+- Leaving plain text mode still restores the language the file would have had: it is inferred from the contributed language definitions and your `files.associations` before the temporary entry is written.
+
+### Added
+
+- Files above `workbench.editorLargeFileConfirmation` MB, which VS Code replaces with the *"The file is not displayed in the text editor because it is very large"* placeholder, now offer plain text mode from a notification — this extension opens documents through the extension host, which is not bound by that limit, so the content shows without pressing `Open Anyway` first. The offer honours the same `Don't ask again` switch as the size prompt, and is skipped entirely when `textToolkit.plainText.promptSizeMB` is `0`. It is a notification rather than a button on the placeholder because VS Code hardcodes that page's buttons and the `editor/content` menu that could contribute one is still proposed API.
+- `plainText.suppressLanguageActivation` in the built-in layer (`textToolkit.advanced`), default `true`.
+- 13 new tests covering the original-language inference and the two new pure helpers (250 tests, up from 237).
+
+### Changed
+
+- The built-in `[plaintext]` override table now turns word wrap **on** (`editor.wordWrap`: `"on"`, previously `"off"`), so a long line no longer needs `Alt+Z` after entering the mode. The table still has 29 entries; set `{ "textToolkit.advanced": { "plainText.editorOverrides": { "editor.wordWrap": "off" } } }` for the old behaviour.
+
 ## v0.0.4 2026-08-10 Editable comparison copies
 
 ### Added

@@ -26,6 +26,7 @@ describe('advanced (内置层增量覆盖)', () => {
       assert.strictEqual(defaults.alignByRegex.rememberLastInput, true);
       assert.strictEqual(defaults.plainText.applyEditorSettings, true);
       assert.strictEqual(defaults.plainText.disableLineNumbers, false);
+      assert.strictEqual(defaults.plainText.suppressLanguageActivation, true);
       assert.deepStrictEqual(
         defaults.plainText.editorOverrides,
         { ...DEFAULT_EDITOR_OVERRIDES }
@@ -42,7 +43,7 @@ describe('advanced (内置层增量覆盖)', () => {
       for (const key of Object.keys(DEFAULT_EDITOR_OVERRIDES)) {
         assert.ok(key.startsWith('editor.'), `unexpected setting scope: ${key}`);
       }
-      assert.strictEqual(DEFAULT_EDITOR_OVERRIDES['editor.wordWrap'], 'off');
+      assert.strictEqual(DEFAULT_EDITOR_OVERRIDES['editor.wordWrap'], 'on');
       assert.strictEqual(DEFAULT_EDITOR_OVERRIDES['editor.minimap.enabled'], false);
     });
   });
@@ -167,6 +168,10 @@ describe('advanced (内置层增量覆盖)', () => {
       assert.strictEqual(
         schema.properties[ADVANCED_KEYS.disableLineNumbers].default,
         defaults.plainText.disableLineNumbers
+      );
+      assert.strictEqual(
+        schema.properties[ADVANCED_KEYS.suppressLanguageActivation].default,
+        defaults.plainText.suppressLanguageActivation
       );
       // editorOverrides 是增量对象, 用户侧默认必须是空对象.
       assert.deepStrictEqual(schema.properties[ADVANCED_KEYS.editorOverrides].default, {});

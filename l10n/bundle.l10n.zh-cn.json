@@ -16,6 +16,8 @@
   "Plain text mode enabled.": "已开启纯文本模式.",
   "Plain text mode disabled.": "已关闭纯文本模式.",
   "This file is {0}. Switch to plain text mode for faster editing?": "该文件大小为 {0}. 是否切换到纯文本模式以获得更流畅的编辑体验?",
+  "This file is {0}, too large for the text editor. Open it in plain text mode?": "该文件大小为 {0}, 超过文本编辑器的上限. 是否以纯文本模式打开?",
+  "Open in plain text mode": "以纯文本模式打开",
   "Enable": "开启",
   "Not now": "暂不",
   "Don't ask again": "不再询问",

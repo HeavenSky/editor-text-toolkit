@@ -10,7 +10,7 @@
 /** 纯文本模式下按 `[plaintext]` 语言作用域写入的编辑器覆盖项(内置默认表). */
 export const DEFAULT_EDITOR_OVERRIDES: Readonly<Record<string, unknown>> = {
   'editor.minimap.enabled': false,
-  'editor.wordWrap': 'off',
+  'editor.wordWrap': 'on',
   'editor.folding': false,
   'editor.stickyScroll.enabled': false,
   'editor.bracketPairColorization.enabled': false,
@@ -54,6 +54,8 @@ export interface AdvancedSettings {
   plainText: {
     applyEditorSettings: boolean;
     disableLineNumbers: boolean;
+    /** 以纯文本模式打开文件时, 先用临时 files.associations 挡住语言扩展的激活. */
+    suppressLanguageActivation: boolean;
     editorOverrides: Record<string, unknown>;
   };
 }
@@ -65,6 +67,7 @@ export const ADVANCED_KEYS = {
   rememberLastInput: 'alignByRegex.rememberLastInput',
   applyEditorSettings: 'plainText.applyEditorSettings',
   disableLineNumbers: 'plainText.disableLineNumbers',
+  suppressLanguageActivation: 'plainText.suppressLanguageActivation',
   editorOverrides: 'plainText.editorOverrides'
 } as const;
 
@@ -76,6 +79,7 @@ export function advancedDefaults(): AdvancedSettings {
     plainText: {
       applyEditorSettings: true,
       disableLineNumbers: false,
+      suppressLanguageActivation: true,
       editorOverrides: { ...DEFAULT_EDITOR_OVERRIDES }
     }
   };
@@ -136,6 +140,10 @@ export function resolveAdvanced(raw: unknown): AdvancedSettings {
   resolved.plainText.disableLineNumbers = readBoolean(
     ADVANCED_KEYS.disableLineNumbers,
     resolved.plainText.disableLineNumbers
+  );
+  resolved.plainText.suppressLanguageActivation = readBoolean(
+    ADVANCED_KEYS.suppressLanguageActivation,
+    resolved.plainText.suppressLanguageActivation
   );
   resolved.plainText.editorOverrides = mergeEditorOverrides(
     DEFAULT_EDITOR_OVERRIDES,
