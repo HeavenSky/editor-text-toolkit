@@ -51,24 +51,22 @@ export function getLargeFileLimitMB(resource: vscode.Uri): number {
   return typeof value === 'number' && value > 0 ? value : DEFAULT_LARGE_FILE_LIMIT_MB;
 }
 
-export type DiffContextMenu = 'both' | 'markOnly' | 'none';
 export type ClipboardSide = 'left' | 'right';
 
 export interface DiffConfig {
-  contextMenu: DiffContextMenu;
   clipboardSide: ClipboardSide;
   /** 原始值; 校验与丢弃非法条目由 features/diff/core.ts 的 loadRules 负责. */
   normalizationRules: unknown;
 }
 
 /**
- * `contextMenu` 用单个枚举而不是每条命令一个布尔: `when` 子句只能读取嵌套对象属性,
- * 而本扩展的内置层 `textToolkit.advanced` 用的是扁平点号键, 无法在 `when` 中引用.
+ * 不含 `textToolkit.diff.contextMenu`: 它只被 package.json 里 editor/context 的 `when`
+ * 子句消费, 运行时无需读取. 它用单个枚举而不是每条命令一个布尔, 是因为 `when` 只能读取
+ * 嵌套对象属性, 而本扩展的内置层 `textToolkit.advanced` 用的是扁平点号键.
  */
 export function getDiffConfig(): DiffConfig {
   const config = vscode.workspace.getConfiguration('textToolkit.diff');
   return {
-    contextMenu: config.get<DiffContextMenu>('contextMenu', 'both'),
     clipboardSide: config.get<ClipboardSide>('clipboardSide', 'left'),
     normalizationRules: config.get<unknown>('normalizationRules', [])
   };
