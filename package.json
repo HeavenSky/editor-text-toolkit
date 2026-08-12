@@ -32,6 +32,17 @@
     "diff",
     "compare"
   ],
+  "files": [
+    "out/extension.js",
+    "l10n",
+    "media/icon.png",
+    "package.nls.json",
+    "package.nls.zh-cn.json",
+    "LICENSE.txt",
+    "NOTICE.md",
+    "README.zh-cn.md",
+    "CHANGELOG.md"
+  ],
   "main": "./out/extension.js",
   "activationEvents": [
     "onStartupFinished"
