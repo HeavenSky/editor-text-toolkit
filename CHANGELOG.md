@@ -1,5 +1,23 @@
 # Change Log
 
+## v0.0.6 2026-08-13 Maintenance: packaging switched to an allowlist
+
+No user-visible change. Every command, setting and default behaves exactly as in v0.0.5, and the packaged VSIX holds the same 11 entries; this release only changes how that packaging is decided and removes dead code behind it.
+
+### Changed
+
+- What goes into the VSIX is now declared as the `files` allowlist in `package.json` instead of the `.vscodeignore` denylist. A denylist can only stop paths that were anticipated, so any new build output would have slipped into the package silently; `vsce` supports only one of the two, so `.vscodeignore` is deleted. The packaging script keeps asserting the final VSIX content against an allowlist derived independently from the manifest, so a contribution added without a matching `files` entry — or a stale entry left behind — still fails the build.
+- The 17 files shared with the project skeleton (`build.mjs`, `scripts/`, `vitest.config.ts`, `.template-shared`) are back in sync with its current version, and the release workflow gained comments explaining why `npm ci` and a committed lockfile are required. No behaviour change in any of them.
+
+### Removed
+
+- `DiffConfig.contextMenu` and the `DiffContextMenu` type. `textToolkit.diff.contextMenu` is consumed only by the two `when` clauses on the editor context menu, which VS Code evaluates itself, so reading it at runtime was dead code that suggested a dependency that never existed. **The setting itself is unchanged** — same key, same `both` / `markOnly` / `none` values, same effect.
+- The two integration design documents under `docs/`. Both changes they described — merging three extensions, and building the Compare module from `partial-diff`'s capabilities — have shipped, so the documents had stopped guiding anything and only competed with the README and this file as a source of truth. `docs/` is now empty.
+
+### Unchanged
+
+- 250 tests, all passing; the consistency checks (`npm run check`), typecheck and packaging assertions are green. Still zero runtime dependencies.
+
 ## v0.0.5 2026-08-12 Plain text mode opens large files without waking language extensions
 
 ### Fixed
