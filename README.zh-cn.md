@@ -1,6 +1,12 @@
 # Editor Text Toolkit
 
-[English](README.md) · **简体中文**
+[![VS Marketplace](https://vsmarketplacebadges.dev/version-short/HeavenSky.editor-text-toolkit.svg?label=VS%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=HeavenSky.editor-text-toolkit)
+[![Installs](https://vsmarketplacebadges.dev/installs-short/HeavenSky.editor-text-toolkit.svg)](https://marketplace.visualstudio.com/items?itemName=HeavenSky.editor-text-toolkit)
+[![License](https://img.shields.io/badge/license-MIT-blue)](./LICENSE.txt)
+
+[English](./README.md) · **简体中文**
+
+> 市场页只渲染英文版 README, 不随访问者的显示语言切换; 插件界面本身是双语的.
 
 五个日常编辑工具合并成一个 VS Code 扩展 —— 复制 `path:12-14` 形式的引用, 转换大小写风格, 按正则对齐, 驯服超大日志文件, 以及比较两段文本.
 
@@ -8,7 +14,7 @@
 
 ## 快速上手
 
-1. 按 `Ctrl+Shift+P` / `Cmd+Shift+P`, 执行 **`Text Toolkit: 显示全部命令`**.
+1. 按 `Ctrl+Shift+P` / `Cmd+Shift+P`, 执行 **`文本工具箱: 显示全部命令`**.
 2. 选一个分类. 选择器会显示当前生效的设置并列出全部动作, 因此不必记住任何命令名就能用完整个扩展.
 3. 确定了常用的那几个之后, 再给它们[绑定快捷键](#快捷键).
 
@@ -35,7 +41,7 @@
 src/features/diff/core.ts:112-118
 ```
 
-**如何执行:** `Text Toolkit: 复制路径与行号`, 或在编辑器中右键, 或通过选择器.
+**如何执行:** `文本工具箱: 复制路径与行号`, 或在编辑器中右键, 或通过选择器.
 
 **路径部分**遵循 `textToolkit.copyPath.pathStyle`; 选择器同时把四种风格都列为一次性选项, 选用时不会写回你的设置:
 
@@ -75,7 +81,7 @@ src/features/diff/core.ts:112-118
 
 把选区, 多个选区, 或光标所在的词在 16 种风格之间转换.
 
-**如何执行:** `Text Toolkit: 转换大小写风格...` 打开风格选择器; 当选区只有一行时, 每一项都会**预览转换后的文本**, 让你在确认前先看到结果. 从快捷键触发时可以用 `{ "style": "kebab" }` 直接跳过选择器.
+**如何执行:** `文本工具箱: 转换大小写风格...` 打开风格选择器; 当选区只有一行时, 每一项都会**预览转换后的文本**, 让你在确认前先看到结果. 从快捷键触发时可以用 `{ "style": "kebab" }` 直接跳过选择器.
 
 全部 16 种风格, 以输入 `fooBar baz-qux` 为例:
 
@@ -108,7 +114,7 @@ src/features/diff/core.ts:112-118
 
 按某个分隔符对齐选中的若干行, 使各列纵向对齐.
 
-**如何执行:** 选中要对齐的行, 执行 `Text Toolkit: 按正则对齐`. 输入一个正则表达式, 或一个已保存模板的名称. 选择器会连同模式一起列出你的模板, 因此不必回忆模板名.
+**如何执行:** 选中要对齐的行, 执行 `文本工具箱: 按正则对齐`. 输入一个正则表达式, 或一个已保存模板的名称. 选择器会连同模式一起列出你的模板, 因此不必回忆模板名.
 
 在设置中保存模板:
 
@@ -147,7 +153,7 @@ w = 4; vvvvv = 5;      w  = 4; vvvvv = 5;
 **五种进入方式:**
 
 - **资源管理器右键 → `以纯文本模式打开`** —— 一步完成打开与进入, 文件不会先被正常渲染一次. 支持多选; 目录会被跳过.
-- `Text Toolkit: 切换纯文本模式`, 作用于当前打开的文件.
+- `文本工具箱: 切换纯文本模式`, 作用于当前打开的文件.
 - **自动询问**: 打开体积达到 `textToolkit.plainText.promptSizeMB` MB(默认 2)的文件时弹出提示, 接受即进入. 选择 `不再询问` 会被记住; 在选择器的纯文本模式一项中可以恢复. 设为 `0` 表示永不询问.
 - **VS Code 根本不显示该文件时**: 超过 `workbench.editorLargeFileConfirmation` MB 的文件, 编辑器会被换成 *"The file is not displayed in the text editor because it is very large"* 占位页. 扩展会认出这类标签页并提示以纯文本模式打开; 打开走的是扩展宿主, 不受该上限约束, 因此不必先点 `Open Anyway` 就能看到内容. 这里是通知而不是占位页上的按钮: 那个页面的按钮由 VS Code 写死, 唯一能往里加按钮的 `editor/content` 菜单仍是 proposed API, 正式发布的扩展用不了. 与上一条共用 `不再询问` 开关.
 - **静默进入**: 扩展名列在 `textToolkit.plainText.autoApplyExtensions` 中的文件, 例如 `[".log", ".csv"]`.
@@ -207,7 +213,7 @@ w = 4; vvvvv = 5;      w  = 4; vvvvv = 5;
 | 归一化规则 | 只在写副本那一刻套用一次. 之后切换规则不会碰已打开的副本, 因此规则切换永远不会覆盖你的编辑 |
 | `交换比较两侧` | 在副本上执行时反序重开同两个文件, 而不是再写一份副本, 因此未保存的编辑仍在 |
 | 回到来源 | `✎` 旁边的跳转文件按钮, 或选择器里的 `打开来源文件`, 会打开这一侧的来源文件并选中当初的那几行 |
-| 清理 | 副本文件会一直留着, 直到你自己清理 —— 执行 `Text Toolkit: 清理比较副本文件`. **扩展不会自动删除任何东西.** 清理前请先关掉副本标签页, 否则它们会变成"文件已删除"的编辑器 |
+| 清理 | 副本文件会一直留着, 直到你自己清理 —— 执行 `文本工具箱: 清理比较副本文件`. **扩展不会自动删除任何东西.** 清理前请先关掉副本标签页, 否则它们会变成"文件已删除"的编辑器 |
 
 ### 归一化规则
 
@@ -260,7 +266,7 @@ w = 4; vvvvv = 5;      w  = 4; vvvvv = 5;
 
 ### 两级选择器
 
-`Text Toolkit: 显示全部命令` 是总入口. 第一级列出五个分类, 每项显示当前生效的设置; 选中之后进入第二级:
+`文本工具箱: 显示全部命令` 是总入口. 第一级列出五个分类, 每项显示当前生效的设置; 选中之后进入第二级:
 
 | 分类 | 第二级 |
 | --- | --- |
@@ -274,7 +280,7 @@ w = 4; vvvvv = 5;      w  = 4; vvvvv = 5;
 
 ### 命令一览
 
-命令面板中共有九条命令, 全部归在 `Text Toolkit` 分类下:
+命令面板中共有九条命令, 全部归在 `文本工具箱` 分类下(英文界面为 `Text Toolkit`):
 
 | 命令 ID | 标题 | 参数(用于快捷键) |
 | --- | --- | --- |
@@ -466,4 +472,4 @@ npm run package     # 打 VSIX 到 artifacts/, 再按允许清单断言包内容
 
 ## 许可证
 
-MIT. 本扩展的部分内容改编自更早的 MIT 授权作品; 完整的第三方声明随扩展一同分发, 见 `NOTICE.md`.
+MIT. 本扩展的部分内容改编自更早的 MIT 授权作品; 完整的第三方声明随扩展一同分发, 见 [NOTICE.md](./NOTICE.md).

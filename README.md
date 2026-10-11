@@ -1,6 +1,10 @@
 # Editor Text Toolkit
 
-**English** · [简体中文](README.zh-cn.md)
+[![VS Marketplace](https://vsmarketplacebadges.dev/version-short/HeavenSky.editor-text-toolkit.svg?label=VS%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=HeavenSky.editor-text-toolkit)
+[![Installs](https://vsmarketplacebadges.dev/installs-short/HeavenSky.editor-text-toolkit.svg)](https://marketplace.visualstudio.com/items?itemName=HeavenSky.editor-text-toolkit)
+[![License](https://img.shields.io/badge/license-MIT-blue)](./LICENSE.txt)
+
+**English** · [简体中文](./README.zh-cn.md)
 
 Five everyday editing tools in one VS Code extension — copy a `path:12-14` reference, convert case, align by a regex, tame a huge log file, and diff two text fragments.
 
@@ -466,4 +470,4 @@ Each feature lives in `src/features/<name>/`, with the pure logic in files that 
 
 ## License
 
-MIT. Parts of this extension adapt earlier MIT-licensed work; the full third-party notices ship with the extension in `NOTICE.md`.
+MIT. Parts of this extension adapt earlier MIT-licensed work; the full third-party notices ship with the extension in [NOTICE.md](./NOTICE.md).
