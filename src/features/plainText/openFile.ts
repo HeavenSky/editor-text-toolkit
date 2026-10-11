@@ -1,5 +1,9 @@
 import * as vscode from 'vscode';
-import { PLAIN_TEXT_LANGUAGE_ID, toFileAssociationPattern } from './core';
+import {
+  PLAIN_TEXT_LANGUAGE_ID,
+  planTemporaryAssociations,
+  toFileAssociationPattern
+} from './core';
 import { guessLanguageId, type LanguageContribution } from './language';
 
 /**
@@ -58,21 +62,22 @@ function collectLanguageContributions(): LanguageContribution[] {
   return contributions;
 }
 
+/** 返回本次实际新增的 pattern; 用户已有的同名关联保持原样, 撤销时也只处理返回值. */
 async function addAssociations(
   context: vscode.ExtensionContext,
   patterns: readonly string[]
-): Promise<void> {
-  const current = readGlobalAssociations();
-  const next: Record<string, string> = { ...current };
-  for (const pattern of patterns) {
-    next[pattern] = PLAIN_TEXT_LANGUAGE_ID;
+): Promise<string[]> {
+  const { next, added } = planTemporaryAssociations(readGlobalAssociations(), patterns);
+  if (added.length === 0) {
+    return added;
   }
   const pending = new Set(context.globalState.get<string[]>(PENDING_ASSOCIATIONS_KEY, []));
-  for (const pattern of patterns) {
+  for (const pattern of added) {
     pending.add(pattern);
   }
   await context.globalState.update(PENDING_ASSOCIATIONS_KEY, [...pending]);
   await associationsConfiguration().update(ASSOCIATIONS_KEY, next, ASSOCIATIONS_TARGET);
+  return added;
 }
 
 /** 只摘掉自己写进去的键; 全部摘完后若对象已空则整条设置移除, 不留 `"files.associations": {}`. */
@@ -179,9 +184,10 @@ export async function openDocumentsAsPlainText(
     }
 
     const patterns = viaAssociation.map((target) => target.pattern);
+    let added: string[] = [];
     let associated = true;
     try {
-      await addAssociations(context, patterns);
+      added = await addAssociations(context, patterns);
     } catch {
       // 设置不可写(只读配置文件, 受管策略等): 退回普通打开, 慢但不至于打不开.
       associated = false;
@@ -212,7 +218,9 @@ export async function openDocumentsAsPlainText(
       }
     } finally {
       try {
-        await removeAssociations(context, patterns);
+        if (added.length > 0) {
+          await removeAssociations(context, added);
+        }
       } catch {
         /* 撤销失败时残留条目记在 globalState 里, 下次激活再清 */
       }

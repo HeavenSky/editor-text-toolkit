@@ -116,7 +116,14 @@ class CompareFeature {
     context.subscriptions.push(
       this.provider,
       this.statusBarItem,
-      vscode.workspace.registerTextDocumentContentProvider(DIFF_SCHEME, this.provider)
+      vscode.workspace.registerTextDocumentContentProvider(DIFF_SCHEME, this.provider),
+      // 用户直接改 settings.json 时也要刷新计数与已打开的比较, 否则状态栏会与实际规则脱节.
+      vscode.workspace.onDidChangeConfiguration((event) => {
+        if (event.affectsConfiguration('textToolkit.diff.normalizationRules')) {
+          this.updateStatusBar();
+          this.provider.refreshAll();
+        }
+      })
     );
     this.updateStatusBar();
   }
@@ -394,9 +401,18 @@ class CompareFeature {
     }
 
     const range = picked.sourceRange;
-    await vscode.window.showTextDocument(vscode.Uri.parse(picked.sourceUri as string), {
-      ...(range ? { selection: new vscode.Range(range.start, 0, range.end, 0) } : {})
-    });
+    const document = await vscode.workspace.openTextDocument(
+      vscode.Uri.parse(picked.sourceUri as string)
+    );
+    // range.end 是选区末行(含), 因此选到该行行尾; 文档可能已变短, 先夹到最后一行.
+    const lastLine = document.lineCount - 1;
+    const selection = range
+      ? new vscode.Range(
+          new vscode.Position(Math.min(range.start, lastLine), 0),
+          document.lineAt(Math.min(range.end, lastLine)).range.end
+        )
+      : undefined;
+    await vscode.window.showTextDocument(document, selection ? { selection } : {});
   }
 
   /**

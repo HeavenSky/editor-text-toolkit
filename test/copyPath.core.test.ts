@@ -177,5 +177,14 @@ describe('copyPath core', () => {
       assert.strictEqual(applyTilde('C:\\Users\\username\\a.ts', 'C:\\Users\\username', '\\'), '~\\a.ts');
       assert.strictEqual(applyTilde('D:\\tmp\\a.ts', 'C:\\Users\\username', '\\'), 'D:\\tmp\\a.ts');
     });
+
+    it('Windows 下忽略大小写比较前缀, 保留原路径大小写', () => {
+      assert.strictEqual(applyTilde('c:\\Users\\username\\Code\\a.ts', 'C:\\Users\\username', '\\'), '~\\Code\\a.ts');
+      assert.strictEqual(applyTilde('c:\\users\\USERNAME', 'C:\\Users\\username\\', '\\'), '~');
+    });
+
+    it('POSIX 下仍区分大小写', () => {
+      assert.strictEqual(applyTilde('/users/username/a.ts', '/Users/username', '/'), '/users/username/a.ts');
+    });
   });
 });

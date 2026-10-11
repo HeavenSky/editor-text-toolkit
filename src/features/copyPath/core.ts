@@ -98,13 +98,21 @@ export function formatResult(
   return `${filePath}${separator}${formatLines(lines, style, spanSyntax)}`;
 }
 
-/** 仅当路径位于 home 目录下时替换前缀为 `~`; sep 可注入以便跨平台测试. */
+/**
+ * 仅当路径位于 home 目录下时替换前缀为 `~`; sep 可注入以便跨平台测试.
+ *
+ * Windows 路径大小写不敏感, 且 fsPath 的盘符是小写而 homedir 是大写, 因此 `\\` 分隔时
+ * 忽略大小写比较前缀; 截取仍用原值, 保留路径本来的大小写.
+ */
 export function applyTilde(absolutePath: string, homeDir: string, sep: string = path.sep): string {
   const normalizedHome = homeDir.endsWith(sep) ? homeDir.slice(0, -1) : homeDir;
-  if (absolutePath === normalizedHome) {
+  const fold = (value: string): string => (sep === '\\' ? value.toLowerCase() : value);
+  const target = fold(absolutePath);
+  const home = fold(normalizedHome);
+  if (target === home) {
     return '~';
   }
-  if (absolutePath.startsWith(`${normalizedHome}${sep}`)) {
+  if (target.startsWith(`${home}${sep}`)) {
     return `~${absolutePath.slice(normalizedHome.length)}`;
   }
   return absolutePath;

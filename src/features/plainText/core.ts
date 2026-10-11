@@ -61,6 +61,26 @@ export function toFileAssociationPattern(fsPath: string): string | undefined {
   return normalized;
 }
 
+/**
+ * 计算要临时挂上的关联: 用户设置里已有的 pattern 一律跳过, 不覆盖也不记为本次新增,
+ * 这样撤销时只会摘掉本次真正写进去的键, 不误删用户原本的同名配置.
+ */
+export function planTemporaryAssociations(
+  current: Readonly<Record<string, string>> | undefined,
+  patterns: readonly string[]
+): { next: Record<string, string>; added: string[] } {
+  const next: Record<string, string> = { ...current };
+  const added: string[] = [];
+  for (const pattern of patterns) {
+    if (Object.prototype.hasOwnProperty.call(next, pattern)) {
+      continue;
+    }
+    next[pattern] = PLAIN_TEXT_LANGUAGE_ID;
+    added.push(pattern);
+  }
+  return { next, added };
+}
+
 export function formatFileSize(bytes: number): string {
   if (bytes < 1024) {
     return `${bytes} B`;

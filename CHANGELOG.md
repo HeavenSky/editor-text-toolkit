@@ -1,5 +1,14 @@
 # Change Log
 
+## Unreleased
+
+### Fixed
+
+- Editing `textToolkit.diff.normalizationRules` directly in `settings.json` now updates the `$(filter)N` status bar count and re-renders every open comparison right away. Previously both only caught up on the next compare action, although the tooltip promised the count was always current.
+- `Open Source File` from a comparison now selects the original lines through the end of the last one. It used to stop at column 0 of the last line, which left a single-line source with an empty selection and dropped the last line of a multi-line one.
+- `textToolkit.copyPath` replaces the home directory with `~` on Windows again. `fsPath` reports the drive letter in lower case while the home directory uses upper case, so the case-sensitive prefix check never matched; Windows paths are now compared case-insensitively, and the rest of the path keeps its original case.
+- Plain text mode no longer deletes a `files.associations` entry you already had for the same file. The temporary entry is skipped when that pattern already exists in User settings, and cleanup only removes entries this extension added.
+
 ## v0.0.6 2026-08-13 Maintenance: packaging switched to an allowlist
 
 No user-visible change. Every command, setting and default behaves exactly as in v0.0.5, and the packaged VSIX holds the same 11 entries; this release only changes how that packaging is decided and removes dead code behind it.

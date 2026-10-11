@@ -5,6 +5,7 @@ import {
   formatFileSize,
   matchesAutoApplyExtension,
   normalizeExtension,
+  planTemporaryAssociations,
   shouldPromptForSize,
   toFileAssociationPattern
 } from '../src/features/plainText/core';
@@ -101,6 +102,24 @@ describe('plainText core', () => {
     it('不含路径分隔符时无法只匹配这一个文件, 返回 undefined', () => {
       assert.strictEqual(toFileAssociationPattern('big.ts'), undefined);
       assert.strictEqual(toFileAssociationPattern(''), undefined);
+    });
+  });
+
+  describe('planTemporaryAssociations', () => {
+    it('只新增用户设置里没有的 pattern', () => {
+      const current = { '**/a.ts': 'plaintext', '**/b.ts': 'typescript', '*.md': 'markdown' };
+      const { next, added } = planTemporaryAssociations(current, ['**/a.ts', '**/b.ts', '**/c.ts']);
+      assert.deepStrictEqual(added, ['**/c.ts']);
+      assert.deepStrictEqual(next, { ...current, '**/c.ts': 'plaintext' });
+    });
+
+    it('用户设置为空时全部新增, 且不改动传入对象', () => {
+      const current = {};
+      const { next, added } = planTemporaryAssociations(current, ['**/a.ts']);
+      assert.deepStrictEqual(added, ['**/a.ts']);
+      assert.deepStrictEqual(next, { '**/a.ts': 'plaintext' });
+      assert.deepStrictEqual(current, {});
+      assert.deepStrictEqual(planTemporaryAssociations(undefined, ['**/a.ts']).added, ['**/a.ts']);
     });
   });
 });
