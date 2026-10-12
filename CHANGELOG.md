@@ -1,6 +1,6 @@
 # Change Log
 
-## Unreleased
+## v0.0.7 2026-10-12 Comparison, path and plain text fixes
 
 ### Fixed
 
@@ -8,6 +8,10 @@
 - `Open Source File` from a comparison now selects the original lines through the end of the last one. It used to stop at column 0 of the last line, which left a single-line source with an empty selection and dropped the last line of a multi-line one.
 - `textToolkit.copyPath` replaces the home directory with `~` on Windows again. `fsPath` reports the drive letter in lower case while the home directory uses upper case, so the case-sensitive prefix check never matched; Windows paths are now compared case-insensitively, and the rest of the path keeps its original case.
 - Plain text mode no longer deletes a `files.associations` entry you already had for the same file. The temporary entry is skipped when that pattern already exists in User settings, and cleanup only removes entries this extension added.
+
+### Changed
+
+- Docs: the README now shows a screenshot of each feature. The images are loaded from GitHub when the page is viewed and are not packaged into the extension.
 
 ## v0.0.6 2026-08-13 Maintenance: packaging switched to an allowlist
 

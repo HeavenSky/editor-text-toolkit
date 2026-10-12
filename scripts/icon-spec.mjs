@@ -69,7 +69,7 @@ const lowerA = (cx, cy, radius, stroke, strokeWidth) => [
   },
 ];
 
-export const spec = {
+export default {
   size: SIZE,
   label: 'Editor Text Toolkit',
   shapes: [

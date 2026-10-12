@@ -83,6 +83,8 @@ src/features/diff/core.ts:112-118
 
 **如何执行:** `文本工具箱: 转换大小写风格...` 打开风格选择器; 当选区只有一行时, 每一项都会**预览转换后的文本**, 让你在确认前先看到结果. 从快捷键触发时可以用 `{ "style": "kebab" }` 直接跳过选择器.
 
+![转换大小写风格的选择器, 每一项预览选区转换后的结果](./media/screenshots/change-case.png)
+
 全部 16 种风格, 以输入 `fooBar baz-qux` 为例:
 
 | 风格 | 结果 | 说明 |
@@ -115,6 +117,10 @@ src/features/diff/core.ts:112-118
 按某个分隔符对齐选中的若干行, 使各列纵向对齐.
 
 **如何执行:** 选中要对齐的行, 执行 `文本工具箱: 按正则对齐`. 输入一个正则表达式, 或一个已保存模板的名称. 选择器会连同模式一起列出你的模板, 因此不必回忆模板名.
+
+![按正则对齐: 为选中的行输入正则表达式](./media/screenshots/align-input.png)
+
+![按正则对齐: 两处分隔符都已对齐](./media/screenshots/align-result.png)
 
 在设置中保存模板:
 
@@ -178,6 +184,8 @@ w = 4; vvvvv = 5;      w  = 4; vvvvv = 5;
 ## 比较 (Diff)
 
 比较两段文本, 两边都不需要先存成文件. 两侧默认只读, 除非你要一份[可编辑副本](#可编辑副本).
+
+![比较同一文件里的两段选区](./media/screenshots/diff.png)
 
 **五种发起比较的方式:**
 
@@ -277,6 +285,8 @@ w = 4; vvvvv = 5;      w  = 4; vvvvv = 5;
 | 比较 (Diff) | 标记, 与标记比较, 与剪贴板比较, 比较可见编辑器, 比较两个标签页, 交换两侧, 把当前比较改成可编辑副本, 打开来源文件, 切换归一化规则, 清理副本文件, 以及存在标记时的清除标记 |
 
 三条规则处处成立: 第二级的首项固定是 `← 返回`; `Esc` 取消整个流程且不做任何改动; 第一级本身从不执行动作.
+
+![选择器的第一级](./media/screenshots/commands.png)
 
 ### 命令一览
 
@@ -464,9 +474,14 @@ npm run build       # 同上, 但压缩且不带 sourcemap(vscode:prepublish 执
 npm run watch       # 改动后重新构建
 npm run gen:icon    # 依据 scripts/icon-spec.mjs 重新生成 media/icon.svg 与 media/icon.png
 npm run package     # 打 VSIX 到 artifacts/, 再按允许清单断言包内容
+npm run shots       # 重新生成功能截图到 media/screenshots/(macOS, 会弹出一个 VS Code 窗口)
 ```
 
 `npm run package` **不会**替你跑检查 —— 请先执行 `typecheck`, `test` 与 `check`. `npm run check` 拦的是构建拦不住的问题: 缺失的 `package.nls` 条目会静默渲染成 `%config.foo%`, 缺失的 `l10n` 条目会静默回落英文, 因此两个方向都要断言 —— 既查缺失条目, 也查无人使用的条目.
+
+使用 npm 12 时, `npm ci` 只接受从 `registry.npmjs.org` 解析的 lockfile, 且依赖的安装脚本(`esbuild`, `@vscode/vsce-sign`, `fsevents`)默认不执行. 检查, 测试与打包都不需要它们; 只有本地签名或发布报错时, 才用 `npm install-scripts approve <包>` 放行. CI 使用 `.nvmrc` 指定的 Node 版本自带的 npm, 不受影响.
+
+`npm run shots` 只手动执行: 它经 `scripts/shoot.mjs` 操作一个独立的 VS Code 窗口, 把本文引用的截图写入 `media/screenshots/`, 不参与打包与发布.
 
 每个功能位于 `src/features/<name>/`, 纯逻辑放在从不 import `vscode` 的文件里, 以便直接单测. `change-case@5` 是纯 ESM, 因此扩展用 esbuild 打包成 CJS; 发布的 `.vsix` 中不含 `node_modules`.
 

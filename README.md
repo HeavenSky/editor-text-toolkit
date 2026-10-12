@@ -81,6 +81,8 @@ Converts the selection, several selections at once, or the word under the cursor
 
 **Run it:** `Text Toolkit: Change Case...` opens the style picker; with a single-line selection each entry **previews the converted text**, so you can see the result before committing. From a keybinding you can skip the picker entirely with `{ "style": "kebab" }`.
 
+![Change Case picker previewing every style for the selection](./media/screenshots/change-case.png)
+
 All 16 styles, applied to the input `fooBar baz-qux`:
 
 | Style | Result | Notes |
@@ -113,6 +115,10 @@ Multi-line selections are split on the document's own end-of-line sequence, so a
 Aligns the selected lines on a separator so columns line up.
 
 **Run it:** select the lines, then `Text Toolkit: Align by RegEx`. Enter a regular expression, or the name of a saved template. The picker lists your templates with their patterns, so you never have to recall a name.
+
+![Align by RegEx: entering a regular expression for the selected lines](./media/screenshots/align-input.png)
+
+![Align by RegEx: the lines aligned on both separators](./media/screenshots/align-result.png)
 
 Save templates in settings:
 
@@ -176,6 +182,8 @@ Set `{ "textToolkit.advanced": { "plainText.applyEditorSettings": false } }` to 
 ## Compare (Diff)
 
 Diff two pieces of text without saving either of them to a file. Both sides are read-only, unless you ask for an [editable copy](#editable-copies).
+
+![Comparing two selections from the same file](./media/screenshots/diff.png)
 
 **Five ways to start a comparison:**
 
@@ -275,6 +283,8 @@ The comparison opens in a stock VS Code diff editor, so everything the diff edit
 | Compare (Diff) | Mark, compare with the mark, compare with the clipboard, compare visible editors, compare two open tabs, swap sides, turn the comparison into an editable copy, open the source file, toggle normalization rules, clean up copy files, and clear the mark when one is set |
 
 Three rules hold everywhere: the second level always starts with `← Back`; `Esc` cancels the whole flow without changing anything; the first level never performs an action by itself.
+
+![The first level of the picker](./media/screenshots/commands.png)
 
 ### Command reference
 
@@ -462,9 +472,14 @@ npm run build       # same but minified and without a sourcemap (what vscode:pre
 npm run watch       # rebuild on change
 npm run gen:icon    # regenerate media/icon.svg and media/icon.png from scripts/icon-spec.mjs
 npm run package     # vsce package into artifacts/, then assert the VSIX contents against an allowlist
+npm run shots       # regenerate the feature screenshots into media/screenshots/ (macOS, opens a VS Code window)
 ```
 
 `npm run package` does **not** run the checks for you — run `typecheck`, `test` and `check` first. `npm run check` is the gate that catches what a build cannot: a missing `package.nls` entry silently renders as `%config.foo%`, and a missing `l10n` entry silently falls back to English, so both directions are asserted — missing entries *and* unused ones.
+
+With npm 12, `npm ci` only accepts a lockfile resolved from `registry.npmjs.org`, and dependency install scripts (`esbuild`, `@vscode/vsce-sign`, `fsevents`) are skipped by default. None of them is needed to check, test or package; approve one with `npm install-scripts approve <package>` only if signing or publishing locally fails. CI uses the npm bundled with the Node version in `.nvmrc` and is not affected.
+
+`npm run shots` is run by hand only: it drives a separate VS Code window through `scripts/shoot.mjs`, writes the screenshots used by this README to `media/screenshots/`, and is not part of packaging or publishing.
 
 Each feature lives in `src/features/<name>/`, with the pure logic in files that never import `vscode` so they can be unit-tested directly. `change-case@5` is pure ESM, so the extension is bundled to CJS with esbuild; the packaged `.vsix` contains no `node_modules`.
 
