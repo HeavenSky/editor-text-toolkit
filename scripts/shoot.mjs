@@ -7,9 +7,10 @@
 //   diff           两段选区的对比视图
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { launch, gitInit } from './lib/shoot-ext.mjs';
 
-const REPO = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
+const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 const SERVICE_TS = `import { fetchJson } from './http';
 
