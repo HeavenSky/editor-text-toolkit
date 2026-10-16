@@ -1,5 +1,11 @@
 # Change Log
 
+## v0.0.8 2026-10-16 Rewritten docs
+
+### Changed
+
+- Docs: the README is now a short overview; each tool has its own page under [docs](https://github.com/HeavenSky/editor-text-toolkit/blob/HEAD/docs/README.md), including troubleshooting, and the Chinese pages now live under `zh/`.
+
 ## v0.0.7 2026-10-12 Comparison, path and plain text fixes
 
 ### Changed
