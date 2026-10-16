@@ -1,5 +1,5 @@
 {
-  "extension.description": "复制路径与行号, 转换大小写风格, 按正则对齐, 以及面向大文件的纯文本模式.",
+  "extension.description": "复制 路径:行号 形式的位置引用, 转换大小写风格, 按正则对齐各列, 以纯文本模式打开大文件, 比较任意两段文本.",
   "category": "文本工具箱",
   "command.commands": "显示全部命令",
   "command.copyPathWithLines": "复制路径与行号",
@@ -45,7 +45,7 @@
   "config.diffClipboardSide": "「与剪贴板比较」时剪贴板放在哪一侧. 「交换比较两侧」只影响单次比较, 不改动该设置.",
   "config.diffClipboardSide.left": "剪贴板在左, 选区在右.",
   "config.diffClipboardSide.right": "选区在左, 剪贴板在右.",
-  "config.advanced": "对内置默认值的增量覆盖: 只有你显式设置的键会被改变, 其余全部保持内置值. 未知的键与类型不符的值会被忽略, 不会报错.\n\n全部可用键及其内置默认值:\n\n- `copyPath.useLineCountSyntax` — 布尔, 默认 `false`\n- `changeCase.includeDotInCurrentWord` — 布尔, 默认 `false`\n- `alignByRegex.rememberLastInput` — 布尔, 默认 `true`\n- `plainText.applyEditorSettings` — 布尔, 默认 `true`\n- `plainText.disableLineNumbers` — 布尔, 默认 `false`\n- `plainText.editorOverrides` — 对象, 默认 `{}`, 叠加在 29 项内置 `[plaintext]` 覆盖之上(完整表格见该键的说明)\n\n在 settings.json 中编辑可获得每个键的补全, 也可插入 `全部内置默认值` 代码片段直接写出整个对象.",
+  "config.advanced": "对内置默认值的增量覆盖: 只有你显式设置的键会被改变, 其余全部保持内置值. 未知的键与类型不符的值会被忽略, 不会报错.\n\n全部可用键及其内置默认值:\n\n- `copyPath.useLineCountSyntax` — 布尔, 默认 `false`\n- `changeCase.includeDotInCurrentWord` — 布尔, 默认 `false`\n- `alignByRegex.rememberLastInput` — 布尔, 默认 `true`\n- `plainText.applyEditorSettings` — 布尔, 默认 `true`\n- `plainText.disableLineNumbers` — 布尔, 默认 `false`\n- `plainText.suppressLanguageActivation` — 布尔, 默认 `true`\n- `plainText.editorOverrides` — 对象, 默认 `{}`, 叠加在 29 项内置 `[plaintext]` 覆盖之上(完整表格见该键的说明)\n\n在 settings.json 中编辑可获得每个键的补全, 也可插入 `全部内置默认值` 代码片段直接写出整个对象.",
   "advanced.useLineCountSyntax": "多行片段写成 `a+n`(起始行 + 行数), 而不是闭区间 `a-b`. 两种写法下单行都写成 `a`, 多个片段都用逗号连接; 该开关只影响 `copyPath.multiLineFormat: range`.\n\n取值 `true` | `false`, 内置默认 `false`. 例: 输出 `src/a.ts:12+3` 而非 `src/a.ts:12-14`.",
   "advanced.includeDotInCurrentWord": "转换光标所在词(空选区)时, 把 `.` 视为词的一部分. Change Case 始终把 `_`, `-`, `/`, `$` 视为词字符, 该键只控制点号.\n\n取值 `true` | `false`, 内置默认 `false`. 光标位于 `foo_bar.baz` 的 `baz` 上时: `true` 转换整个 `foo_bar.baz`, `false` 只转换 `baz`.",
   "advanced.rememberLastInput": "按正则对齐的输入框预填上一次使用的表达式. 仅保存在当前窗口的内存中, 不写入磁盘.\n\n取值 `true` | `false`, 内置默认 `true`.",

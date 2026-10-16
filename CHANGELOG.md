@@ -2,16 +2,16 @@
 
 ## v0.0.7 2026-10-12 Comparison, path and plain text fixes
 
+### Changed
+
+- Docs: the README now shows a screenshot of each feature. The images are loaded from GitHub when the page is viewed and are not packaged into the extension.
+
 ### Fixed
 
 - Editing `textToolkit.diff.normalizationRules` directly in `settings.json` now updates the `$(filter)N` status bar count and re-renders every open comparison right away. Previously both only caught up on the next compare action, although the tooltip promised the count was always current.
 - `Open Source File` from a comparison now selects the original lines through the end of the last one. It used to stop at column 0 of the last line, which left a single-line source with an empty selection and dropped the last line of a multi-line one.
 - `textToolkit.copyPath` replaces the home directory with `~` on Windows again. `fsPath` reports the drive letter in lower case while the home directory uses upper case, so the case-sensitive prefix check never matched; Windows paths are now compared case-insensitively, and the rest of the path keeps its original case.
 - Plain text mode no longer deletes a `files.associations` entry you already had for the same file. The temporary entry is skipped when that pattern already exists in User settings, and cleanup only removes entries this extension added.
-
-### Changed
-
-- Docs: the README now shows a screenshot of each feature. The images are loaded from GitHub when the page is viewed and are not packaged into the extension.
 
 ## v0.0.6 2026-08-13 Maintenance: packaging switched to an allowlist
 
@@ -33,14 +33,9 @@ No user-visible change. Every command, setting and default behaves exactly as in
 
 ## v0.0.5 2026-08-12 Plain text mode opens large files without waking language extensions
 
-### Fixed
-
-- `Open in Plain Text Mode` no longer waits for language extensions. VS Code fires `onLanguage:<id>` the moment a text model is created, so opening a large `.ts` first pulled in the TypeScript extension, which loaded the whole project and fetched types while the editor sat on *"Activating Extensions..."* — switching the language afterwards was too late. The command now writes one `files.associations` entry matching exactly that file into User settings, opens it as `plaintext`, pins the language, and removes the entry again, so the model is never anything but plain text. A multi-selection writes that setting once for the whole batch, and a leftover entry from a crashed session is cleaned up on the next activation. Set `{ "textToolkit.advanced": { "plainText.suppressLanguageActivation": false } }` to opt out.
-- Leaving plain text mode still restores the language the file would have had: it is inferred from the contributed language definitions and your `files.associations` before the temporary entry is written.
-
 ### Added
 
-- Files above `workbench.editorLargeFileConfirmation` MB, which VS Code replaces with the *"The file is not displayed in the text editor because it is very large"* placeholder, now offer plain text mode from a notification — this extension opens documents through the extension host, which is not bound by that limit, so the content shows without pressing `Open Anyway` first. The offer honours the same `Don't ask again` switch as the size prompt, and is skipped entirely when `textToolkit.plainText.promptSizeMB` is `0`. It is a notification rather than a button on the placeholder because VS Code hardcodes that page's buttons and the `editor/content` menu that could contribute one is still proposed API.
+- Files too large for VS Code to display now offer plain text mode from a notification, so you no longer need `Open Anyway` first ([how it works](https://github.com/HeavenSky/editor-text-toolkit/blob/HEAD/docs/plain-text-mode.md#enter-the-mode)).
 - `plainText.suppressLanguageActivation` in the built-in layer (`textToolkit.advanced`), default `true`.
 - 13 new tests covering the original-language inference and the two new pure helpers (250 tests, up from 237).
 
@@ -48,12 +43,17 @@ No user-visible change. Every command, setting and default behaves exactly as in
 
 - The built-in `[plaintext]` override table now turns word wrap **on** (`editor.wordWrap`: `"on"`, previously `"off"`), so a long line no longer needs `Alt+Z` after entering the mode. The table still has 29 entries; set `{ "textToolkit.advanced": { "plainText.editorOverrides": { "editor.wordWrap": "off" } } }` for the old behaviour.
 
+### Fixed
+
+- `Open in Plain Text Mode` no longer waits for language extensions such as TypeScript to activate before showing a large file ([how it works](https://github.com/HeavenSky/editor-text-toolkit/blob/HEAD/docs/plain-text-mode.md#what-changes-while-the-mode-is-on)).
+- Leaving plain text mode still restores the language the file would have had: it is inferred from the contributed language definitions and your `files.associations` before the temporary entry is written.
+
 ## v0.0.4 2026-08-10 Editable comparison copies
 
 ### Added
 
 - **Editable comparisons** — `Edit This Comparison as a Copy` (`textToolkit.diff.editableCopy`) makes the comparison you are looking at editable on **both** sides. It appears as a `✎` button in the top-right corner of a comparison this extension opened, and in the Compare picker; triggered from the diff editor it replaces that tab in place, in the same editor group.
-- Two whole files open directly as a **native editable diff of the real files**, so edits save straight back to disk with Git integration intact. Everything else — a selection, the clipboard, a read-only virtual document — is written to two real copy files named after their origin (`service (ll.3-7).ts`, `Clipboard.ts`) under the extension's storage directory. Copies are editable on both sides and are **never written back** to the selection they came from; `Ctrl+S` saves the copy file itself, and a side without an extension borrows the other side's so syntax highlighting still works.
+- Two whole files open as a **native editable diff of the real files**; anything else is written to two copy files that are **never written back** to the selection they came from ([details](https://github.com/HeavenSky/editor-text-toolkit/blob/HEAD/docs/compare.md#edit-a-comparison-as-a-copy)).
 - `Open the Source File` (`textToolkit.diff.openSource`) jumps from either kind of comparison back to the file a side came from, selecting the lines that took part in the comparison. Also available as a title-bar button.
 - `Clean Up Comparison Copies` (`textToolkit.diff.cleanUpCopies`) deletes all copy files. **Nothing is cleaned up automatically** — the extension never deletes a copy behind your back, because you may have just saved into it.
 - Normalization rules are applied once, when a copy is written, so toggling rules afterwards can never overwrite your edits. Read-only comparisons still refresh as before.
@@ -104,6 +104,12 @@ No user-visible change. Every command, setting and default behaves exactly as in
 
 First release. Merges three extensions into one, with zero runtime dependencies.
 
+### Changed (breaking vs the original extensions)
+
+- All command IDs use the `textToolkit.` prefix; the old IDs (`copyPath.lineNumber.copy`, `extension.changeCase.*`, `align.by.regex`) are not registered. The 16 per-style Change Case commands are replaced by `textToolkit.changeCase` with a `style` argument. To migrate, point your keybindings at the new IDs, for example `extension.changeCase.kebab` → `textToolkit.changeCase` with `"args": { "style": "kebab" }`.
+- All settings use the `textToolkit.` prefix and are not migrated automatically. `copyPath.pathStyle` values are now bare (`absolute`, `relative`, `tilde`, `fileName`), and `changeCase.includeDotInCurrentWord` moved into `textToolkit.advanced`. To migrate, copy your old values under the new keys in `settings.json`.
+- `sentence` capitalises the first letter; `title` capitalises every word; letter/digit boundaries are no longer split.
+
 ### Features
 
 - **Copy Path With Line Numbers** (`textToolkit.copyPathWithLines`, also in the editor context menu) with `pathStyle` (default `absolute`), `separator` and `multiLineFormat` settings. Accepts `{ "pathStyle": ... }` as a keybinding argument for one-off styles.
@@ -123,9 +129,3 @@ First release. Merges three extensions into one, with zero runtime dependencies.
 - Change Case: `includeDotInCurrentWord` now actually takes effect (upstream declared it outside `contributes`, so it was never registered).
 - Change Case: the quick pick no longer throws when cancelled, no longer throws without an active editor, and applies its `placeHolder` / match-on-description options.
 - Align by RegEx: a selection ending at the very start of the line after the first no longer builds an invalid range.
-
-### Changed (breaking vs the original extensions)
-
-- All command IDs use the `textToolkit.` prefix; the old IDs (`copyPath.lineNumber.copy`, `extension.changeCase.*`, `align.by.regex`) are not registered. The 16 per-style Change Case commands are replaced by `textToolkit.changeCase` with a `style` argument.
-- All settings use the `textToolkit.` prefix and are not migrated automatically. `copyPath.pathStyle` values are now bare (`absolute`, `relative`, `tilde`, `fileName`), and `changeCase.includeDotInCurrentWord` moved into `textToolkit.advanced`.
-- `sentence` capitalises the first letter; `title` capitalises every word; letter/digit boundaries are no longer split.

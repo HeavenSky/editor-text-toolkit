@@ -4,6 +4,10 @@
   "description": "%extension.description%",
   "version": "0.0.7",
   "publisher": "HeavenSky",
+  "author": {
+    "name": "calla",
+    "email": "aurora.calla@outlook.com"
+  },
   "license": "MIT",
   "icon": "media/icon.png",
   "l10n": "./l10n",
@@ -40,7 +44,6 @@
     "package.nls.zh-cn.json",
     "LICENSE.txt",
     "NOTICE.md",
-    "README.zh-cn.md",
     "CHANGELOG.md"
   ],
   "main": "./out/extension.js",
