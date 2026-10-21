@@ -5,6 +5,7 @@ import { registerCopyPathCommand } from "./features/copyPath/command";
 import { registerDiffFeature } from "./features/diff/command";
 import { registerMenuCommand } from "./features/menu/command";
 import { registerPlainTextMode } from "./features/plainText/command";
+import { registerTerminalOpenFeature } from "./features/terminalOpen/command";
 
 export function activate(context: vscode.ExtensionContext): void {
 	registerCopyPathCommand(context);
@@ -12,6 +13,7 @@ export function activate(context: vscode.ExtensionContext): void {
 	registerAlignByRegexCommand(context);
 	const plainText = registerPlainTextMode(context);
 	const diff = registerDiffFeature(context);
+	registerTerminalOpenFeature(context);
 	registerMenuCommand(context, plainText, diff);
 }
 

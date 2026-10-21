@@ -54,6 +54,10 @@ export interface AdvancedSettings {
 		suppressLanguageActivation: boolean;
 		editorOverrides: Record<string, unknown>;
 	};
+	terminalOpen: {
+		/** false 时不注册终端选区链接 provider. */
+		selectionLink: boolean;
+	};
 }
 
 /** `textToolkit.advanced` 里可用的扁平点号键, 与 package.json 的 schema 一致. */
@@ -65,6 +69,7 @@ export const ADVANCED_KEYS = {
 	disableLineNumbers: "plainText.disableLineNumbers",
 	suppressLanguageActivation: "plainText.suppressLanguageActivation",
 	editorOverrides: "plainText.editorOverrides",
+	selectionLink: "terminalOpen.selectionLink",
 } as const;
 
 export function advancedDefaults(): AdvancedSettings {
@@ -78,6 +83,7 @@ export function advancedDefaults(): AdvancedSettings {
 			suppressLanguageActivation: true,
 			editorOverrides: { ...DEFAULT_EDITOR_OVERRIDES },
 		},
+		terminalOpen: { selectionLink: true },
 	};
 }
 
@@ -140,6 +146,10 @@ export function resolveAdvanced(raw: unknown): AdvancedSettings {
 	resolved.plainText.suppressLanguageActivation = readBoolean(
 		ADVANCED_KEYS.suppressLanguageActivation,
 		resolved.plainText.suppressLanguageActivation
+	);
+	resolved.terminalOpen.selectionLink = readBoolean(
+		ADVANCED_KEYS.selectionLink,
+		resolved.terminalOpen.selectionLink
 	);
 	resolved.plainText.editorOverrides = mergeEditorOverrides(
 		DEFAULT_EDITOR_OVERRIDES,

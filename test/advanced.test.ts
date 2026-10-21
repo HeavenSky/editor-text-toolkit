@@ -27,6 +27,7 @@ describe("advanced (内置层增量覆盖)", () => {
 			assert.strictEqual(defaults.plainText.applyEditorSettings, true);
 			assert.strictEqual(defaults.plainText.disableLineNumbers, false);
 			assert.strictEqual(defaults.plainText.suppressLanguageActivation, true);
+			assert.strictEqual(defaults.terminalOpen.selectionLink, true);
 			assert.deepStrictEqual(defaults.plainText.editorOverrides, {
 				...DEFAULT_EDITOR_OVERRIDES,
 			});
@@ -106,6 +107,16 @@ describe("advanced (内置层增量覆盖)", () => {
 			assert.strictEqual(resolved.changeCase.includeDotInCurrentWord, false);
 		});
 
+		it("终端选区链接开关可单独关闭", () => {
+			const resolved = resolveAdvanced({ [ADVANCED_KEYS.selectionLink]: false });
+			assert.strictEqual(resolved.terminalOpen.selectionLink, false);
+			assert.strictEqual(resolved.alignByRegex.rememberLastInput, true);
+			assert.strictEqual(
+				resolveAdvanced({ [ADVANCED_KEYS.selectionLink]: "no" }).terminalOpen.selectionLink,
+				true
+			);
+		});
+
 		it("类型不符的值被忽略", () => {
 			const resolved = resolveAdvanced({
 				[ADVANCED_KEYS.includeDotInCurrentWord]: "yes",
@@ -175,6 +186,10 @@ describe("advanced (内置层增量覆盖)", () => {
 			assert.strictEqual(
 				schema.properties[ADVANCED_KEYS.suppressLanguageActivation].default,
 				defaults.plainText.suppressLanguageActivation
+			);
+			assert.strictEqual(
+				schema.properties[ADVANCED_KEYS.selectionLink].default,
+				defaults.terminalOpen.selectionLink
 			);
 			// editorOverrides 是增量对象, 用户侧默认必须是空对象.
 			assert.deepStrictEqual(schema.properties[ADVANCED_KEYS.editorOverrides].default, {});

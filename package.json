@@ -159,6 +159,11 @@
 				"command": "textToolkit.diff.showMenu",
 				"title": "%command.diffShowMenu%",
 				"category": "%category%"
+			},
+			{
+				"command": "textToolkit.terminal.openSelection",
+				"title": "%command.terminalOpenSelection%",
+				"category": "%category%"
 			}
 		],
 		"menus": {
@@ -194,6 +199,10 @@
 				{
 					"command": "textToolkit.diff.showMenu",
 					"when": "false"
+				},
+				{
+					"command": "textToolkit.terminal.openSelection",
+					"when": "terminalIsOpen"
 				}
 			],
 			"editor/title": [
@@ -230,6 +239,13 @@
 					"command": "textToolkit.plainText.open",
 					"when": "!explorerResourceIsFolder",
 					"group": "navigation@100"
+				}
+			],
+			"terminal/context": [
+				{
+					"command": "textToolkit.terminal.openSelection",
+					"when": "terminalTextSelectedInFocused || terminalTextSelected",
+					"group": "3_edit@5"
 				}
 			]
 		},
@@ -487,6 +503,11 @@
 									}
 								}
 							]
+						},
+						"terminalOpen.selectionLink": {
+							"type": "boolean",
+							"default": true,
+							"markdownDescription": "%advanced.selectionLink%"
 						}
 					},
 					"markdownDescription": "%config.advanced%",
@@ -501,7 +522,8 @@
 								"plainText.applyEditorSettings": true,
 								"plainText.disableLineNumbers": false,
 								"plainText.suppressLanguageActivation": true,
-								"plainText.editorOverrides": {}
+								"plainText.editorOverrides": {},
+								"terminalOpen.selectionLink": true
 							}
 						}
 					]
