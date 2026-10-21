@@ -65,7 +65,7 @@ var cc = 333;           var cc   = 333;
 
 ## 延伸阅读
 
-[使用指南](docs/README.md)覆盖全部选项、限制和提示信息。命令与设置清单见扩展市场页的 **Feature Contributions** 标签页。各版本的变化见英文版[更新日志](../CHANGELOG.md)。
+[使用指南](docs/README.md)覆盖全部选项、限制和提示信息。命令与设置清单见扩展市场页的 **Feature Contributions** 标签页。各版本的变化见[更新日志](CHANGELOG.md)。
 
 ## 许可证
 
