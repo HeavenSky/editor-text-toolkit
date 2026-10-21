@@ -2,7 +2,7 @@
 
 [English](../../docs/commands-and-keybindings.md) · **简体中文**
 
-本页说明怎样从一个选择器用到全部动作，以及怎样给常用动作绑定快捷键；扩展默认不绑定任何快捷键，不会与已有绑定冲突。
+本页说明怎样从一个选择器用到全部编辑器动作，以及怎样给常用动作绑定快捷键；扩展默认不绑定任何快捷键，不会与已有绑定冲突。
 
 ## 使用两级选择器
 
@@ -60,9 +60,16 @@
 		"key": "ctrl+3",
 		"command": "textToolkit.diff.compareWithClipboard",
 		"when": "editorTextFocus"
+	},
+	{
+		"key": "ctrl+alt+o",
+		"command": "textToolkit.terminal.openSelection",
+		"when": "terminalFocus && terminalTextSelected"
 	}
 ]
 ```
+
+终端会把按键交给 shell，macOS 上带 Cmd 的除外；所以给 `textToolkit.terminal.openSelection` 绑定 `ctrl+alt+o` 这类终端快捷键时，还要配置 `terminal.integrated.commandsToSkipShell`，见[绑定快捷键](open-terminal-selection.md#绑定快捷键)。
 
 ## 找到不在命令面板里的命令
 
@@ -77,3 +84,5 @@
 | 显示比较菜单                                                             | 状态栏中的比较项                                    |
 
 编辑器右键菜单里有 `复制路径与行号`、`标记待比较文本`，存在标记时还有 `与标记的文本比较`；后两项由 `textToolkit.diff.contextMenu` 控制。
+
+终端右键菜单在有选中文本时提供 `将终端选中文本作为路径打开`。打开终端后，这条命令也出现在命令面板里，但不在两级选择器中；见[把终端选中文本作为路径打开](open-terminal-selection.md)。

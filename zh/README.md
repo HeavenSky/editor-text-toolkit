@@ -10,7 +10,7 @@
 [![Installs](https://vsmarketplacebadges.dev/installs-short/HeavenSky.editor-text-toolkit.svg)](https://marketplace.visualstudio.com/items?itemName=HeavenSky.editor-text-toolkit)
 [![License](https://img.shields.io/badge/license-MIT-blue)](../LICENSE.txt)
 
-如果你每天都要把代码位置贴进评审和聊天、改标识符写法、比对代码片段，这个扩展就是为你做的。不必为每件事各装一个扩展：一个选择器列出全部动作，旁边标着当前生效的设置，不用记任何命令名。默认不绑定快捷键，没有运行时依赖，也不收集遥测数据。
+如果你每天都要把代码位置贴进评审和聊天、改标识符写法、比对代码片段，这个扩展就是为你做的。不必为每件事各装一个扩展：一个选择器列出本扩展在编辑器里的全部动作，旁边标着当前生效的设置，不用记任何命令名。默认不绑定快捷键，没有运行时依赖，也不收集遥测数据。
 
 ![选择器列出五个工具及当前生效的设置](../media/screenshots/commands.png)
 
@@ -58,6 +58,17 @@ var cc = 333;           var cc   = 333;
 ![同一文件里的两段选区左右对比](../media/screenshots/diff.png)
 
 归一化规则能屏蔽时间戳、制表符这类可预期的噪声；点一下就能把比较结果变成可编辑的副本。详见[比较两段文本](docs/compare.md)。
+
+## 从终端输出直接打开路径
+
+从终端打印的路径直接跳到对应的文件和行，VS Code 自带的链接检测把路径切错时也一样；相对路径按该终端的当前目录解析。选中路径后，按住 Cmd（Windows 和 Linux 上是 Ctrl）点击选区，或在选区上右键选择 `将终端选中文本作为路径打开`：
+
+```text
+# 在终端里选中                  # 在编辑器里打开
+src/app.ts:12:5                 src/app.ts，光标在第 12 行第 5 列
+```
+
+引号、括号和末尾标点会被去掉，`path(12,5)`、`#L12`、`~` 和 `file://` 写法也能识别。详见[把终端选中文本作为路径打开](docs/open-terminal-selection.md)。
 
 ## 不适用的场景
 

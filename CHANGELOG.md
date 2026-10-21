@@ -2,6 +2,12 @@
 
 **English** · [简体中文](./zh/CHANGELOG.md)
 
+## Unreleased
+
+### Added
+
+- Open a path selected in the integrated terminal, resolved against the terminal's current folder and positioned at the line and column it names: hold Cmd or Ctrl and click the selection, or use `Open Terminal Selection as Path` from the terminal's right-click menu or the Command Palette. See [Open a terminal selection as a path](https://github.com/HeavenSky/editor-text-toolkit/blob/HEAD/docs/open-terminal-selection.md).
+
 ## v0.0.8 2026-10-16 Rewritten docs
 
 ### Changed

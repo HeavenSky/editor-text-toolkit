@@ -30,5 +30,6 @@ Write only the keys you want to change into `textToolkit.advanced`; every key yo
 | `plainText.disableLineNumbers`         | `false`          | [Tune the overrides](plain-text-mode.md#tune-the-overrides)                                         |
 | `plainText.suppressLanguageActivation` | `true`           | [Tune the overrides](plain-text-mode.md#tune-the-overrides)                                         |
 | `plainText.editorOverrides`            | `{}`             | [Tune the overrides](plain-text-mode.md#tune-the-overrides)                                         |
+| `terminalOpen.selectionLink`           | `true`           | [Turn off the selection link](open-terminal-selection.md#turn-off-the-selection-link)               |
 
 `settings.json` completes every key with its type and default, and the value of `textToolkit.advanced` offers a snippet that writes out all built-in defaults. Unknown keys and values of the wrong type are ignored and the built-in default is kept, so a typo never leaves the extension broken.

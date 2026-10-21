@@ -8,7 +8,7 @@ Copy `path:12-14` references, convert case, align columns by a regex, open large
 [![Installs](https://vsmarketplacebadges.dev/installs-short/HeavenSky.editor-text-toolkit.svg)](https://marketplace.visualstudio.com/items?itemName=HeavenSky.editor-text-toolkit)
 [![License](https://img.shields.io/badge/license-MIT-blue)](./LICENSE.txt)
 
-It is for people who paste code locations into reviews and chats, reshape identifiers, and diff snippets many times a day. Instead of one extension per task, you get one picker that lists every action next to the settings in effect, so you never need to remember a command name. It binds no keys by default, has no runtime dependencies, and sends no telemetry.
+It is for people who paste code locations into reviews and chats, reshape identifiers, and diff snippets many times a day. Instead of one extension per task, you get one picker that lists every action the extension offers in the editor next to the settings in effect, so you never need to remember a command name. It binds no keys by default, has no runtime dependencies, and sends no telemetry.
 
 ![The picker lists the five tools with the settings currently in effect](media/screenshots/commands.png)
 
@@ -56,6 +56,17 @@ Mark one selection and compare it with another, with the clipboard, with a visib
 ![Two selections from the same file compared side by side](media/screenshots/diff.png)
 
 Normalization rules hide predictable noise such as timestamps or tabs, and one click turns a comparison into editable copies. See [Compare two pieces of text](docs/compare.md).
+
+## Open a path straight from terminal output
+
+Jump from a path printed in the terminal to that file and line, even where VS Code's own link detection splits the path wrongly; relative paths resolve against the terminal's current folder. Select the path, then hold Cmd (Ctrl on Windows and Linux) and click the selection, or right-click it and choose `Open Terminal Selection as Path`:
+
+```text
+# selected in the terminal      # opens in the editor
+src/app.ts:12:5                 src/app.ts, cursor at line 12, column 5
+```
+
+Quotes, brackets and trailing punctuation are stripped, and `path(12,5)`, `#L12`, `~` and `file://` forms work too. See [Open a terminal selection as a path](docs/open-terminal-selection.md).
 
 ## When not to use it
 

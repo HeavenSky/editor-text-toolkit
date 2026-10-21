@@ -2,7 +2,7 @@
 
 **English** · [简体中文](../zh/docs/commands-and-keybindings.md)
 
-This page shows how to reach every action from one picker and how to bind keys to the ones you use; the extension binds no keys by default, so nothing collides with your existing bindings.
+This page shows how to reach every editor action from one picker and how to bind keys to the ones you use; the extension binds no keys by default, so nothing collides with your existing bindings.
 
 ## Use the two-level picker
 
@@ -60,9 +60,16 @@ Add bindings to `keybindings.json` (`Preferences: Open Keyboard Shortcuts (JSON)
 		"key": "ctrl+3",
 		"command": "textToolkit.diff.compareWithClipboard",
 		"when": "editorTextFocus"
+	},
+	{
+		"key": "ctrl+alt+o",
+		"command": "textToolkit.terminal.openSelection",
+		"when": "terminalFocus && terminalTextSelected"
 	}
 ]
 ```
+
+The terminal passes keys to the shell unless they use Cmd on macOS, so a terminal binding such as `ctrl+alt+o` for `textToolkit.terminal.openSelection` also needs `terminal.integrated.commandsToSkipShell`; see [Bind a key](open-terminal-selection.md#bind-a-key).
 
 ## Find the commands that are not in the Command Palette
 
@@ -77,3 +84,5 @@ Eight commands stay out of the Command Palette because they need a file to act o
 | Show Compare Menu                                                                                           | The Compare status bar item                                           |
 
 The editor's right-click menu has `Copy Path With Line Numbers` and `Select Text for Compare`, plus `Compare Text with Marked Selection` once something is marked; `textToolkit.diff.contextMenu` controls the two compare entries.
+
+The terminal's right-click menu has `Open Terminal Selection as Path` while text is selected. The same command is in the Command Palette once a terminal is open, but not in the two-level picker; see [Open a terminal selection as a path](open-terminal-selection.md).

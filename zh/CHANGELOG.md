@@ -2,6 +2,12 @@
 
 [English](../CHANGELOG.md) · **简体中文**
 
+## Unreleased
+
+### 新增
+
+- 在集成终端里选中的路径可以直接打开：按终端当前目录解析，并定位到其中写明的行和列。按住 Cmd 或 Ctrl 点击选区即可，也可以从终端右键菜单或命令面板执行 `将终端选中文本作为路径打开`。详见[把终端选中文本作为路径打开](https://github.com/HeavenSky/editor-text-toolkit/blob/HEAD/zh/docs/open-terminal-selection.md)。
+
 ## v0.0.8 2026-10-16 文档重写
 
 ### 变更
