@@ -14,22 +14,22 @@ src/features/diff/core.ts:112-118
 
 `textToolkit.copyPath.pathStyle` sets the path part. The picker also offers every style as a one-off that does not change your settings, and a keybinding can pass `{ "pathStyle": "relative" }` for the same effect.
 
-| Style | Result |
-| --- | --- |
-| `absolute` (default) | `/Users/you/project/src/app.ts` |
-| `relative` | `src/app.ts`; falls back to the absolute path when no workspace folder contains the file |
-| `tilde` | `~/project/src/app.ts`; only rewrites the prefix when the file is under your home directory |
-| `fileName` | `app.ts` |
+| Style                | Result                                                                                      |
+| -------------------- | ------------------------------------------------------------------------------------------- |
+| `absolute` (default) | `/Users/you/project/src/app.ts`                                                             |
+| `relative`           | `src/app.ts`; falls back to the absolute path when no workspace folder contains the file    |
+| `tilde`              | `~/project/src/app.ts`; only rewrites the prefix when the file is under your home directory |
+| `fileName`           | `app.ts`                                                                                    |
 
 ## Choose how lines are written
 
 Line numbers come from every cursor and selection; they are deduplicated, sorted, and consecutive lines merge into one fragment. `textToolkit.copyPath.multiLineFormat` picks the shape. For selected lines 3, 4, 8, 12, 13 and 14:
 
-| Format | Output |
-| --- | --- |
-| `range` (default) | `path:3-4,8,12-14` |
-| `list` | `path:3,4,8,12,13,14` |
-| `perLine` | `path:3`, `path:4`, … one per line |
+| Format            | Output                             |
+| ----------------- | ---------------------------------- |
+| `range` (default) | `path:3-4,8,12-14`                 |
+| `list`            | `path:3,4,8,12,13,14`              |
+| `perLine`         | `path:3`, `path:4`, … one per line |
 
 To write a fragment as a start line plus a count, turn on the `a+n` form. The same selection then copies as `path:3+2,8,12+3`; single lines stay `a`, and `list` and `perLine` are unaffected because they never produce fragments.
 

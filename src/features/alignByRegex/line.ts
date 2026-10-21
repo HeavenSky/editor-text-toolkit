@@ -1,6 +1,6 @@
-import type { Part } from './part';
+import type { Part } from "./part";
 
 export interface Line {
-  number: number;
-  parts: Part[];
+	number: number;
+	parts: Part[];
 }

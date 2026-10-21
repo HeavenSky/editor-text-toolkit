@@ -6,68 +6,68 @@
  */
 
 /** diff 的两侧. 上游用 reg1/reg2/clipboard/visible1/visible2 五个键, 实际只服务于"一对". */
-export type DiffSlot = 'left' | 'right';
+export type DiffSlot = "left" | "right";
 
-export type ReplaceWith = string | { letterCase: 'upper' | 'lower' };
+export type ReplaceWith = string | { letterCase: "upper" | "lower" };
 
 /** 用户配置的比较前归一化规则, 加载后附带运行时的启停状态. */
 export interface NormalizationRule {
-  name?: string;
-  match: string;
-  replaceWith: ReplaceWith;
-  active: boolean;
+	name?: string;
+	match: string;
+	replaceWith: ReplaceWith;
+	active: boolean;
 }
 
 /** 行号从 0 起, 与 vscode.Position.line 一致; 渲染成标签时才 +1. */
 export interface LineRange {
-  start: number;
-  end: number;
+	start: number;
+	end: number;
 }
 
 /** 参与比较的一侧. rangeLabel 为 `full` 表示取了整个文档而非某段选区. */
 export interface SelectionInfo {
-  text: string;
-  baseName: string;
-  rangeLabel: string;
-  languageId?: string;
-  /** 来源文档的 URI scheme. 剪贴板没有来源文档, 因此这一侧不填. */
-  sourceScheme?: string;
-  /** 来源文档 URI 的字符串形式, 供「打开来源文件」回跳; 剪贴板一侧不填. */
-  sourceUri?: string;
-  /** 第一段选区的行范围, 回跳时用来定位; 取了整个文档时不填. */
-  sourceRange?: LineRange;
+	text: string;
+	baseName: string;
+	rangeLabel: string;
+	languageId?: string;
+	/** 来源文档的 URI scheme. 剪贴板没有来源文档, 因此这一侧不填. */
+	sourceScheme?: string;
+	/** 来源文档 URI 的字符串形式, 供「打开来源文件」回跳; 剪贴板一侧不填. */
+	sourceUri?: string;
+	/** 第一段选区的行范围, 回跳时用来定位; 取了整个文档时不填. */
+	sourceRange?: LineRange;
 }
 
 /** 单个非空选区的位置与内容, 由调用方从 vscode.Selection 摘出后传入. */
 export interface SelectionPart {
-  startLine: number;
-  startChar: number;
-  endLine: number;
-  text: string;
+	startLine: number;
+	startChar: number;
+	endLine: number;
+	text: string;
 }
 
 export interface DiffPathParts {
-  sessionId: string;
-  slot: DiffSlot;
-  rangeLabel: string;
-  baseName: string;
+	sessionId: string;
+	slot: DiffSlot;
+	rangeLabel: string;
+	baseName: string;
 }
 
 /** rangeLabel 的这个取值表示"整个文档", 标题中会省略括号部分. */
-export const FULL_RANGE_LABEL = 'full';
+export const FULL_RANGE_LABEL = "full";
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
+	return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function readReplaceWith(value: unknown): ReplaceWith | undefined {
-  if (typeof value === 'string') {
-    return value;
-  }
-  if (isPlainObject(value) && (value.letterCase === 'upper' || value.letterCase === 'lower')) {
-    return { letterCase: value.letterCase };
-  }
-  return undefined;
+	if (typeof value === "string") {
+		return value;
+	}
+	if (isPlainObject(value) && (value.letterCase === "upper" || value.letterCase === "lower")) {
+		return { letterCase: value.letterCase };
+	}
+	return undefined;
 }
 
 /**
@@ -75,68 +75,68 @@ function readReplaceWith(value: unknown): ReplaceWith | undefined {
  * 一条写错的规则不应该让整个比较功能不可用.
  */
 export function loadRules(raw: unknown): NormalizationRule[] {
-  if (!Array.isArray(raw)) {
-    return [];
-  }
+	if (!Array.isArray(raw)) {
+		return [];
+	}
 
-  const rules: NormalizationRule[] = [];
-  let malformed = 0;
-  let badPattern = 0;
+	const rules: NormalizationRule[] = [];
+	let malformed = 0;
+	let badPattern = 0;
 
-  for (const entry of raw) {
-    if (!isPlainObject(entry) || typeof entry.match !== 'string') {
-      malformed += 1;
-      continue;
-    }
-    const replaceWith = readReplaceWith(entry.replaceWith);
-    if (replaceWith === undefined) {
-      malformed += 1;
-      continue;
-    }
-    try {
-      new RegExp(entry.match, 'g');
-    } catch {
-      badPattern += 1;
-      continue;
-    }
-    rules.push({
-      ...(typeof entry.name === 'string' ? { name: entry.name } : {}),
-      match: entry.match,
-      replaceWith,
-      active: entry.enableOnStart !== false
-    });
-  }
+	for (const entry of raw) {
+		if (!isPlainObject(entry) || typeof entry.match !== "string") {
+			malformed += 1;
+			continue;
+		}
+		const replaceWith = readReplaceWith(entry.replaceWith);
+		if (replaceWith === undefined) {
+			malformed += 1;
+			continue;
+		}
+		try {
+			new RegExp(entry.match, "g");
+		} catch {
+			badPattern += 1;
+			continue;
+		}
+		rules.push({
+			...(typeof entry.name === "string" ? { name: entry.name } : {}),
+			match: entry.match,
+			replaceWith,
+			active: entry.enableOnStart !== false,
+		});
+	}
 
-  // 每类问题只报一次, 避免配置写错时刷屏.
-  if (malformed > 0) {
-    console.log(
-      `[Text Toolkit] compare: skipped ${malformed} normalization rule(s) missing a valid "match" or "replaceWith".`
-    );
-  }
-  if (badPattern > 0) {
-    console.log(
-      `[Text Toolkit] compare: skipped ${badPattern} normalization rule(s) whose "match" is not a valid regular expression.`
-    );
-  }
+	// 每类问题只报一次, 避免配置写错时刷屏.
+	if (malformed > 0) {
+		console.log(
+			`[Text Toolkit] compare: skipped ${malformed} normalization rule(s) missing a valid "match" or "replaceWith".`
+		);
+	}
+	if (badPattern > 0) {
+		console.log(
+			`[Text Toolkit] compare: skipped ${badPattern} normalization rule(s) whose "match" is not a valid regular expression.`
+		);
+	}
 
-  return rules;
+	return rules;
 }
 
 function applyRule(text: string, rule: NormalizationRule): string {
-  const pattern = new RegExp(rule.match, 'g');
-  if (typeof rule.replaceWith === 'string') {
-    // 字符串替换保留 $N 的捕获组语义.
-    return text.replace(pattern, rule.replaceWith);
-  }
-  const { letterCase } = rule.replaceWith;
-  return text.replace(pattern, (matched) =>
-    letterCase === 'upper' ? matched.toUpperCase() : matched.toLowerCase()
-  );
+	const pattern = new RegExp(rule.match, "g");
+	if (typeof rule.replaceWith === "string") {
+		// 字符串替换保留 $N 的捕获组语义.
+		return text.replace(pattern, rule.replaceWith);
+	}
+	const { letterCase } = rule.replaceWith;
+	return text.replace(pattern, matched =>
+		letterCase === "upper" ? matched.toUpperCase() : matched.toLowerCase()
+	);
 }
 
 /** 按数组顺序依次应用; 只作用于 diff 中显示的文本, 不改动任何源文档. */
 export function applyRules(text: string, rules: NormalizationRule[]): string {
-  return rules.reduce(applyRule, text);
+	return rules.reduce(applyRule, text);
 }
 
 /**
@@ -144,41 +144,41 @@ export function applyRules(text: string, rules: NormalizationRule[]): string {
  * 返回 null 表示没有非空选区, 由调用方决定改取整个文档 —— 纯函数读不到文档内容.
  */
 export function aggregateSelections(
-  parts: SelectionPart[]
+	parts: SelectionPart[]
 ): { text: string; ranges: LineRange[] } | null {
-  if (parts.length === 0) {
-    return null;
-  }
-  const sorted = [...parts].sort((a, b) =>
-    a.startLine !== b.startLine ? a.startLine - b.startLine : a.startChar - b.startChar
-  );
-  return {
-    text: sorted.map((part) => part.text).join('\n'),
-    ranges: sorted.map((part) => ({ start: part.startLine, end: part.endLine }))
-  };
+	if (parts.length === 0) {
+		return null;
+	}
+	const sorted = [...parts].sort((a, b) =>
+		a.startLine !== b.startLine ? a.startLine - b.startLine : a.startChar - b.startChar
+	);
+	return {
+		text: sorted.map(part => part.text).join("\n"),
+		ranges: sorted.map(part => ({ start: part.startLine, end: part.endLine })),
+	};
 }
 
 function rangeLabelOf(range: LineRange): string {
-  return range.start === range.end
-    ? `l.${range.start + 1}`
-    : `ll.${range.start + 1}-${range.end + 1}`;
+	return range.start === range.end
+		? `l.${range.start + 1}`
+		: `ll.${range.start + 1}-${range.end + 1}`;
 }
 
 /** 空范围渲染为 `full`; 其余形如 `l.4` 或 `ll.4-8`, 多片段以逗号连接. */
 export function formatRangeLabel(ranges: LineRange[] | null): string {
-  if (!ranges || ranges.length === 0) {
-    return FULL_RANGE_LABEL;
-  }
-  return ranges.map(rangeLabelOf).join(',');
+	if (!ranges || ranges.length === 0) {
+		return FULL_RANGE_LABEL;
+	}
+	return ranges.map(rangeLabelOf).join(",");
 }
 
 function sideTitle(info: SelectionInfo | null): string {
-  if (!info) {
-    return 'N/A';
-  }
-  return info.rangeLabel === FULL_RANGE_LABEL
-    ? info.baseName
-    : `${info.baseName} (${info.rangeLabel})`;
+	if (!info) {
+		return "N/A";
+	}
+	return info.rangeLabel === FULL_RANGE_LABEL
+		? info.baseName
+		: `${info.baseName} (${info.rangeLabel})`;
 }
 
 /**
@@ -188,25 +188,22 @@ function sideTitle(info: SelectionInfo | null): string {
  * `editable` 的 `✎` 前缀与中缀正交: 前者说明这是一份可编辑副本, 后者说明打开时是否套了规则.
  */
 export function buildDiffTitle(
-  left: SelectionInfo | null,
-  right: SelectionInfo | null,
-  normalized: boolean,
-  editable = false
+	left: SelectionInfo | null,
+	right: SelectionInfo | null,
+	normalized: boolean,
+	editable = false
 ): string {
-  const title = `${sideTitle(left)} ${normalized ? '~' : '↔'} ${sideTitle(right)}`;
-  return editable ? `✎ ${title}` : title;
+	const title = `${sideTitle(left)} ${normalized ? "~" : "↔"} ${sideTitle(right)}`;
+	return editable ? `✎ ${title}` : title;
 }
 
 /** 该侧是「整个文件」且其来源文件系统可写, 即用户本来就能直接编辑它. */
-function editableInPlace(
-  info: SelectionInfo,
-  isWritable: (scheme: string) => boolean
-): boolean {
-  return (
-    info.rangeLabel === FULL_RANGE_LABEL &&
-    info.sourceScheme !== undefined &&
-    isWritable(info.sourceScheme)
-  );
+function editableInPlace(info: SelectionInfo, isWritable: (scheme: string) => boolean): boolean {
+	return (
+		info.rangeLabel === FULL_RANGE_LABEL &&
+		info.sourceScheme !== undefined &&
+		isWritable(info.sourceScheme)
+	);
 }
 
 /**
@@ -217,11 +214,11 @@ function editableInPlace(
  * (例如 `git:` / `output:`), 原生就给不出等价的可编辑比较, 因此仍然允许做副本.
  */
 export function bothSidesEditableInPlace(
-  left: SelectionInfo,
-  right: SelectionInfo,
-  isWritable: (scheme: string) => boolean
+	left: SelectionInfo,
+	right: SelectionInfo,
+	isWritable: (scheme: string) => boolean
 ): boolean {
-  return editableInPlace(left, isWritable) && editableInPlace(right, isWritable);
+	return editableInPlace(left, isWritable) && editableInPlace(right, isWritable);
 }
 
 /**
@@ -231,44 +228,42 @@ export function bothSidesEditableInPlace(
  * 并让 VS Code 在语言未被显式设置时仍能按扩展名做出合理判定.
  */
 export function encodeDiffPath(parts: DiffPathParts): string {
-  return `/${[parts.sessionId, parts.slot, parts.rangeLabel, parts.baseName]
-    .map(encodeURIComponent)
-    .join('/')}`;
+	return `/${[parts.sessionId, parts.slot, parts.rangeLabel, parts.baseName].map(encodeURIComponent).join("/")}`;
 }
 
 export function decodeDiffPath(path: string): DiffPathParts | null {
-  const segments = path.split('/');
-  if (segments[0] === '') {
-    segments.shift();
-  }
-  if (segments.length !== 4) {
-    return null;
-  }
-  let decoded: string[];
-  try {
-    decoded = segments.map(decodeURIComponent);
-  } catch {
-    return null;
-  }
-  const [sessionId, slot, rangeLabel, baseName] = decoded;
-  if (slot !== 'left' && slot !== 'right') {
-    return null;
-  }
-  return { sessionId, slot, rangeLabel, baseName };
+	const segments = path.split("/");
+	if (segments[0] === "") {
+		segments.shift();
+	}
+	if (segments.length !== 4) {
+		return null;
+	}
+	let decoded: string[];
+	try {
+		decoded = segments.map(decodeURIComponent);
+	} catch {
+		return null;
+	}
+	const [sessionId, slot, rangeLabel, baseName] = decoded;
+	if (slot !== "left" && slot !== "right") {
+		return null;
+	}
+	return { sessionId, slot, rangeLabel, baseName };
 }
 
 /** 以最后一个 `.` 切出主干与扩展名; 点开头的名字(`.gitignore`)整体算主干. */
 function splitName(baseName: string): { stem: string; extension: string } {
-  const dot = baseName.lastIndexOf('.');
-  return dot <= 0
-    ? { stem: baseName, extension: '' }
-    : { stem: baseName.slice(0, dot), extension: baseName.slice(dot) };
+	const dot = baseName.lastIndexOf(".");
+	return dot <= 0
+		? { stem: baseName, extension: "" }
+		: { stem: baseName.slice(0, dot), extension: baseName.slice(dot) };
 }
 
 /** 多光标会产生任意多段的标签; 超过两段就只留第一段并记下剩余段数, 免得文件名无界增长. */
 function compactLabel(rangeLabel: string): string {
-  const parts = rangeLabel.split(',');
-  return parts.length <= 2 ? rangeLabel : `${parts[0]},+${parts.length - 1}`;
+	const parts = rangeLabel.split(",");
+	return parts.length <= 2 ? rangeLabel : `${parts[0]},+${parts.length - 1}`;
 }
 
 /**
@@ -280,21 +275,21 @@ function compactLabel(rangeLabel: string): string {
  * VS Code 关闭并重开文档, 是副本机制里最容易出错的一环.
  */
 export function copyFileName(
-  baseName: string,
-  rangeLabel: string,
-  fallbackExtension: string
+	baseName: string,
+	rangeLabel: string,
+	fallbackExtension: string
 ): string {
-  const { stem, extension } = splitName(baseName);
-  // 点开头的名字(`.gitignore`)本身就决定了语言, 借来的扩展名只会破坏判定.
-  const suffix = extension || (baseName.startsWith('.') ? '' : fallbackExtension);
-  return rangeLabel === FULL_RANGE_LABEL
-    ? `${stem}${suffix}`
-    : `${stem} (${compactLabel(rangeLabel)})${suffix}`;
+	const { stem, extension } = splitName(baseName);
+	// 点开头的名字(`.gitignore`)本身就决定了语言, 借来的扩展名只会破坏判定.
+	const suffix = extension || (baseName.startsWith(".") ? "" : fallbackExtension);
+	return rangeLabel === FULL_RANGE_LABEL
+		? `${stem}${suffix}`
+		: `${stem} (${compactLabel(rangeLabel)})${suffix}`;
 }
 
 /** 从文件名取扩展名, 供另一侧继承; 没有扩展名时返回空串. */
 export function extensionOf(baseName: string): string {
-  return splitName(baseName).extension;
+	return splitName(baseName).extension;
 }
 
 /**
@@ -302,12 +297,12 @@ export function extensionOf(baseName: string): string {
  * 这样"与剪贴板比较"也能拿到语法高亮 —— 上游 issue #38 的核心诉求.
  */
 export function resolveLanguages(
-  leftLanguageId?: string,
-  rightLanguageId?: string
+	leftLanguageId?: string,
+	rightLanguageId?: string
 ): { left?: string; right?: string } {
-  const fallback = leftLanguageId ?? rightLanguageId;
-  if (fallback === undefined) {
-    return {};
-  }
-  return { left: leftLanguageId ?? fallback, right: rightLanguageId ?? fallback };
+	const fallback = leftLanguageId ?? rightLanguageId;
+	if (fallback === undefined) {
+		return {};
+	}
+	return { left: leftLanguageId ?? fallback, right: rightLanguageId ?? fallback };
 }

@@ -14,136 +14,136 @@
  */
 
 export interface LanguageContribution {
-  id: string;
-  extensions?: readonly string[];
-  filenames?: readonly string[];
-  filenamePatterns?: readonly string[];
+	id: string;
+	extensions?: readonly string[];
+	filenames?: readonly string[];
+	filenamePatterns?: readonly string[];
 }
 
 function normalizePath(fsPath: string): string {
-  return fsPath.replace(/\\/g, '/').toLowerCase();
+	return fsPath.replace(/\\/g, "/").toLowerCase();
 }
 
 function basenameOf(path: string): string {
-  return path.slice(path.lastIndexOf('/') + 1);
+	return path.slice(path.lastIndexOf("/") + 1);
 }
 
 /** 只实现 `*`, `?` 与 `**` 三种通配: files.associations 与 filenamePatterns 的常见形态. */
 function globToRegExp(pattern: string): RegExp {
-  let source = '';
-  for (let index = 0; index < pattern.length; index += 1) {
-    const char = pattern[index];
-    if (char === '*') {
-      if (pattern[index + 1] === '*') {
-        // `**/` 吃掉任意层目录, 末尾的 `**` 吃掉剩余全部
-        index += 1;
-        if (pattern[index + 1] === '/') {
-          index += 1;
-          source += '(?:.*/)?';
-        } else {
-          source += '.*';
-        }
-      } else {
-        source += '[^/]*';
-      }
-    } else if (char === '?') {
-      source += '[^/]';
-    } else {
-      source += char.replace(/[.+^${}()|[\]\\]/g, '\\$&');
-    }
-  }
-  return new RegExp(`^${source}$`);
+	let source = "";
+	for (let index = 0; index < pattern.length; index += 1) {
+		const char = pattern[index];
+		if (char === "*") {
+			if (pattern[index + 1] === "*") {
+				// `**/` 吃掉任意层目录, 末尾的 `**` 吃掉剩余全部
+				index += 1;
+				if (pattern[index + 1] === "/") {
+					index += 1;
+					source += "(?:.*/)?";
+				} else {
+					source += ".*";
+				}
+			} else {
+				source += "[^/]*";
+			}
+		} else if (char === "?") {
+			source += "[^/]";
+		} else {
+			source += char.replace(/[.+^${}()|[\]\\]/g, "\\$&");
+		}
+	}
+	return new RegExp(`^${source}$`);
 }
 
 function matchGlob(pattern: string, path: string, base: string): boolean {
-  // 与 VS Code 一致: 模式里带路径分隔符才拿整个路径去比, 否则只比文件名.
-  const target = pattern.includes('/') ? path : base;
-  try {
-    return globToRegExp(pattern.toLowerCase()).test(target);
-  } catch {
-    return false;
-  }
+	// 与 VS Code 一致: 模式里带路径分隔符才拿整个路径去比, 否则只比文件名.
+	const target = pattern.includes("/") ? path : base;
+	try {
+		return globToRegExp(pattern.toLowerCase()).test(target);
+	} catch {
+		return false;
+	}
 }
 
 /** 同类模式命中多条时取最长的那条, 与 VS Code 的取舍一致. */
 function pickLongestMatch(
-  entries: Iterable<readonly [string, string]>,
-  path: string,
-  base: string
+	entries: Iterable<readonly [string, string]>,
+	path: string,
+	base: string
 ): string | undefined {
-  let bestPattern: string | undefined;
-  let bestId: string | undefined;
-  for (const [pattern, id] of entries) {
-    if (pattern.length > (bestPattern?.length ?? -1) && matchGlob(pattern, path, base)) {
-      bestPattern = pattern;
-      bestId = id;
-    }
-  }
-  return bestId;
+	let bestPattern: string | undefined;
+	let bestId: string | undefined;
+	for (const [pattern, id] of entries) {
+		if (pattern.length > (bestPattern?.length ?? -1) && matchGlob(pattern, path, base)) {
+			bestPattern = pattern;
+			bestId = id;
+		}
+	}
+	return bestId;
 }
 
 function pickLongestExtension(
-  contributions: readonly LanguageContribution[],
-  base: string
+	contributions: readonly LanguageContribution[],
+	base: string
 ): string | undefined {
-  let bestExtension: string | undefined;
-  let bestId: string | undefined;
-  for (const contribution of contributions) {
-    for (const extension of contribution.extensions ?? []) {
-      const normalized = extension.toLowerCase();
-      if (
-        normalized.length > (bestExtension?.length ?? -1) &&
-        normalized.length > 0 &&
-        base.endsWith(normalized)
-      ) {
-        bestExtension = normalized;
-        bestId = contribution.id;
-      }
-    }
-  }
-  return bestId;
+	let bestExtension: string | undefined;
+	let bestId: string | undefined;
+	for (const contribution of contributions) {
+		for (const extension of contribution.extensions ?? []) {
+			const normalized = extension.toLowerCase();
+			if (
+				normalized.length > (bestExtension?.length ?? -1) &&
+				normalized.length > 0 &&
+				base.endsWith(normalized)
+			) {
+				bestExtension = normalized;
+				bestId = contribution.id;
+			}
+		}
+	}
+	return bestId;
 }
 
 export function guessLanguageId(
-  fsPath: string,
-  contributions: readonly LanguageContribution[],
-  associations: Readonly<Record<string, string>> = {}
+	fsPath: string,
+	contributions: readonly LanguageContribution[],
+	associations: Readonly<Record<string, string>> = {}
 ): string | undefined {
-  const path = normalizePath(fsPath);
-  const base = basenameOf(path);
-  if (base.length === 0) {
-    return undefined;
-  }
+	const path = normalizePath(fsPath);
+	const base = basenameOf(path);
+	if (base.length === 0) {
+		return undefined;
+	}
 
-  const userMatch = pickLongestMatch(
-    Object.entries(associations).filter(
-      (entry): entry is [string, string] => typeof entry[1] === 'string'
-    ),
-    path,
-    base
-  );
-  if (userMatch) {
-    return userMatch;
-  }
+	const userMatch = pickLongestMatch(
+		Object.entries(associations).filter(
+			(entry): entry is [string, string] => typeof entry[1] === "string"
+		),
+		path,
+		base
+	);
+	if (userMatch) {
+		return userMatch;
+	}
 
-  for (const contribution of contributions) {
-    for (const filename of contribution.filenames ?? []) {
-      if (filename.toLowerCase() === base) {
-        return contribution.id;
-      }
-    }
-  }
+	for (const contribution of contributions) {
+		for (const filename of contribution.filenames ?? []) {
+			if (filename.toLowerCase() === base) {
+				return contribution.id;
+			}
+		}
+	}
 
-  const patternEntries: [string, string][] = [];
-  for (const contribution of contributions) {
-    for (const pattern of contribution.filenamePatterns ?? []) {
-      patternEntries.push([pattern, contribution.id]);
-    }
-  }
-  const patternMatch = pickLongestMatch(patternEntries, path, base);
-  if (patternMatch) {
-    return patternMatch;
-  }
+	const patternEntries: [string, string][] = [];
+	for (const contribution of contributions) {
+		for (const pattern of contribution.filenamePatterns ?? []) {
+			patternEntries.push([pattern, contribution.id]);
+		}
+	}
+	const patternMatch = pickLongestMatch(patternEntries, path, base);
+	if (patternMatch) {
+		return patternMatch;
+	}
 
-  return pickLongestExtension(contributions, base);
+	return pickLongestExtension(contributions, base);
 }

@@ -1,515 +1,520 @@
 {
-  "name": "editor-text-toolkit",
-  "displayName": "Editor Text Toolkit",
-  "description": "%extension.description%",
-  "version": "0.0.8",
-  "publisher": "HeavenSky",
-  "author": {
-    "name": "calla",
-    "email": "aurora.calla@outlook.com"
-  },
-  "license": "MIT",
-  "icon": "media/icon.png",
-  "l10n": "./l10n",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/HeavenSky/editor-text-toolkit.git"
-  },
-  "homepage": "https://github.com/HeavenSky/editor-text-toolkit",
-  "bugs": {
-    "url": "https://github.com/HeavenSky/editor-text-toolkit/issues"
-  },
-  "engines": {
-    "vscode": "^1.101.0",
-    "node": ">=22.15.1"
-  },
-  "categories": [
-    "Other",
-    "Formatters"
-  ],
-  "keywords": [
-    "copy path",
-    "line numbers",
-    "change case",
-    "align",
-    "large file",
-    "diff",
-    "compare"
-  ],
-  "files": [
-    "out/extension.js",
-    "l10n",
-    "media/icon.png",
-    "package.nls.json",
-    "package.nls.zh-cn.json",
-    "LICENSE.txt",
-    "NOTICE.md",
-    "CHANGELOG.md"
-  ],
-  "main": "./out/extension.js",
-  "activationEvents": [
-    "onStartupFinished"
-  ],
-  "contributes": {
-    "commands": [
-      {
-        "command": "textToolkit.commands",
-        "title": "%command.commands%",
-        "category": "%category%"
-      },
-      {
-        "command": "textToolkit.copyPathWithLines",
-        "title": "%command.copyPathWithLines%",
-        "category": "%category%"
-      },
-      {
-        "command": "textToolkit.changeCase",
-        "title": "%command.changeCase%",
-        "category": "%category%"
-      },
-      {
-        "command": "textToolkit.alignByRegex",
-        "title": "%command.alignByRegex%",
-        "category": "%category%"
-      },
-      {
-        "command": "textToolkit.plainText.toggle",
-        "title": "%command.plainTextToggle%",
-        "category": "%category%"
-      },
-      {
-        "command": "textToolkit.plainText.open",
-        "title": "%command.plainTextOpen%",
-        "category": "%category%"
-      },
-      {
-        "command": "textToolkit.diff.markSelection",
-        "title": "%command.diffMarkSelection%",
-        "category": "%category%"
-      },
-      {
-        "command": "textToolkit.diff.compareWithMarked",
-        "title": "%command.diffCompareWithMarked%",
-        "category": "%category%"
-      },
-      {
-        "command": "textToolkit.diff.compareWithClipboard",
-        "title": "%command.diffCompareWithClipboard%",
-        "category": "%category%"
-      },
-      {
-        "command": "textToolkit.diff.compareVisibleEditors",
-        "title": "%command.diffCompareVisibleEditors%",
-        "category": "%category%"
-      },
-      {
-        "command": "textToolkit.diff.compareTabs",
-        "title": "%command.diffCompareTabs%",
-        "category": "%category%"
-      },
-      {
-        "command": "textToolkit.diff.swapSides",
-        "title": "%command.diffSwapSides%",
-        "category": "%category%"
-      },
-      {
-        "command": "textToolkit.diff.editableCopy",
-        "title": "%command.diffEditableCopy%",
-        "category": "%category%",
-        "icon": "$(edit)"
-      },
-      {
-        "command": "textToolkit.diff.openSource",
-        "title": "%command.diffOpenSource%",
-        "category": "%category%",
-        "icon": "$(go-to-file)"
-      },
-      {
-        "command": "textToolkit.diff.cleanUpCopies",
-        "title": "%command.diffCleanUpCopies%",
-        "category": "%category%"
-      },
-      {
-        "command": "textToolkit.diff.toggleNormalizationRules",
-        "title": "%command.diffToggleNormalizationRules%",
-        "category": "%category%"
-      },
-      {
-        "command": "textToolkit.diff.showMenu",
-        "title": "%command.diffShowMenu%",
-        "category": "%category%"
-      }
-    ],
-    "menus": {
-      "commandPalette": [
-        {
-          "command": "textToolkit.plainText.open",
-          "when": "false"
-        },
-        {
-          "command": "textToolkit.diff.compareVisibleEditors",
-          "when": "false"
-        },
-        {
-          "command": "textToolkit.diff.compareTabs",
-          "when": "false"
-        },
-        {
-          "command": "textToolkit.diff.swapSides",
-          "when": "false"
-        },
-        {
-          "command": "textToolkit.diff.editableCopy",
-          "when": "false"
-        },
-        {
-          "command": "textToolkit.diff.openSource",
-          "when": "false"
-        },
-        {
-          "command": "textToolkit.diff.toggleNormalizationRules",
-          "when": "false"
-        },
-        {
-          "command": "textToolkit.diff.showMenu",
-          "when": "false"
-        }
-      ],
-      "editor/title": [
-        {
-          "command": "textToolkit.diff.editableCopy",
-          "when": "isInDiffEditor && resourceScheme == text-toolkit-diff",
-          "group": "navigation@1"
-        },
-        {
-          "command": "textToolkit.diff.openSource",
-          "when": "isInDiffEditor && (resourceScheme == text-toolkit-diff || resourcePath =~ /\\/compare\\/[^\\/]+\\.copy[0-9]+\\//)",
-          "group": "navigation@2"
-        }
-      ],
-      "editor/context": [
-        {
-          "command": "textToolkit.copyPathWithLines",
-          "when": "editorTextFocus",
-          "group": "copy"
-        },
-        {
-          "command": "textToolkit.diff.markSelection",
-          "when": "editorTextFocus && config.textToolkit.diff.contextMenu != none",
-          "group": "compare@1"
-        },
-        {
-          "command": "textToolkit.diff.compareWithMarked",
-          "when": "editorTextFocus && config.textToolkit.diff.contextMenu == both && textToolkit.diff.hasMark",
-          "group": "compare@2"
-        }
-      ],
-      "explorer/context": [
-        {
-          "command": "textToolkit.plainText.open",
-          "when": "!explorerResourceIsFolder",
-          "group": "navigation@100"
-        }
-      ]
-    },
-    "configuration": {
-      "title": "Editor Text Toolkit",
-      "properties": {
-        "textToolkit.copyPath.pathStyle": {
-          "type": "string",
-          "default": "absolute",
-          "enum": [
-            "absolute",
-            "relative",
-            "tilde",
-            "fileName"
-          ],
-          "enumDescriptions": [
-            "%config.pathStyle.absolute%",
-            "%config.pathStyle.relative%",
-            "%config.pathStyle.tilde%",
-            "%config.pathStyle.fileName%"
-          ],
-          "description": "%config.pathStyle%"
-        },
-        "textToolkit.copyPath.separator": {
-          "type": "string",
-          "default": ":",
-          "description": "%config.separator%"
-        },
-        "textToolkit.copyPath.multiLineFormat": {
-          "type": "string",
-          "default": "range",
-          "enum": [
-            "range",
-            "list",
-            "perLine"
-          ],
-          "enumDescriptions": [
-            "%config.multiLineFormat.range%",
-            "%config.multiLineFormat.list%",
-            "%config.multiLineFormat.perLine%"
-          ],
-          "description": "%config.multiLineFormat%"
-        },
-        "textToolkit.alignByRegex.templates": {
-          "type": "object",
-          "default": {},
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "%config.alignTemplates%"
-        },
-        "textToolkit.plainText.promptSizeMB": {
-          "type": "number",
-          "default": 2,
-          "minimum": 0,
-          "description": "%config.promptSizeMB%"
-        },
-        "textToolkit.plainText.autoApplyExtensions": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "default": [],
-          "description": "%config.autoApplyExtensions%"
-        },
-        "textToolkit.diff.normalizationRules": {
-          "type": "array",
-          "default": [],
-          "items": {
-            "type": "object",
-            "properties": {
-              "name": {
-                "type": "string",
-                "description": "%config.diffNormalizationRules.name%"
-              },
-              "match": {
-                "type": "string",
-                "description": "%config.diffNormalizationRules.match%"
-              },
-              "replaceWith": {
-                "description": "%config.diffNormalizationRules.replaceWith%",
-                "oneOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "letterCase": {
-                        "enum": [
-                          "upper",
-                          "lower"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "letterCase"
-                    ]
-                  }
-                ]
-              },
-              "enableOnStart": {
-                "type": "boolean",
-                "default": true,
-                "description": "%config.diffNormalizationRules.enableOnStart%"
-              }
-            },
-            "required": [
-              "match",
-              "replaceWith"
-            ]
-          },
-          "markdownDescription": "%config.diffNormalizationRules%",
-          "defaultSnippets": [
-            {
-              "label": "%snippet.diffNormalizationRules.example%",
-              "description": "%snippet.diffNormalizationRules.exampleDetail%",
-              "body": [
-                {
-                  "name": "Replace tabs with spaces",
-                  "match": "\\t",
-                  "replaceWith": "  "
-                },
-                {
-                  "name": "One space after a comma",
-                  "match": ",\\s*([^,\\n]+)",
-                  "replaceWith": ", $1"
-                },
-                {
-                  "name": "Ignore letter case",
-                  "match": ".*",
-                  "replaceWith": {
-                    "letterCase": "upper"
-                  },
-                  "enableOnStart": false
-                }
-              ]
-            }
-          ]
-        },
-        "textToolkit.diff.contextMenu": {
-          "type": "string",
-          "default": "both",
-          "enum": [
-            "both",
-            "markOnly",
-            "none"
-          ],
-          "enumDescriptions": [
-            "%config.diffContextMenu.both%",
-            "%config.diffContextMenu.markOnly%",
-            "%config.diffContextMenu.none%"
-          ],
-          "description": "%config.diffContextMenu%"
-        },
-        "textToolkit.diff.clipboardSide": {
-          "type": "string",
-          "default": "left",
-          "enum": [
-            "left",
-            "right"
-          ],
-          "enumDescriptions": [
-            "%config.diffClipboardSide.left%",
-            "%config.diffClipboardSide.right%"
-          ],
-          "description": "%config.diffClipboardSide%"
-        },
-        "textToolkit.advanced": {
-          "type": "object",
-          "default": {},
-          "additionalProperties": false,
-          "properties": {
-            "copyPath.useLineCountSyntax": {
-              "type": "boolean",
-              "default": false,
-              "markdownDescription": "%advanced.useLineCountSyntax%"
-            },
-            "changeCase.includeDotInCurrentWord": {
-              "type": "boolean",
-              "default": false,
-              "markdownDescription": "%advanced.includeDotInCurrentWord%"
-            },
-            "alignByRegex.rememberLastInput": {
-              "type": "boolean",
-              "default": true,
-              "markdownDescription": "%advanced.rememberLastInput%"
-            },
-            "plainText.applyEditorSettings": {
-              "type": "boolean",
-              "default": true,
-              "markdownDescription": "%advanced.applyEditorSettings%"
-            },
-            "plainText.disableLineNumbers": {
-              "type": "boolean",
-              "default": false,
-              "markdownDescription": "%advanced.disableLineNumbers%"
-            },
-            "plainText.suppressLanguageActivation": {
-              "type": "boolean",
-              "default": true,
-              "markdownDescription": "%advanced.suppressLanguageActivation%"
-            },
-            "plainText.editorOverrides": {
-              "type": "object",
-              "default": {},
-              "additionalProperties": true,
-              "markdownDescription": "%advanced.editorOverrides%",
-              "defaultSnippets": [
-                {
-                  "label": "%snippet.editorOverrides.builtin%",
-                  "description": "%snippet.editorOverrides.builtinDetail%",
-                  "body": {
-                    "editor.minimap.enabled": false,
-                    "editor.wordWrap": "on",
-                    "editor.folding": false,
-                    "editor.stickyScroll.enabled": false,
-                    "editor.bracketPairColorization.enabled": false,
-                    "editor.guides.indentation": false,
-                    "editor.guides.bracketPairs": false,
-                    "editor.matchBrackets": "never",
-                    "editor.occurrencesHighlight": "off",
-                    "editor.selectionHighlight": false,
-                    "editor.renderWhitespace": "none",
-                    "editor.renderControlCharacters": false,
-                    "editor.codeLens": false,
-                    "editor.colorDecorators": false,
-                    "editor.links": false,
-                    "editor.hover.enabled": false,
-                    "editor.parameterHints.enabled": false,
-                    "editor.suggestOnTriggerCharacters": false,
-                    "editor.wordBasedSuggestions": "off",
-                    "editor.quickSuggestions": {
-                      "other": false,
-                      "comments": false,
-                      "strings": false
-                    },
-                    "editor.formatOnType": false,
-                    "editor.formatOnPaste": false,
-                    "editor.autoClosingBrackets": "never",
-                    "editor.autoClosingQuotes": "never",
-                    "editor.trimAutoWhitespace": false,
-                    "editor.semanticHighlighting.enabled": false,
-                    "editor.unicodeHighlight.nonBasicASCII": false,
-                    "editor.unicodeHighlight.invisibleCharacters": false,
-                    "editor.unicodeHighlight.ambiguousCharacters": false
-                  }
-                },
-                {
-                  "label": "%snippet.editorOverrides.restore%",
-                  "description": "%snippet.editorOverrides.restoreDetail%",
-                  "body": {
-                    "editor.wordWrap": "off",
-                    "editor.minimap.enabled": null
-                  }
-                }
-              ]
-            }
-          },
-          "markdownDescription": "%config.advanced%",
-          "defaultSnippets": [
-            {
-              "label": "%snippet.advanced.allDefaults%",
-              "description": "%snippet.advanced.allDefaultsDetail%",
-              "body": {
-                "copyPath.useLineCountSyntax": false,
-                "changeCase.includeDotInCurrentWord": false,
-                "alignByRegex.rememberLastInput": true,
-                "plainText.applyEditorSettings": true,
-                "plainText.disableLineNumbers": false,
-                "plainText.suppressLanguageActivation": true,
-                "plainText.editorOverrides": {}
-              }
-            }
-          ]
-        }
-      }
-    }
-  },
-  "scripts": {
-    "compile": "node build.mjs",
-    "build": "node build.mjs --production",
-    "watch": "node build.mjs --watch",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "check": "node scripts/check.mjs",
-    "check:template": "node scripts/check-template.mjs",
-    "gen:icon": "node scripts/gen-icon.mjs",
-    "package": "node scripts/package.mjs",
-    "vscode:prepublish": "npm run build",
-    "shots": "node scripts/shoot.mjs --readme"
-  },
-  "devDependencies": {
-    "@types/node": "^26.6.5",
-    "@vscode/vsce": "^4.0.0",
-    "change-case": "^5.4.4",
-    "esbuild": "^0.28.2",
-    "playwright-core": "^1.64.0",
-    "sharp": "^0.35.5",
-    "typescript": "^7.0.2",
-    "vitest": "^5.0.3",
-    "vscode-types": "npm:@types/vscode@^1.140.0"
-  }
+	"name": "editor-text-toolkit",
+	"displayName": "Editor Text Toolkit",
+	"version": "0.0.8",
+	"description": "%extension.description%",
+	"categories": [
+		"Formatters",
+		"Other"
+	],
+	"keywords": [
+		"align",
+		"change case",
+		"compare",
+		"copy path",
+		"diff",
+		"large file",
+		"line numbers"
+	],
+	"homepage": "https://github.com/HeavenSky/editor-text-toolkit",
+	"bugs": {
+		"url": "https://github.com/HeavenSky/editor-text-toolkit/issues"
+	},
+	"license": "MIT",
+	"author": {
+		"name": "calla",
+		"email": "aurora.calla@outlook.com"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/HeavenSky/editor-text-toolkit.git"
+	},
+	"publisher": "HeavenSky",
+	"files": [
+		"out/extension.js",
+		"l10n",
+		"media/icon.png",
+		"package.nls.json",
+		"package.nls.zh-cn.json",
+		"LICENSE.txt",
+		"NOTICE.md",
+		"CHANGELOG.md"
+	],
+	"main": "./out/extension.js",
+	"scripts": {
+		"compile": "node build.mjs",
+		"build": "node build.mjs --production",
+		"watch": "node build.mjs --watch",
+		"typecheck": "tsc --noEmit",
+		"test": "vitest run",
+		"lint": "oxlint --fix",
+		"lint:check": "oxlint --deny-warnings",
+		"fmt": "oxfmt --write",
+		"fmt:check": "oxfmt --check",
+		"check": "node scripts/check.mjs",
+		"gen:icon": "node scripts/gen-icon.mjs",
+		"package": "node scripts/package.mjs",
+		"vscode:prepublish": "npm run build",
+		"shots": "node scripts/shoot.mjs --readme"
+	},
+	"devDependencies": {
+		"@types/node": "^26.6.5",
+		"@vscode/vsce": "^4.0.0",
+		"change-case": "^5.4.4",
+		"esbuild": "^0.28.2",
+		"oxfmt": "^0.74.0",
+		"oxlint": "^1.89.0",
+		"playwright-core": "^1.64.0",
+		"sharp": "^0.35.5",
+		"typescript": "^7.0.2",
+		"vitest": "^5.0.3",
+		"vscode-types": "npm:@types/vscode@^1.140.0"
+	},
+	"l10n": "./l10n",
+	"contributes": {
+		"commands": [
+			{
+				"command": "textToolkit.commands",
+				"title": "%command.commands%",
+				"category": "%category%"
+			},
+			{
+				"command": "textToolkit.copyPathWithLines",
+				"title": "%command.copyPathWithLines%",
+				"category": "%category%"
+			},
+			{
+				"command": "textToolkit.changeCase",
+				"title": "%command.changeCase%",
+				"category": "%category%"
+			},
+			{
+				"command": "textToolkit.alignByRegex",
+				"title": "%command.alignByRegex%",
+				"category": "%category%"
+			},
+			{
+				"command": "textToolkit.plainText.toggle",
+				"title": "%command.plainTextToggle%",
+				"category": "%category%"
+			},
+			{
+				"command": "textToolkit.plainText.open",
+				"title": "%command.plainTextOpen%",
+				"category": "%category%"
+			},
+			{
+				"command": "textToolkit.diff.markSelection",
+				"title": "%command.diffMarkSelection%",
+				"category": "%category%"
+			},
+			{
+				"command": "textToolkit.diff.compareWithMarked",
+				"title": "%command.diffCompareWithMarked%",
+				"category": "%category%"
+			},
+			{
+				"command": "textToolkit.diff.compareWithClipboard",
+				"title": "%command.diffCompareWithClipboard%",
+				"category": "%category%"
+			},
+			{
+				"command": "textToolkit.diff.compareVisibleEditors",
+				"title": "%command.diffCompareVisibleEditors%",
+				"category": "%category%"
+			},
+			{
+				"command": "textToolkit.diff.compareTabs",
+				"title": "%command.diffCompareTabs%",
+				"category": "%category%"
+			},
+			{
+				"command": "textToolkit.diff.swapSides",
+				"title": "%command.diffSwapSides%",
+				"category": "%category%"
+			},
+			{
+				"command": "textToolkit.diff.editableCopy",
+				"title": "%command.diffEditableCopy%",
+				"category": "%category%",
+				"icon": "$(edit)"
+			},
+			{
+				"command": "textToolkit.diff.openSource",
+				"title": "%command.diffOpenSource%",
+				"category": "%category%",
+				"icon": "$(go-to-file)"
+			},
+			{
+				"command": "textToolkit.diff.cleanUpCopies",
+				"title": "%command.diffCleanUpCopies%",
+				"category": "%category%"
+			},
+			{
+				"command": "textToolkit.diff.toggleNormalizationRules",
+				"title": "%command.diffToggleNormalizationRules%",
+				"category": "%category%"
+			},
+			{
+				"command": "textToolkit.diff.showMenu",
+				"title": "%command.diffShowMenu%",
+				"category": "%category%"
+			}
+		],
+		"menus": {
+			"commandPalette": [
+				{
+					"command": "textToolkit.plainText.open",
+					"when": "false"
+				},
+				{
+					"command": "textToolkit.diff.compareVisibleEditors",
+					"when": "false"
+				},
+				{
+					"command": "textToolkit.diff.compareTabs",
+					"when": "false"
+				},
+				{
+					"command": "textToolkit.diff.swapSides",
+					"when": "false"
+				},
+				{
+					"command": "textToolkit.diff.editableCopy",
+					"when": "false"
+				},
+				{
+					"command": "textToolkit.diff.openSource",
+					"when": "false"
+				},
+				{
+					"command": "textToolkit.diff.toggleNormalizationRules",
+					"when": "false"
+				},
+				{
+					"command": "textToolkit.diff.showMenu",
+					"when": "false"
+				}
+			],
+			"editor/title": [
+				{
+					"command": "textToolkit.diff.editableCopy",
+					"when": "isInDiffEditor && resourceScheme == text-toolkit-diff",
+					"group": "navigation@1"
+				},
+				{
+					"command": "textToolkit.diff.openSource",
+					"when": "isInDiffEditor && (resourceScheme == text-toolkit-diff || resourcePath =~ /\\/compare\\/[^\\/]+\\.copy[0-9]+\\//)",
+					"group": "navigation@2"
+				}
+			],
+			"editor/context": [
+				{
+					"command": "textToolkit.copyPathWithLines",
+					"when": "editorTextFocus",
+					"group": "copy"
+				},
+				{
+					"command": "textToolkit.diff.markSelection",
+					"when": "editorTextFocus && config.textToolkit.diff.contextMenu != none",
+					"group": "compare@1"
+				},
+				{
+					"command": "textToolkit.diff.compareWithMarked",
+					"when": "editorTextFocus && config.textToolkit.diff.contextMenu == both && textToolkit.diff.hasMark",
+					"group": "compare@2"
+				}
+			],
+			"explorer/context": [
+				{
+					"command": "textToolkit.plainText.open",
+					"when": "!explorerResourceIsFolder",
+					"group": "navigation@100"
+				}
+			]
+		},
+		"configuration": {
+			"title": "Editor Text Toolkit",
+			"properties": {
+				"textToolkit.copyPath.pathStyle": {
+					"type": "string",
+					"default": "absolute",
+					"enum": [
+						"absolute",
+						"relative",
+						"tilde",
+						"fileName"
+					],
+					"enumDescriptions": [
+						"%config.pathStyle.absolute%",
+						"%config.pathStyle.relative%",
+						"%config.pathStyle.tilde%",
+						"%config.pathStyle.fileName%"
+					],
+					"description": "%config.pathStyle%"
+				},
+				"textToolkit.copyPath.separator": {
+					"type": "string",
+					"default": ":",
+					"description": "%config.separator%"
+				},
+				"textToolkit.copyPath.multiLineFormat": {
+					"type": "string",
+					"default": "range",
+					"enum": [
+						"range",
+						"list",
+						"perLine"
+					],
+					"enumDescriptions": [
+						"%config.multiLineFormat.range%",
+						"%config.multiLineFormat.list%",
+						"%config.multiLineFormat.perLine%"
+					],
+					"description": "%config.multiLineFormat%"
+				},
+				"textToolkit.alignByRegex.templates": {
+					"type": "object",
+					"default": {},
+					"additionalProperties": {
+						"type": "string"
+					},
+					"description": "%config.alignTemplates%"
+				},
+				"textToolkit.plainText.promptSizeMB": {
+					"type": "number",
+					"default": 2,
+					"minimum": 0,
+					"description": "%config.promptSizeMB%"
+				},
+				"textToolkit.plainText.autoApplyExtensions": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					},
+					"default": [],
+					"description": "%config.autoApplyExtensions%"
+				},
+				"textToolkit.diff.normalizationRules": {
+					"type": "array",
+					"default": [],
+					"items": {
+						"type": "object",
+						"properties": {
+							"name": {
+								"type": "string",
+								"description": "%config.diffNormalizationRules.name%"
+							},
+							"match": {
+								"type": "string",
+								"description": "%config.diffNormalizationRules.match%"
+							},
+							"replaceWith": {
+								"description": "%config.diffNormalizationRules.replaceWith%",
+								"oneOf": [
+									{
+										"type": "string"
+									},
+									{
+										"type": "object",
+										"properties": {
+											"letterCase": {
+												"enum": [
+													"upper",
+													"lower"
+												]
+											}
+										},
+										"required": [
+											"letterCase"
+										]
+									}
+								]
+							},
+							"enableOnStart": {
+								"type": "boolean",
+								"default": true,
+								"description": "%config.diffNormalizationRules.enableOnStart%"
+							}
+						},
+						"required": [
+							"match",
+							"replaceWith"
+						]
+					},
+					"markdownDescription": "%config.diffNormalizationRules%",
+					"defaultSnippets": [
+						{
+							"label": "%snippet.diffNormalizationRules.example%",
+							"description": "%snippet.diffNormalizationRules.exampleDetail%",
+							"body": [
+								{
+									"name": "Replace tabs with spaces",
+									"match": "\\t",
+									"replaceWith": "  "
+								},
+								{
+									"name": "One space after a comma",
+									"match": ",\\s*([^,\\n]+)",
+									"replaceWith": ", $1"
+								},
+								{
+									"name": "Ignore letter case",
+									"match": ".*",
+									"replaceWith": {
+										"letterCase": "upper"
+									},
+									"enableOnStart": false
+								}
+							]
+						}
+					]
+				},
+				"textToolkit.diff.contextMenu": {
+					"type": "string",
+					"default": "both",
+					"enum": [
+						"both",
+						"markOnly",
+						"none"
+					],
+					"enumDescriptions": [
+						"%config.diffContextMenu.both%",
+						"%config.diffContextMenu.markOnly%",
+						"%config.diffContextMenu.none%"
+					],
+					"description": "%config.diffContextMenu%"
+				},
+				"textToolkit.diff.clipboardSide": {
+					"type": "string",
+					"default": "left",
+					"enum": [
+						"left",
+						"right"
+					],
+					"enumDescriptions": [
+						"%config.diffClipboardSide.left%",
+						"%config.diffClipboardSide.right%"
+					],
+					"description": "%config.diffClipboardSide%"
+				},
+				"textToolkit.advanced": {
+					"type": "object",
+					"default": {},
+					"additionalProperties": false,
+					"properties": {
+						"copyPath.useLineCountSyntax": {
+							"type": "boolean",
+							"default": false,
+							"markdownDescription": "%advanced.useLineCountSyntax%"
+						},
+						"changeCase.includeDotInCurrentWord": {
+							"type": "boolean",
+							"default": false,
+							"markdownDescription": "%advanced.includeDotInCurrentWord%"
+						},
+						"alignByRegex.rememberLastInput": {
+							"type": "boolean",
+							"default": true,
+							"markdownDescription": "%advanced.rememberLastInput%"
+						},
+						"plainText.applyEditorSettings": {
+							"type": "boolean",
+							"default": true,
+							"markdownDescription": "%advanced.applyEditorSettings%"
+						},
+						"plainText.disableLineNumbers": {
+							"type": "boolean",
+							"default": false,
+							"markdownDescription": "%advanced.disableLineNumbers%"
+						},
+						"plainText.suppressLanguageActivation": {
+							"type": "boolean",
+							"default": true,
+							"markdownDescription": "%advanced.suppressLanguageActivation%"
+						},
+						"plainText.editorOverrides": {
+							"type": "object",
+							"default": {},
+							"additionalProperties": true,
+							"markdownDescription": "%advanced.editorOverrides%",
+							"defaultSnippets": [
+								{
+									"label": "%snippet.editorOverrides.builtin%",
+									"description": "%snippet.editorOverrides.builtinDetail%",
+									"body": {
+										"editor.minimap.enabled": false,
+										"editor.wordWrap": "on",
+										"editor.folding": false,
+										"editor.stickyScroll.enabled": false,
+										"editor.bracketPairColorization.enabled": false,
+										"editor.guides.indentation": false,
+										"editor.guides.bracketPairs": false,
+										"editor.matchBrackets": "never",
+										"editor.occurrencesHighlight": "off",
+										"editor.selectionHighlight": false,
+										"editor.renderWhitespace": "none",
+										"editor.renderControlCharacters": false,
+										"editor.codeLens": false,
+										"editor.colorDecorators": false,
+										"editor.links": false,
+										"editor.hover.enabled": false,
+										"editor.parameterHints.enabled": false,
+										"editor.suggestOnTriggerCharacters": false,
+										"editor.wordBasedSuggestions": "off",
+										"editor.quickSuggestions": {
+											"other": false,
+											"comments": false,
+											"strings": false
+										},
+										"editor.formatOnType": false,
+										"editor.formatOnPaste": false,
+										"editor.autoClosingBrackets": "never",
+										"editor.autoClosingQuotes": "never",
+										"editor.trimAutoWhitespace": false,
+										"editor.semanticHighlighting.enabled": false,
+										"editor.unicodeHighlight.nonBasicASCII": false,
+										"editor.unicodeHighlight.invisibleCharacters": false,
+										"editor.unicodeHighlight.ambiguousCharacters": false
+									}
+								},
+								{
+									"label": "%snippet.editorOverrides.restore%",
+									"description": "%snippet.editorOverrides.restoreDetail%",
+									"body": {
+										"editor.wordWrap": "off",
+										"editor.minimap.enabled": null
+									}
+								}
+							]
+						}
+					},
+					"markdownDescription": "%config.advanced%",
+					"defaultSnippets": [
+						{
+							"label": "%snippet.advanced.allDefaults%",
+							"description": "%snippet.advanced.allDefaultsDetail%",
+							"body": {
+								"copyPath.useLineCountSyntax": false,
+								"changeCase.includeDotInCurrentWord": false,
+								"alignByRegex.rememberLastInput": true,
+								"plainText.applyEditorSettings": true,
+								"plainText.disableLineNumbers": false,
+								"plainText.suppressLanguageActivation": true,
+								"plainText.editorOverrides": {}
+							}
+						}
+					]
+				}
+			}
+		}
+	},
+	"activationEvents": [
+		"onStartupFinished"
+	],
+	"icon": "media/icon.png",
+	"engines": {
+		"node": ">=22.15.1",
+		"vscode": "^1.101.0"
+	}
 }

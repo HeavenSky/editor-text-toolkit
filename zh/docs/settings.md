@@ -14,21 +14,21 @@
 
 ```json
 {
-  "textToolkit.advanced": {
-    "copyPath.useLineCountSyntax": true,
-    "alignByRegex.rememberLastInput": false
-  }
+	"textToolkit.advanced": {
+		"copyPath.useLineCountSyntax": true,
+		"alignByRegex.rememberLastInput": false
+	}
 }
 ```
 
-| 键 | 内置默认值 | 说明见 |
-| --- | --- | --- |
-| `copyPath.useLineCountSyntax` | `false` | [选择行号的写法](copy-path.md#选择行号的写法) |
-| `changeCase.includeDotInCurrentWord` | `false` | [怎样算光标所在的词](change-case.md#怎样算光标所在的词) |
-| `alignByRegex.rememberLastInput` | `true` | [对齐选中的行](align-by-regex.md#对齐选中的行) |
-| `plainText.applyEditorSettings` | `true` | [调整覆盖项](plain-text-mode.md#调整覆盖项) |
-| `plainText.disableLineNumbers` | `false` | [调整覆盖项](plain-text-mode.md#调整覆盖项) |
-| `plainText.suppressLanguageActivation` | `true` | [调整覆盖项](plain-text-mode.md#调整覆盖项) |
-| `plainText.editorOverrides` | `{}` | [调整覆盖项](plain-text-mode.md#调整覆盖项) |
+| 键                                     | 内置默认值 | 说明见                                                  |
+| -------------------------------------- | ---------- | ------------------------------------------------------- |
+| `copyPath.useLineCountSyntax`          | `false`    | [选择行号的写法](copy-path.md#选择行号的写法)           |
+| `changeCase.includeDotInCurrentWord`   | `false`    | [怎样算光标所在的词](change-case.md#怎样算光标所在的词) |
+| `alignByRegex.rememberLastInput`       | `true`     | [对齐选中的行](align-by-regex.md#对齐选中的行)          |
+| `plainText.applyEditorSettings`        | `true`     | [调整覆盖项](plain-text-mode.md#调整覆盖项)             |
+| `plainText.disableLineNumbers`         | `false`    | [调整覆盖项](plain-text-mode.md#调整覆盖项)             |
+| `plainText.suppressLanguageActivation` | `true`     | [调整覆盖项](plain-text-mode.md#调整覆盖项)             |
+| `plainText.editorOverrides`            | `{}`       | [调整覆盖项](plain-text-mode.md#调整覆盖项)             |
 
 在 `settings.json` 里输入时，每个键都会补全类型和默认值；编辑 `textToolkit.advanced` 的值时，还有一个代码片段能写出全部内置默认值。未知的键和类型不符的值会被忽略并保留内置默认值，写错一处也不会让扩展失灵。

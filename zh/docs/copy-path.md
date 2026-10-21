@@ -14,22 +14,22 @@ src/features/diff/core.ts:112-118
 
 `textToolkit.copyPath.pathStyle` 决定路径部分。选择器还把每种写法都列成一次性选项，选用时不改设置；快捷键传入 `{ "pathStyle": "relative" }` 效果相同。
 
-| 写法 | 结果 |
-| --- | --- |
-| `absolute`（默认） | `/Users/you/project/src/app.ts` |
-| `relative` | `src/app.ts`；没有工作区文件夹包含该文件时回退为绝对路径 |
-| `tilde` | `~/project/src/app.ts`；只有文件位于 home 目录下时才替换前缀 |
-| `fileName` | `app.ts` |
+| 写法               | 结果                                                         |
+| ------------------ | ------------------------------------------------------------ |
+| `absolute`（默认） | `/Users/you/project/src/app.ts`                              |
+| `relative`         | `src/app.ts`；没有工作区文件夹包含该文件时回退为绝对路径     |
+| `tilde`            | `~/project/src/app.ts`；只有文件位于 home 目录下时才替换前缀 |
+| `fileName`         | `app.ts`                                                     |
 
 ## 选择行号的写法
 
 行号取自每个光标和选区，去重、排序后，连续的行合并成一个片段。`textToolkit.copyPath.multiLineFormat` 决定输出形状。以选中第 3、4、8、12、13、14 行为例：
 
-| 格式 | 输出 |
-| --- | --- |
-| `range`（默认） | `path:3-4,8,12-14` |
-| `list` | `path:3,4,8,12,13,14` |
-| `perLine` | `path:3`、`path:4`……每行一条 |
+| 格式            | 输出                         |
+| --------------- | ---------------------------- |
+| `range`（默认） | `path:3-4,8,12-14`           |
+| `list`          | `path:3,4,8,12,13,14`        |
+| `perLine`       | `path:3`、`path:4`……每行一条 |
 
 想把片段写成「起始行 + 行数」，打开 `a+n` 写法。同样的选区会复制成 `path:3+2,8,12+3`；单行仍写作 `a`，`list` 与 `perLine` 不受影响，因为它们不产生片段。
 

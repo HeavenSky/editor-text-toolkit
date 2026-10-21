@@ -1,10 +1,10 @@
-import * as vscode from 'vscode';
+import * as vscode from "vscode";
 import {
-  PLAIN_TEXT_LANGUAGE_ID,
-  planTemporaryAssociations,
-  toFileAssociationPattern
-} from './core';
-import { guessLanguageId, type LanguageContribution } from './language';
+	PLAIN_TEXT_LANGUAGE_ID,
+	planTemporaryAssociations,
+	toFileAssociationPattern,
+} from "./core";
+import { guessLanguageId, type LanguageContribution } from "./language";
 
 /**
  * 以纯文本模式打开文件, 且不惊动语言扩展.
@@ -19,127 +19,125 @@ import { guessLanguageId, type LanguageContribution } from './language';
  * 中途崩溃留下的残条目在下次激活时清理.
  */
 
-const ASSOCIATIONS_SECTION = 'files';
-const ASSOCIATIONS_KEY = 'associations';
+const ASSOCIATIONS_SECTION = "files";
+const ASSOCIATIONS_KEY = "associations";
 /** 临时关联写在用户级: 工作区级会去改仓库里的 `.vscode/settings.json`. */
 const ASSOCIATIONS_TARGET = vscode.ConfigurationTarget.Global;
-const PENDING_ASSOCIATIONS_KEY = 'textToolkit.plainText.pendingAssociations';
+const PENDING_ASSOCIATIONS_KEY = "textToolkit.plainText.pendingAssociations";
 
 export interface PlainTextOpenResult {
-  uri: vscode.Uri;
-  /** 打开失败时为 undefined. */
-  document?: vscode.TextDocument;
-  /** 打开前该文件本应使用的语言; 推断不出时为 undefined. */
-  originalLanguageId?: string;
+	uri: vscode.Uri;
+	/** 打开失败时为 undefined. */
+	document?: vscode.TextDocument;
+	/** 打开前该文件本应使用的语言; 推断不出时为 undefined. */
+	originalLanguageId?: string;
 }
 
 function associationsConfiguration(): vscode.WorkspaceConfiguration {
-  return vscode.workspace.getConfiguration(ASSOCIATIONS_SECTION);
+	return vscode.workspace.getConfiguration(ASSOCIATIONS_SECTION);
 }
 
 function readUserAssociations(): Record<string, string> {
-  return associationsConfiguration().get<Record<string, string>>(ASSOCIATIONS_KEY, {});
+	return associationsConfiguration().get<Record<string, string>>(ASSOCIATIONS_KEY, {});
 }
 
 function readGlobalAssociations(): Record<string, string> | undefined {
-  return associationsConfiguration().inspect<Record<string, string>>(ASSOCIATIONS_KEY)
-    ?.globalValue;
+	return associationsConfiguration().inspect<Record<string, string>>(ASSOCIATIONS_KEY)
+		?.globalValue;
 }
 
 function collectLanguageContributions(): LanguageContribution[] {
-  const contributions: LanguageContribution[] = [];
-  for (const extension of vscode.extensions.all) {
-    const languages = extension.packageJSON?.contributes?.languages;
-    if (!Array.isArray(languages)) {
-      continue;
-    }
-    for (const language of languages) {
-      if (language && typeof language.id === 'string') {
-        contributions.push(language as LanguageContribution);
-      }
-    }
-  }
-  return contributions;
+	const contributions: LanguageContribution[] = [];
+	for (const extension of vscode.extensions.all) {
+		const languages = extension.packageJSON?.contributes?.languages;
+		if (!Array.isArray(languages)) {
+			continue;
+		}
+		for (const language of languages) {
+			if (language && typeof language.id === "string") {
+				contributions.push(language as LanguageContribution);
+			}
+		}
+	}
+	return contributions;
 }
 
 /** 返回本次实际新增的 pattern; 用户已有的同名关联保持原样, 撤销时也只处理返回值. */
 async function addAssociations(
-  context: vscode.ExtensionContext,
-  patterns: readonly string[]
+	context: vscode.ExtensionContext,
+	patterns: readonly string[]
 ): Promise<string[]> {
-  const { next, added } = planTemporaryAssociations(readGlobalAssociations(), patterns);
-  if (added.length === 0) {
-    return added;
-  }
-  const pending = new Set(context.globalState.get<string[]>(PENDING_ASSOCIATIONS_KEY, []));
-  for (const pattern of added) {
-    pending.add(pattern);
-  }
-  await context.globalState.update(PENDING_ASSOCIATIONS_KEY, [...pending]);
-  await associationsConfiguration().update(ASSOCIATIONS_KEY, next, ASSOCIATIONS_TARGET);
-  return added;
+	const { next, added } = planTemporaryAssociations(readGlobalAssociations(), patterns);
+	if (added.length === 0) {
+		return added;
+	}
+	const pending = new Set(context.globalState.get<string[]>(PENDING_ASSOCIATIONS_KEY, []));
+	for (const pattern of added) {
+		pending.add(pattern);
+	}
+	await context.globalState.update(PENDING_ASSOCIATIONS_KEY, [...pending]);
+	await associationsConfiguration().update(ASSOCIATIONS_KEY, next, ASSOCIATIONS_TARGET);
+	return added;
 }
 
 /** 只摘掉自己写进去的键; 全部摘完后若对象已空则整条设置移除, 不留 `"files.associations": {}`. */
 async function removeAssociations(
-  context: vscode.ExtensionContext,
-  patterns: readonly string[]
+	context: vscode.ExtensionContext,
+	patterns: readonly string[]
 ): Promise<void> {
-  const current = readGlobalAssociations();
-  if (current) {
-    const next: Record<string, string> = { ...current };
-    let changed = false;
-    for (const pattern of patterns) {
-      if (next[pattern] === PLAIN_TEXT_LANGUAGE_ID) {
-        delete next[pattern];
-        changed = true;
-      }
-    }
-    if (changed) {
-      await associationsConfiguration().update(
-        ASSOCIATIONS_KEY,
-        Object.keys(next).length > 0 ? next : undefined,
-        ASSOCIATIONS_TARGET
-      );
-    }
-  }
+	const current = readGlobalAssociations();
+	if (current) {
+		const next: Record<string, string> = { ...current };
+		let changed = false;
+		for (const pattern of patterns) {
+			if (next[pattern] === PLAIN_TEXT_LANGUAGE_ID) {
+				delete next[pattern];
+				changed = true;
+			}
+		}
+		if (changed) {
+			await associationsConfiguration().update(
+				ASSOCIATIONS_KEY,
+				Object.keys(next).length > 0 ? next : undefined,
+				ASSOCIATIONS_TARGET
+			);
+		}
+	}
 
-  const pending = context.globalState
-    .get<string[]>(PENDING_ASSOCIATIONS_KEY, [])
-    .filter((pattern) => !patterns.includes(pattern));
-  await context.globalState.update(
-    PENDING_ASSOCIATIONS_KEY,
-    pending.length > 0 ? pending : undefined
-  );
+	const pending = context.globalState
+		.get<string[]>(PENDING_ASSOCIATIONS_KEY, [])
+		.filter(pattern => !patterns.includes(pattern));
+	await context.globalState.update(
+		PENDING_ASSOCIATIONS_KEY,
+		pending.length > 0 ? pending : undefined
+	);
 }
 
 /** 上次会话异常结束时可能留下临时关联, 激活时清掉. */
-export async function cleanUpPendingAssociations(
-  context: vscode.ExtensionContext
-): Promise<void> {
-  const pending = context.globalState.get<string[]>(PENDING_ASSOCIATIONS_KEY, []);
-  if (pending.length === 0) {
-    return;
-  }
-  try {
-    await removeAssociations(context, pending);
-  } catch {
-    /* 设置暂时不可写时下次激活再试 */
-  }
+export async function cleanUpPendingAssociations(context: vscode.ExtensionContext): Promise<void> {
+	const pending = context.globalState.get<string[]>(PENDING_ASSOCIATIONS_KEY, []);
+	if (pending.length === 0) {
+		return;
+	}
+	try {
+		await removeAssociations(context, pending);
+	} catch {
+		/* 设置暂时不可写时下次激活再试 */
+	}
 }
 
 function findOpenDocument(uri: vscode.Uri): vscode.TextDocument | undefined {
-  const key = uri.toString();
-  return vscode.workspace.textDocuments.find((document) => document.uri.toString() === key);
+	const key = uri.toString();
+	return vscode.workspace.textDocuments.find(document => document.uri.toString() === key);
 }
 
 async function openPlainly(uri: vscode.Uri): Promise<PlainTextOpenResult> {
-  try {
-    const document = await vscode.workspace.openTextDocument(uri);
-    return { uri, document, originalLanguageId: document.languageId };
-  } catch {
-    return { uri };
-  }
+	try {
+		const document = await vscode.workspace.openTextDocument(uri);
+		return { uri, document, originalLanguageId: document.languageId };
+	} catch {
+		return { uri };
+	}
 }
 
 /**
@@ -147,87 +145,96 @@ async function openPlainly(uri: vscode.Uri): Promise<PlainTextOpenResult> {
  * `suppressLanguageActivation` 为 false 时退化成普通打开.
  */
 export async function openDocumentsAsPlainText(
-  context: vscode.ExtensionContext,
-  uris: readonly vscode.Uri[],
-  suppressLanguageActivation: boolean
+	context: vscode.ExtensionContext,
+	uris: readonly vscode.Uri[],
+	suppressLanguageActivation: boolean
 ): Promise<PlainTextOpenResult[]> {
-  const results = new Map<string, PlainTextOpenResult>();
-  const order: string[] = [];
-  const viaAssociation: { uri: vscode.Uri; pattern: string; originalLanguageId?: string }[] = [];
+	const results = new Map<string, PlainTextOpenResult>();
+	const order: string[] = [];
+	const viaAssociation: { uri: vscode.Uri; pattern: string; originalLanguageId?: string }[] = [];
 
-  for (const uri of uris) {
-    const key = uri.toString();
-    if (order.includes(key)) {
-      continue;
-    }
-    order.push(key);
-    const opened = findOpenDocument(uri);
-    if (opened) {
-      // 已经打开过: 模型早就建好, 语言扩展也早已被激活, 临时关联毫无意义.
-      results.set(key, { uri, document: opened, originalLanguageId: opened.languageId });
-      continue;
-    }
-    const pattern = suppressLanguageActivation ? toFileAssociationPattern(uri.fsPath) : undefined;
-    if (pattern) {
-      viaAssociation.push({ uri, pattern });
-    } else {
-      results.set(key, await openPlainly(uri));
-    }
-  }
+	for (const uri of uris) {
+		const key = uri.toString();
+		if (order.includes(key)) {
+			continue;
+		}
+		order.push(key);
+		const opened = findOpenDocument(uri);
+		if (opened) {
+			// 已经打开过: 模型早就建好, 语言扩展也早已被激活, 临时关联毫无意义.
+			results.set(key, { uri, document: opened, originalLanguageId: opened.languageId });
+			continue;
+		}
+		const pattern = suppressLanguageActivation
+			? toFileAssociationPattern(uri.fsPath)
+			: undefined;
+		if (pattern) {
+			viaAssociation.push({ uri, pattern });
+		} else {
+			results.set(key, await openPlainly(uri));
+		}
+	}
 
-  if (viaAssociation.length > 0) {
-    // 语言必须在挂上临时关联之前推断, 否则推出来的只会是 plaintext.
-    const contributions = collectLanguageContributions();
-    const associations = readUserAssociations();
-    for (const target of viaAssociation) {
-      target.originalLanguageId = guessLanguageId(target.uri.fsPath, contributions, associations);
-    }
+	if (viaAssociation.length > 0) {
+		// 语言必须在挂上临时关联之前推断, 否则推出来的只会是 plaintext.
+		const contributions = collectLanguageContributions();
+		const associations = readUserAssociations();
+		for (const target of viaAssociation) {
+			target.originalLanguageId = guessLanguageId(
+				target.uri.fsPath,
+				contributions,
+				associations
+			);
+		}
 
-    const patterns = viaAssociation.map((target) => target.pattern);
-    let added: string[] = [];
-    let associated = true;
-    try {
-      added = await addAssociations(context, patterns);
-    } catch {
-      // 设置不可写(只读配置文件, 受管策略等): 退回普通打开, 慢但不至于打不开.
-      associated = false;
-    }
-    if (!associated) {
-      for (const target of viaAssociation) {
-        results.set(target.uri.toString(), await openPlainly(target.uri));
-      }
-      return order
-        .map((key) => results.get(key))
-        .filter((result): result is PlainTextOpenResult => result !== undefined);
-    }
-    try {
-      for (const target of viaAssociation) {
-        const key = target.uri.toString();
-        try {
-          const document = await vscode.workspace.openTextDocument(target.uri);
-          // 钉死语言: 之后撤销关联时模型才不会跳回原语言并激活语言扩展.
-          await vscode.languages.setTextDocumentLanguage(document, PLAIN_TEXT_LANGUAGE_ID);
-          results.set(key, {
-            uri: target.uri,
-            document,
-            originalLanguageId: target.originalLanguageId
-          });
-        } catch {
-          results.set(key, { uri: target.uri });
-        }
-      }
-    } finally {
-      try {
-        if (added.length > 0) {
-          await removeAssociations(context, added);
-        }
-      } catch {
-        /* 撤销失败时残留条目记在 globalState 里, 下次激活再清 */
-      }
-    }
-  }
+		const patterns = viaAssociation.map(target => target.pattern);
+		let added: string[] = [];
+		let associated = true;
+		try {
+			added = await addAssociations(context, patterns);
+		} catch {
+			// 设置不可写(只读配置文件, 受管策略等): 退回普通打开, 慢但不至于打不开.
+			associated = false;
+		}
+		if (!associated) {
+			for (const target of viaAssociation) {
+				results.set(target.uri.toString(), await openPlainly(target.uri));
+			}
+			return order
+				.map(key => results.get(key))
+				.filter((result): result is PlainTextOpenResult => result !== undefined);
+		}
+		try {
+			for (const target of viaAssociation) {
+				const key = target.uri.toString();
+				try {
+					const document = await vscode.workspace.openTextDocument(target.uri);
+					// 钉死语言: 之后撤销关联时模型才不会跳回原语言并激活语言扩展.
+					await vscode.languages.setTextDocumentLanguage(
+						document,
+						PLAIN_TEXT_LANGUAGE_ID
+					);
+					results.set(key, {
+						uri: target.uri,
+						document,
+						originalLanguageId: target.originalLanguageId,
+					});
+				} catch {
+					results.set(key, { uri: target.uri });
+				}
+			}
+		} finally {
+			try {
+				if (added.length > 0) {
+					await removeAssociations(context, added);
+				}
+			} catch {
+				/* 撤销失败时残留条目记在 globalState 里, 下次激活再清 */
+			}
+		}
+	}
 
-  return order
-    .map((key) => results.get(key))
-    .filter((result): result is PlainTextOpenResult => result !== undefined);
+	return order
+		.map(key => results.get(key))
+		.filter((result): result is PlainTextOpenResult => result !== undefined);
 }

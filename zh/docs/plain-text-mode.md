@@ -11,7 +11,7 @@
 - 资源管理器右键 → `以纯文本模式打开`：一步完成打开与进入。支持多选，文件夹会被跳过。
 - `文本工具箱: 切换纯文本模式`：作用于当前打开的文件。
 - 大文件提示：打开不小于 `textToolkit.plainText.promptSizeMB` MB（默认 `2`）的文件时，会询问是否切换。选 `不再询问` 后会记住，可以在选择器的纯文本模式一项里重新启用。设为 `0` 则永不询问。
-- VS Code 拒绝显示的文件：超过 `workbench.editorLargeFileConfirmation` MB 时，VS Code 不显示内容，只显示占位提示「此文件未显示在文本编辑器中，因为它非常大。」（英文界面：*The file is not displayed in the text editor because it is very large*）。这时会弹出通知，提示以纯文本模式打开该标签页；文件经扩展宿主打开，不受这个上限约束，不必先点 `仍然打开`。它与大文件提示共用 `不再询问` 开关和 `0` 这个取值。
+- VS Code 拒绝显示的文件：超过 `workbench.editorLargeFileConfirmation` MB 时，VS Code 不显示内容，只显示占位提示「此文件未显示在文本编辑器中，因为它非常大。」（英文界面：_The file is not displayed in the text editor because it is very large_）。这时会弹出通知，提示以纯文本模式打开该标签页；文件经扩展宿主打开，不受这个上限约束，不必先点 `仍然打开`。它与大文件提示共用 `不再询问` 开关和 `0` 这个取值。
 - 自动进入：扩展名列在 `textToolkit.plainText.autoApplyExtensions` 里的文件（例如 `[".log", ".csv"]`）不经询问直接进入。
 
 ## 模式开启后会改变什么
@@ -36,12 +36,12 @@
 
 `textToolkit.advanced` 里有四个键控制本模式：
 
-| 键 | 默认值 | 作用 |
-| --- | --- | --- |
-| `plainText.applyEditorSettings` | `true` | 设为 `false` 时只切换语言，29 项覆盖一项都不写 |
-| `plainText.disableLineNumbers` | `false` | 设为 `true` 时模式开启期间同时隐藏行号 |
-| `plainText.suppressLanguageActivation` | `true` | 设为 `false` 时资源管理器照常打开文件，之后再切换语言 |
-| `plainText.editorOverrides` | `{}` | 修改、移除或追加覆盖表中的条目 |
+| 键                                     | 默认值  | 作用                                                  |
+| -------------------------------------- | ------- | ----------------------------------------------------- |
+| `plainText.applyEditorSettings`        | `true`  | 设为 `false` 时只切换语言，29 项覆盖一项都不写        |
+| `plainText.disableLineNumbers`         | `false` | 设为 `true` 时模式开启期间同时隐藏行号                |
+| `plainText.suppressLanguageActivation` | `true`  | 设为 `false` 时资源管理器照常打开文件，之后再切换语言 |
+| `plainText.editorOverrides`            | `{}`    | 修改、移除或追加覆盖表中的条目                        |
 
 `plainText.editorOverrides` 叠加在内置表之上，而不是替换它：
 
@@ -51,13 +51,13 @@
 
 ```json
 {
-  "textToolkit.advanced": {
-    "plainText.disableLineNumbers": true,
-    "plainText.editorOverrides": {
-      "editor.minimap.enabled": true,
-      "editor.hover.enabled": null
-    }
-  }
+	"textToolkit.advanced": {
+		"plainText.disableLineNumbers": true,
+		"plainText.editorOverrides": {
+			"editor.minimap.enabled": true,
+			"editor.hover.enabled": null
+		}
+	}
 }
 ```
 
@@ -65,34 +65,34 @@
 
 ## 29 项内置覆盖
 
-| 设置 id | 内置值 |
-| --- | --- |
-| `editor.minimap.enabled` | `false` |
-| `editor.wordWrap` | `"on"` |
-| `editor.folding` | `false` |
-| `editor.stickyScroll.enabled` | `false` |
-| `editor.bracketPairColorization.enabled` | `false` |
-| `editor.guides.indentation` | `false` |
-| `editor.guides.bracketPairs` | `false` |
-| `editor.matchBrackets` | `"never"` |
-| `editor.occurrencesHighlight` | `"off"` |
-| `editor.selectionHighlight` | `false` |
-| `editor.renderWhitespace` | `"none"` |
-| `editor.renderControlCharacters` | `false` |
-| `editor.codeLens` | `false` |
-| `editor.colorDecorators` | `false` |
-| `editor.links` | `false` |
-| `editor.hover.enabled` | `false` |
-| `editor.parameterHints.enabled` | `false` |
-| `editor.suggestOnTriggerCharacters` | `false` |
-| `editor.wordBasedSuggestions` | `"off"` |
-| `editor.quickSuggestions` | `{ "other": false, "comments": false, "strings": false }` |
-| `editor.formatOnType` | `false` |
-| `editor.formatOnPaste` | `false` |
-| `editor.autoClosingBrackets` | `"never"` |
-| `editor.autoClosingQuotes` | `"never"` |
-| `editor.trimAutoWhitespace` | `false` |
-| `editor.semanticHighlighting.enabled` | `false` |
-| `editor.unicodeHighlight.nonBasicASCII` | `false` |
-| `editor.unicodeHighlight.invisibleCharacters` | `false` |
-| `editor.unicodeHighlight.ambiguousCharacters` | `false` |
+| 设置 id                                       | 内置值                                                    |
+| --------------------------------------------- | --------------------------------------------------------- |
+| `editor.minimap.enabled`                      | `false`                                                   |
+| `editor.wordWrap`                             | `"on"`                                                    |
+| `editor.folding`                              | `false`                                                   |
+| `editor.stickyScroll.enabled`                 | `false`                                                   |
+| `editor.bracketPairColorization.enabled`      | `false`                                                   |
+| `editor.guides.indentation`                   | `false`                                                   |
+| `editor.guides.bracketPairs`                  | `false`                                                   |
+| `editor.matchBrackets`                        | `"never"`                                                 |
+| `editor.occurrencesHighlight`                 | `"off"`                                                   |
+| `editor.selectionHighlight`                   | `false`                                                   |
+| `editor.renderWhitespace`                     | `"none"`                                                  |
+| `editor.renderControlCharacters`              | `false`                                                   |
+| `editor.codeLens`                             | `false`                                                   |
+| `editor.colorDecorators`                      | `false`                                                   |
+| `editor.links`                                | `false`                                                   |
+| `editor.hover.enabled`                        | `false`                                                   |
+| `editor.parameterHints.enabled`               | `false`                                                   |
+| `editor.suggestOnTriggerCharacters`           | `false`                                                   |
+| `editor.wordBasedSuggestions`                 | `"off"`                                                   |
+| `editor.quickSuggestions`                     | `{ "other": false, "comments": false, "strings": false }` |
+| `editor.formatOnType`                         | `false`                                                   |
+| `editor.formatOnPaste`                        | `false`                                                   |
+| `editor.autoClosingBrackets`                  | `"never"`                                                 |
+| `editor.autoClosingQuotes`                    | `"never"`                                                 |
+| `editor.trimAutoWhitespace`                   | `false`                                                   |
+| `editor.semanticHighlighting.enabled`         | `false`                                                   |
+| `editor.unicodeHighlight.nonBasicASCII`       | `false`                                                   |
+| `editor.unicodeHighlight.invisibleCharacters` | `false`                                                   |
+| `editor.unicodeHighlight.ambiguousCharacters` | `false`                                                   |

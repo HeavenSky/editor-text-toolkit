@@ -14,21 +14,21 @@ Write only the keys you want to change into `textToolkit.advanced`; every key yo
 
 ```json
 {
-  "textToolkit.advanced": {
-    "copyPath.useLineCountSyntax": true,
-    "alignByRegex.rememberLastInput": false
-  }
+	"textToolkit.advanced": {
+		"copyPath.useLineCountSyntax": true,
+		"alignByRegex.rememberLastInput": false
+	}
 }
 ```
 
-| Key | Built-in default | Explained in |
-| --- | --- | --- |
-| `copyPath.useLineCountSyntax` | `false` | [Choose how lines are written](copy-path.md#choose-how-lines-are-written) |
-| `changeCase.includeDotInCurrentWord` | `false` | [What counts as the word under the cursor](change-case.md#what-counts-as-the-word-under-the-cursor) |
-| `alignByRegex.rememberLastInput` | `true` | [Align a selection](align-by-regex.md#align-a-selection) |
-| `plainText.applyEditorSettings` | `true` | [Tune the overrides](plain-text-mode.md#tune-the-overrides) |
-| `plainText.disableLineNumbers` | `false` | [Tune the overrides](plain-text-mode.md#tune-the-overrides) |
-| `plainText.suppressLanguageActivation` | `true` | [Tune the overrides](plain-text-mode.md#tune-the-overrides) |
-| `plainText.editorOverrides` | `{}` | [Tune the overrides](plain-text-mode.md#tune-the-overrides) |
+| Key                                    | Built-in default | Explained in                                                                                        |
+| -------------------------------------- | ---------------- | --------------------------------------------------------------------------------------------------- |
+| `copyPath.useLineCountSyntax`          | `false`          | [Choose how lines are written](copy-path.md#choose-how-lines-are-written)                           |
+| `changeCase.includeDotInCurrentWord`   | `false`          | [What counts as the word under the cursor](change-case.md#what-counts-as-the-word-under-the-cursor) |
+| `alignByRegex.rememberLastInput`       | `true`           | [Align a selection](align-by-regex.md#align-a-selection)                                            |
+| `plainText.applyEditorSettings`        | `true`           | [Tune the overrides](plain-text-mode.md#tune-the-overrides)                                         |
+| `plainText.disableLineNumbers`         | `false`          | [Tune the overrides](plain-text-mode.md#tune-the-overrides)                                         |
+| `plainText.suppressLanguageActivation` | `true`           | [Tune the overrides](plain-text-mode.md#tune-the-overrides)                                         |
+| `plainText.editorOverrides`            | `{}`             | [Tune the overrides](plain-text-mode.md#tune-the-overrides)                                         |
 
 `settings.json` completes every key with its type and default, and the value of `textToolkit.advanced` offers a snippet that writes out all built-in defaults. Unknown keys and values of the wrong type are ignored and the built-in default is kept, so a typo never leaves the extension broken.

@@ -1,9 +1,9 @@
 export enum PartType {
-  Regex,
-  Text
+	Regex,
+	Text,
 }
 
 export interface Part {
-  type: PartType;
-  value: string;
+	type: PartType;
+	value: string;
 }

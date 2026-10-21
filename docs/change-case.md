@@ -16,24 +16,24 @@ To skip the picker, bind a key with a style argument, for example `{ "style": "k
 
 Applied to the input `fooBar baz-qux`:
 
-| Style | Result | Notes |
-| --- | --- | --- |
-| `camel` | `fooBarBazQux` | |
-| `pascal` | `FooBarBazQux` | |
-| `snake` | `foo_bar_baz_qux` | |
-| `constant` | `FOO_BAR_BAZ_QUX` | |
-| `kebab` | `foo-bar-baz-qux` | |
-| `param` | `foo-bar-baz-qux` | alias of `kebab` |
-| `dot` | `foo.bar.baz.qux` | |
-| `path` | `foo/bar/baz/qux` | |
-| `no` | `foo bar baz qux` | lower case, space separated |
-| `sentence` | `Foo bar baz qux` | first character uppercased |
-| `title` | `Foo Bar Baz Qux` | every word capitalized |
-| `lower` | `foobar baz-qux` | whole string, separators untouched |
-| `upper` | `FOOBAR BAZ-QUX` | whole string, separators untouched |
-| `lowerFirst` | `fooBar baz-qux` | only the first character |
-| `upperFirst` | `FooBar baz-qux` | only the first character |
-| `swap` | `FOObAR BAZ-QUX` | every character's case reversed |
+| Style        | Result            | Notes                              |
+| ------------ | ----------------- | ---------------------------------- |
+| `camel`      | `fooBarBazQux`    |                                    |
+| `pascal`     | `FooBarBazQux`    |                                    |
+| `snake`      | `foo_bar_baz_qux` |                                    |
+| `constant`   | `FOO_BAR_BAZ_QUX` |                                    |
+| `kebab`      | `foo-bar-baz-qux` |                                    |
+| `param`      | `foo-bar-baz-qux` | alias of `kebab`                   |
+| `dot`        | `foo.bar.baz.qux` |                                    |
+| `path`       | `foo/bar/baz/qux` |                                    |
+| `no`         | `foo bar baz qux` | lower case, space separated        |
+| `sentence`   | `Foo bar baz qux` | first character uppercased         |
+| `title`      | `Foo Bar Baz Qux` | every word capitalized             |
+| `lower`      | `foobar baz-qux`  | whole string, separators untouched |
+| `upper`      | `FOOBAR BAZ-QUX`  | whole string, separators untouched |
+| `lowerFirst` | `fooBar baz-qux`  | only the first character           |
+| `upperFirst` | `FooBar baz-qux`  | only the first character           |
+| `swap`       | `FOObAR BAZ-QUX`  | every character's case reversed    |
 
 ## What counts as the word under the cursor
 

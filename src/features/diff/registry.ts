@@ -1,4 +1,4 @@
-import type { DiffSlot, SelectionInfo } from './core';
+import type { DiffSlot, SelectionInfo } from "./core";
 
 /**
  * 保留多少次比较的内容.
@@ -11,9 +11,9 @@ import type { DiffSlot, SelectionInfo } from './core';
 const MAX_SESSIONS = 8;
 
 interface DiffSession {
-  left: SelectionInfo;
-  right: SelectionInfo;
-  uris: string[];
+	left: SelectionInfo;
+	right: SelectionInfo;
+	uris: string[];
 }
 
 /**
@@ -21,75 +21,75 @@ interface DiffSession {
  * 全部只在内存中, 不写 globalState —— 比较标记是瞬时意图, 持久化只会留下过期状态.
  */
 export class DiffRegistry {
-  /** 「标记待比较文本」命令存下的那一段, 供下一次「与标记比较」使用. */
-  marked: SelectionInfo | null = null;
+	/** 「标记待比较文本」命令存下的那一段, 供下一次「与标记比较」使用. */
+	marked: SelectionInfo | null = null;
 
-  private readonly sessions = new Map<string, DiffSession>();
-  private readonly issued = new Set<string>();
-  private counter = 0;
-  private last: string | undefined;
+	private readonly sessions = new Map<string, DiffSession>();
+	private readonly issued = new Set<string>();
+	private counter = 0;
+	private last: string | undefined;
 
-  /**
-   * 建立一次比较. URI 的构造需要 sessionId, 而 sessionId 由本方法产出, 因此 uris 只能
-   * 以回调形式回填 —— 直接接收 uris 参数会形成循环依赖.
-   */
-  createSession(
-    left: SelectionInfo,
-    right: SelectionInfo,
-    buildUris: (sessionId: string) => string[]
-  ): { sessionId: string; uris: string[] } {
-    this.counter += 1;
-    const sessionId = `${Date.now().toString(36)}-${this.counter}`;
-    const uris = buildUris(sessionId);
+	/**
+	 * 建立一次比较. URI 的构造需要 sessionId, 而 sessionId 由本方法产出, 因此 uris 只能
+	 * 以回调形式回填 —— 直接接收 uris 参数会形成循环依赖.
+	 */
+	createSession(
+		left: SelectionInfo,
+		right: SelectionInfo,
+		buildUris: (sessionId: string) => string[]
+	): { sessionId: string; uris: string[] } {
+		this.counter += 1;
+		const sessionId = `${Date.now().toString(36)}-${this.counter}`;
+		const uris = buildUris(sessionId);
 
-    this.sessions.set(sessionId, { left, right, uris });
-    for (const uri of uris) {
-      this.issued.add(uri);
-    }
-    this.last = sessionId;
-    this.evictOldest();
+		this.sessions.set(sessionId, { left, right, uris });
+		for (const uri of uris) {
+			this.issued.add(uri);
+		}
+		this.last = sessionId;
+		this.evictOldest();
 
-    return { sessionId, uris };
-  }
+		return { sessionId, uris };
+	}
 
-  /** Map 保持插入顺序, 因此第一个键就是最旧的 session. */
-  private evictOldest(): void {
-    while (this.sessions.size > MAX_SESSIONS) {
-      const oldest = this.sessions.keys().next();
-      if (oldest.done) {
-        return;
-      }
-      const evicted = this.sessions.get(oldest.value);
-      this.sessions.delete(oldest.value);
-      // 同步清理已发放集合, 否则它只增不减, 刷新时会对早已失效的 URI 反复触发事件.
-      for (const uri of evicted?.uris ?? []) {
-        this.issued.delete(uri);
-      }
-      if (this.last === oldest.value) {
-        this.last = undefined;
-      }
-    }
-  }
+	/** Map 保持插入顺序, 因此第一个键就是最旧的 session. */
+	private evictOldest(): void {
+		while (this.sessions.size > MAX_SESSIONS) {
+			const oldest = this.sessions.keys().next();
+			if (oldest.done) {
+				return;
+			}
+			const evicted = this.sessions.get(oldest.value);
+			this.sessions.delete(oldest.value);
+			// 同步清理已发放集合, 否则它只增不减, 刷新时会对早已失效的 URI 反复触发事件.
+			for (const uri of evicted?.uris ?? []) {
+				this.issued.delete(uri);
+			}
+			if (this.last === oldest.value) {
+				this.last = undefined;
+			}
+		}
+	}
 
-  getSlot(sessionId: string, slot: DiffSlot): SelectionInfo | undefined {
-    return this.sessions.get(sessionId)?.[slot];
-  }
+	getSlot(sessionId: string, slot: DiffSlot): SelectionInfo | undefined {
+		return this.sessions.get(sessionId)?.[slot];
+	}
 
-  /**
-   * 某次比较发放的两个 URI. 供「在非 diff 编辑器上下文里做可编辑副本」时
-   * 回退到最近一次比较使用 —— 那种情况下拿不到活动 diff 标签页的两侧 URI.
-   */
-  getUris(sessionId: string): readonly string[] | undefined {
-    return this.sessions.get(sessionId)?.uris;
-  }
+	/**
+	 * 某次比较发放的两个 URI. 供「在非 diff 编辑器上下文里做可编辑副本」时
+	 * 回退到最近一次比较使用 —— 那种情况下拿不到活动 diff 标签页的两侧 URI.
+	 */
+	getUris(sessionId: string): readonly string[] | undefined {
+		return this.sessions.get(sessionId)?.uris;
+	}
 
-  /** 最近一次比较, 供「交换两侧」使用; 已被淘汰时为 undefined. */
-  get lastSessionId(): string | undefined {
-    return this.last;
-  }
+	/** 最近一次比较, 供「交换两侧」使用; 已被淘汰时为 undefined. */
+	get lastSessionId(): string | undefined {
+		return this.last;
+	}
 
-  /** 当前仍然有效的全部虚拟文档 URI, 供内容提供器刷新用. */
-  get issuedUris(): ReadonlySet<string> {
-    return this.issued;
-  }
+	/** 当前仍然有效的全部虚拟文档 URI, 供内容提供器刷新用. */
+	get issuedUris(): ReadonlySet<string> {
+		return this.issued;
+	}
 }

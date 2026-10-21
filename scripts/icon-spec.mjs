@@ -13,87 +13,87 @@
  *
  * 只描述图形, 不做渲染; SVG 与 PNG 都由 `scripts/gen-icon.mjs` 从这份数据生成。
  */
-import { SIZE, baseShapes } from './lib/icon-brand.mjs';
+import { SIZE, baseShapes } from "./lib/icon-brand.mjs";
 
-const LETTER_UPPER = '#6FD6FF';
-const LETTER_LOWER = '#FFC145';
+const LETTER_UPPER = "#6FD6FF";
+const LETTER_LOWER = "#FFC145";
 /** 对齐基准线用标点色, 与两侧内容拉开层次。 */
-const GUIDE = '#C792EA';
+const GUIDE = "#C792EA";
 /** 处理前: 每行各不相同。 */
-const BEFORE = ['#FF6B60', '#FFC145'];
+const BEFORE = ["#FF6B60", "#FFC145"];
 /** 处理后: 统一。 */
-const AFTER = '#4EDD6E';
+const AFTER = "#4EDD6E";
 
 const segment = (x1, y, x2, stroke, width = 11) => ({
-  kind: 'polyline',
-  points: [
-    [x1, y],
-    [x2, y],
-  ],
-  stroke,
-  strokeWidth: width,
+	kind: "polyline",
+	points: [
+		[x1, y],
+		[x2, y],
+	],
+	stroke,
+	strokeWidth: width,
 });
 
 /** 大写 A: 两撇加一道横杠。 */
 const upperA = (x, yTop, yBottom, width, stroke, strokeWidth) => [
-  {
-    kind: 'polyline',
-    points: [
-      [x, yBottom],
-      [x + width / 2, yTop],
-      [x + width, yBottom],
-    ],
-    stroke,
-    strokeWidth,
-  },
-  segment(
-    x + width * 0.22,
-    yBottom - (yBottom - yTop) * 0.34,
-    x + width * 0.78,
-    stroke,
-    strokeWidth * 0.8,
-  ),
+	{
+		kind: "polyline",
+		points: [
+			[x, yBottom],
+			[x + width / 2, yTop],
+			[x + width, yBottom],
+		],
+		stroke,
+		strokeWidth,
+	},
+	segment(
+		x + width * 0.22,
+		yBottom - (yBottom - yTop) * 0.34,
+		x + width * 0.78,
+		stroke,
+		strokeWidth * 0.8
+	),
 ];
 
 /** 小写 a: 一个圆环加右侧竖笔。 */
 const lowerA = (cx, cy, radius, stroke, strokeWidth) => [
-  { kind: 'ring', cx, cy, outer: radius, inner: radius - strokeWidth, fill: stroke },
-  {
-    kind: 'polyline',
-    points: [
-      [cx + radius - strokeWidth / 2, cy - radius + strokeWidth / 2],
-      [cx + radius - strokeWidth / 2, cy + radius - strokeWidth / 2],
-    ],
-    stroke,
-    strokeWidth,
-  },
+	{ kind: "ring", cx, cy, outer: radius, inner: radius - strokeWidth, fill: stroke },
+	{
+		kind: "polyline",
+		points: [
+			[cx + radius - strokeWidth / 2, cy - radius + strokeWidth / 2],
+			[cx + radius - strokeWidth / 2, cy + radius - strokeWidth / 2],
+		],
+		stroke,
+		strokeWidth,
+	},
 ];
 
 export default {
-  size: SIZE,
-  label: 'Editor Text Toolkit',
-  shapes: [
-    ...baseShapes(),
+	size: SIZE,
+	label: "Editor Text Toolkit",
+	shapes: [
+		...baseShapes(),
 
-    // 大小写转换
-    ...upperA(58, 60, 112, 40, LETTER_UPPER, 11),
-    ...lowerA(126, 96, 22, LETTER_LOWER, 10),
+		// 大小写转换
+		...upperA(58, 60, 112, 40, LETTER_UPPER, 11),
+		...lowerA(126, 96, 22, LETTER_LOWER, 10),
 
-    // 对齐基准线, 兼作差异对比的中缝
-    {
-      kind: 'polyline',
-      points: [
-        [104, 134],
-        [104, 198],
-      ],
-      stroke: GUIDE,
-      strokeWidth: 8,
-    },
+		// 对齐基准线, 兼作差异对比的中缝
+		{
+			kind: "polyline",
+			points: [
+				[104, 134],
+				[104, 198],
+			],
+			stroke: GUIDE,
+			strokeWidth: 8,
+		},
 
-    // 处理前长短不一, 处理后右侧对齐
-    segment(52, 148, 88, BEFORE[0]),
-    segment(120, 148, 204, AFTER),
-    segment(52, 176, 74, BEFORE[1]),
-    segment(120, 176, 204, AFTER),
-  ],
+		// 处理前长短不一, 处理后右侧对齐
+		segment(52, 148, 88, BEFORE[0]),
+		segment(120, 148, 204, AFTER),
+		segment(52, 176, 74, BEFORE[1]),
+		segment(120, 176, 204, AFTER),
+	],
 };

@@ -10,6 +10,8 @@ This page is for working on the extension itself: it covers what the `package.js
 
 ```bash
 npm run typecheck
+npm run lint:check  # oxlint; `npm run lint` also applies fixes
+npm run fmt:check  # oxfmt; `npm run fmt` formats in place
 npm test
 npm run check
 npm run package

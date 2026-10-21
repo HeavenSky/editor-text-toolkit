@@ -16,24 +16,24 @@
 
 以输入 `fooBar baz-qux` 为例：
 
-| 风格 | 结果 | 说明 |
-| --- | --- | --- |
-| `camel` | `fooBarBazQux` | |
-| `pascal` | `FooBarBazQux` | |
-| `snake` | `foo_bar_baz_qux` | |
-| `constant` | `FOO_BAR_BAZ_QUX` | |
-| `kebab` | `foo-bar-baz-qux` | |
-| `param` | `foo-bar-baz-qux` | `kebab` 的别名 |
-| `dot` | `foo.bar.baz.qux` | |
-| `path` | `foo/bar/baz/qux` | |
-| `no` | `foo bar baz qux` | 小写，空格分隔 |
-| `sentence` | `Foo bar baz qux` | 首字符大写 |
-| `title` | `Foo Bar Baz Qux` | 每个词首字母大写 |
-| `lower` | `foobar baz-qux` | 整串转小写，分隔符不动 |
-| `upper` | `FOOBAR BAZ-QUX` | 整串转大写，分隔符不动 |
-| `lowerFirst` | `fooBar baz-qux` | 只改首字符 |
-| `upperFirst` | `FooBar baz-qux` | 只改首字符 |
-| `swap` | `FOObAR BAZ-QUX` | 每个字符大小写互换 |
+| 风格         | 结果              | 说明                   |
+| ------------ | ----------------- | ---------------------- |
+| `camel`      | `fooBarBazQux`    |                        |
+| `pascal`     | `FooBarBazQux`    |                        |
+| `snake`      | `foo_bar_baz_qux` |                        |
+| `constant`   | `FOO_BAR_BAZ_QUX` |                        |
+| `kebab`      | `foo-bar-baz-qux` |                        |
+| `param`      | `foo-bar-baz-qux` | `kebab` 的别名         |
+| `dot`        | `foo.bar.baz.qux` |                        |
+| `path`       | `foo/bar/baz/qux` |                        |
+| `no`         | `foo bar baz qux` | 小写，空格分隔         |
+| `sentence`   | `Foo bar baz qux` | 首字符大写             |
+| `title`      | `Foo Bar Baz Qux` | 每个词首字母大写       |
+| `lower`      | `foobar baz-qux`  | 整串转小写，分隔符不动 |
+| `upper`      | `FOOBAR BAZ-QUX`  | 整串转大写，分隔符不动 |
+| `lowerFirst` | `fooBar baz-qux`  | 只改首字符             |
+| `upperFirst` | `FooBar baz-qux`  | 只改首字符             |
+| `swap`       | `FOObAR BAZ-QUX`  | 每个字符大小写互换     |
 
 ## 怎样算光标所在的词
 
