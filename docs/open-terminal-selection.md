@@ -8,11 +8,11 @@ This page shows how to select a path in VS Code's integrated terminal and open e
 
 Select the path with the mouse, then use whichever entry is at hand; all three open the selected text the same way.
 
-| Entry                     | Do this                                                                                                    |
-| ------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| Selection link            | Hold the link modifier and click the selected text                                                         |
-| Terminal right-click menu | Right-click the selection and choose `Open Terminal Selection as Path`, below Copy and Paste               |
-| Command Palette or a key  | Run `Text Toolkit: Open Terminal Selection as Path`, or [bind a key](#bind-a-key); no key is bound for you |
+| Entry                     | Do this                                                                                                 |
+| ------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Key                       | Press Cmd+U while the terminal has focus on macOS; on Windows and Linux [bind a key](#bind-a-key) first |
+| Terminal right-click menu | Right-click the selection and choose `Open Terminal Selection as Path`, below Copy and Paste            |
+| Command Palette           | Run `Text Toolkit: Open Terminal Selection as Path`                                                     |
 
 For this compiler output, selecting `src/app.ts:12:5` opens `src/app.ts` with the cursor on line 12, column 5, even where VS Code's own link detection would not take it as one path:
 
@@ -21,7 +21,7 @@ $ npm run build
 src/app.ts:12:5 - error TS2322: Type 'string' is not assignable to type 'number'.
 ```
 
-The link modifier is Cmd on macOS and Ctrl on Windows and Linux, or Alt when `editor.multiCursorModifier` is `ctrlCmd`. The selection link appears only while text is selected and only over that text, so clicking anything else behaves as before; while it is there, it takes priority over VS Code's own link for the same text. The link appears only after you move the pointer off the line and back; see [Known limits](#known-limits).
+Cmd+U acts only while the terminal has focus; in the editor it keeps its usual meaning. It runs even with nothing selected, so it can offer the path that a full-screen program such as Claude Code copied; see [Select text in full-screen programs such as Claude Code](#select-text-in-full-screen-programs-such-as-claude-code). Cmd+click on the selection is off by default; see [Turn on the selection link](#turn-on-the-selection-link).
 
 The command appears in the Command Palette once a terminal is open and acts on the active terminal; the right-click entry appears only while text is selected and acts on the terminal you clicked.
 
@@ -53,13 +53,14 @@ A selection over several lines gives one candidate per line, up to 20, and a not
 
 Relative paths start from the terminal's current folder, taken from the first source below that gives a folder which exists:
 
-1. The folder reported by shell integration. It follows every `cd`.
-2. The folder of the shell process, read from the operating system on macOS and Linux. It also follows `cd`; it is skipped on Windows and once the terminal has exited.
-3. The folder the terminal was started in. It does not follow `cd`.
-4. The first workspace folder.
-5. None. Only absolute, `~` and `file://` paths open.
+1. The folder of the program running in the foreground, such as Claude Code or vim, read from the operating system on macOS and Linux. It is used only while such a program runs, and it is right even for a one-liner such as `cd docs && claude`, where shell integration still reports the folder from before the line ran.
+2. The folder reported by shell integration. It follows every `cd`.
+3. The folder of the shell process, read from the operating system on macOS and Linux. It also follows `cd`; it is skipped on Windows and once the terminal has exited.
+4. The folder the terminal was started in. It does not follow `cd`.
+5. The first workspace folder.
+6. None. Only absolute, `~` and `file://` paths open.
 
-**Only the shell's own folder counts.** A `:cd` inside vim, a tmux or screen session, a pager such as `less`, or `ssh` to another machine inside the terminal is not tracked. A reported folder that does not exist on this machine is skipped, so an `ssh` session usually falls through to the next source.
+**Folders inside tmux, screen or ssh are not tracked.** Those programs report the folder they were started in, not the folder of the shell running inside them. A reported folder that does not exist on this machine is skipped.
 
 When the extension can find the shell integration folder, the selection link's tooltip shows it as `Open selection as path (relative to …)`. In a Remote-SSH, WSL or Dev Container window, folders, `~` and absolute paths refer to the remote machine.
 
@@ -89,27 +90,37 @@ When nothing in the selection exists, an input box titled `Open Terminal Selecti
 
 The box stays open when you click back into the terminal, so you can check the original output. You can also type an absolute path, a `~` path or a `file://` URI. A path that exists but cannot be read, because of permissions or a file system that does not answer within 1.5 seconds, reports `Cannot access …: …` instead of opening the box; see [Troubleshooting](troubleshooting.md).
 
+## Select text in full-screen programs such as Claude Code
+
+Programs that capture the mouse, such as Claude Code in full-screen mode, draw their own drag highlight, so the terminal itself has no selection: the selection link and the right-click entry do not appear, and the command reports that nothing is selected. Either of these works:
+
+1. Hold Option while dragging (Shift on Windows and Linux) to make a real terminal selection, then use any entry. On macOS this needs `"terminal.integrated.macOptionClickForcesSelection": true`; the command's notification offers `Enable Option+Drag Selection` to turn it on.
+2. Select inside the program as usual. Claude Code copies the selection to the clipboard when you release the mouse; press Cmd+U, and when the clipboard holds a path that exists, the notification offers `Open Clipboard Path`. Relative paths resolve against the folder Claude Code was started in.
+
 ## Bind a key
 
-No key is bound by default. Add bindings to `keybindings.json` (`Preferences: Open Keyboard Shortcuts (JSON)`); `terminalTextSelected` keeps the key inactive while nothing is selected:
+On macOS, Cmd+U runs the command while the terminal has focus; no key is bound on Windows and Linux. To use another key, add bindings to `keybindings.json` (`Preferences: Open Keyboard Shortcuts (JSON)`):
 
 ```jsonc
 // keybindings.json
 [
-	// macOS
+	// macOS: turn off the default Cmd+U and use Cmd+Alt+U instead
+	{ "key": "cmd+u", "command": "-textToolkit.terminal.openSelection" },
 	{
-		"key": "cmd+alt+o",
+		"key": "cmd+alt+u",
 		"command": "textToolkit.terminal.openSelection",
-		"when": "terminalFocus && terminalTextSelected",
+		"when": "terminalFocus",
 	},
 	// Windows / Linux
 	{
 		"key": "ctrl+alt+o",
 		"command": "textToolkit.terminal.openSelection",
-		"when": "terminalFocus && terminalTextSelected",
+		"when": "terminalFocus",
 	},
 ]
 ```
+
+Leave `terminalTextSelected` out of `when`: a full-screen program such as Claude Code leaves the terminal without a selection, and the key would then do nothing.
 
 On macOS a key with `cmd` works in the terminal as is. Any other key, which means every key on Windows and Linux, goes to the shell instead, so also add the command to `settings.json`; without it the shell receives the key and nothing opens:
 
@@ -117,22 +128,23 @@ On macOS a key with `cmd` works in the terminal as is. Any other key, which mean
 { "terminal.integrated.commandsToSkipShell": ["textToolkit.terminal.openSelection"] }
 ```
 
-## Turn off the selection link
+## Turn on the selection link
 
-Turn the link off when you want Cmd+click (Ctrl+click on Windows and Linux) on selected text to keep VS Code's own link behavior:
+The selection link lets you hold the link modifier and click the selected text instead of pressing a key. It is off by default because it appears only after the pointer has moved to another line and back; see [Known limits](#known-limits). To turn it on:
 
 ```json
-{ "textToolkit.advanced": { "terminalOpen.selectionLink": false } }
+{ "textToolkit.advanced": { "terminalOpen.selectionLink": true } }
 ```
 
-The change takes effect immediately. The right-click entry, the command and your keybindings keep working.
+The change takes effect immediately. The link modifier is Cmd on macOS and Ctrl on Windows and Linux, or Alt when `editor.multiCursorModifier` is `ctrlCmd`. The link covers only the selected text, so clicking anything else behaves as before; on the selected text it takes priority over VS Code's own link.
 
 ## Known limits
 
-- After you select, the link appears only once the pointer has left the line and come back, because VS Code asks for a line's links when the pointer enters it. The right-click entry and keys do not have this delay.
+- With the selection link on, it appears only once the pointer has moved to another line and come back after you select. VS Code asks for a line's links only when the pointer moves onto a different line, and keeps reusing the answer it got before you selected; leaving the terminal and returning to the same line, or moving along the line, does not count. The right-click entry and keys do not have this delay.
 - On a line longer than 2000 characters VS Code does not ask extensions for links, so no selection link appears; use the right-click entry or a key.
 - A selection that starts or ends inside a word, such as `opyPath` out of `copyPath`, gets no link.
 - While text is selected, the same text elsewhere on screen also becomes a link and opens the same path.
+- Claude Code runs its commands in a folder of its own: after its Bash tool runs `cd sub`, relative paths in later command output are relative to `sub`, but the extension still sees the folder Claude Code was started in. Such a path is not found, or opens a file of the same name in the start folder; select the absolute path, or fix the path in the input box.
 - When a line wraps on screen exactly at a space, the terminal drops that space, so the path is not found; restore the space in the input box.
 - Reading the selection relies on a VS Code API that is not finalized. If your VS Code version does not provide it, the selection link never appears, and the right-click entry and the command copy the selection through the clipboard instead, which only works for the active terminal.
 - That clipboard fallback puts your previous clipboard text back afterwards, but images and other non-text clipboard content are lost when text is selected, and clipboard history tools record the extra entries.

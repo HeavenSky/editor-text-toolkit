@@ -39,7 +39,6 @@ export const MAX_CANDIDATES = 20;
 export const MAX_SELECTION_LENGTH = 4096;
 export const MAX_LINKS_PER_LINE = 20;
 export const STAT_TIMEOUT_MS = 1500;
-export const COPY_SELECTION_TIMEOUT_MS = 2000;
 
 interface Location {
 	readonly path: string;
@@ -459,6 +458,21 @@ export function parseLsofCwd(stdout: string): string | undefined {
 	return cwd === undefined || cwd === "" ? undefined : cwd;
 }
 
+/** `ps -o tpgid= -p <pid>` 的输出: 终端前台进程组号; 没有控制终端时为 -1 或空. */
+export function parsePsTpgid(stdout: string): number | undefined {
+	const value = Number(stdout.trim());
+	return Number.isInteger(value) && value > 0 ? value : undefined;
+}
+
+/** /proc/<pid>/stat 的第 8 个字段; 进程名可能含空格和括号, 所以从最后一个 `)` 之后数. */
+export function parseProcStatTpgid(stat: string): number | undefined {
+	const rest = stat
+		.slice(stat.lastIndexOf(")") + 1)
+		.trim()
+		.split(/\s+/);
+	return parsePsTpgid(rest[5] ?? "");
+}
+
 const WORD_CHAR_AT_END = /[\p{L}\p{N}_]$/u;
 const WORD_CHAR_AT_START = /^[\p{L}\p{N}_]/u;
 
@@ -618,34 +632,4 @@ export async function raceTimeout<T>(p: PromiseLike<T>, ms: number): Promise<Rac
 	} finally {
 		clearTimeout(timer);
 	}
-}
-
-/** 后一个任务在前一个结束(无论成败)后才开始. */
-export function createSerialQueue(): <T>(task: () => Promise<T>) => Promise<T> {
-	let tail: Promise<unknown> = Promise.resolve();
-	return <T>(task: () => Promise<T>): Promise<T> => {
-		const result = tail.then(task);
-		tail = result.then(
-			() => undefined,
-			() => undefined
-		);
-		return result;
-	};
-}
-
-/** U+2063 不可见且不会出现在终端选区里; 不能用 NUL, 部分平台剪贴板会在 NUL 处截断. */
-export function makeSentinel(nowMs: number, rand: string): string {
-	return `\u2063etk-probe:${nowMs}:${rand}`;
-}
-
-/** original 为降级前的剪贴板文本, probe 为写入的哨兵('' 表示未写), after 为复制后读回的文本. */
-export function interpretProbe(
-	original: string,
-	probe: string,
-	after: string
-): { readonly selection: string | undefined; readonly restore: boolean } {
-	return {
-		selection: after !== probe && after.trim() !== "" ? after : undefined,
-		restore: probe !== original || after !== original,
-	};
 }

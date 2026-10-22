@@ -166,6 +166,13 @@
 				"category": "%category%"
 			}
 		],
+		"keybindings": [
+			{
+				"command": "textToolkit.terminal.openSelection",
+				"key": "cmd+u",
+				"when": "isMac && terminalFocus"
+			}
+		],
 		"menus": {
 			"commandPalette": [
 				{
@@ -506,7 +513,7 @@
 						},
 						"terminalOpen.selectionLink": {
 							"type": "boolean",
-							"default": true,
+							"default": false,
 							"markdownDescription": "%advanced.selectionLink%"
 						}
 					},
@@ -523,7 +530,7 @@
 								"plainText.disableLineNumbers": false,
 								"plainText.suppressLanguageActivation": true,
 								"plainText.editorOverrides": {},
-								"terminalOpen.selectionLink": true
+								"terminalOpen.selectionLink": false
 							}
 						}
 					]

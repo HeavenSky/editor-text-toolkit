@@ -90,6 +90,12 @@
 	"The selection is too long to be a path.": "选中文本过长, 不可能是路径.",
 	"Only the first {0} lines of the selection are used.": "只使用了选中文本的前 {0} 行.",
 	"Select text in the terminal first.": "请先在终端中选中文本.",
+	"Open Clipboard Path": "打开剪贴板中的路径",
+	"Enable Option+Drag Selection": "开启 Option+拖动选择",
+	"No text is selected in the terminal. The clipboard holds a path: {0}": "终端中没有选中的文本. 剪贴板里有路径: {0}",
+	"In full-screen programs that capture the mouse, such as Claude Code, hold Option while dragging to select terminal text.": "Claude Code 等接管鼠标的全屏程序里, 要按住 Option 拖动才能选中终端文本.",
+	"Enabled. Hold Option while dragging to select terminal text.": "已开启. 按住 Option 拖动即可选中终端文本.",
+	"Foreground program": "前台程序",
 	"Shell integration": "Shell 集成",
 	"Shell process": "Shell 进程",
 	"Terminal launch directory": "终端启动目录",
@@ -117,7 +123,5 @@
 	"Cannot confirm it exists: {0}": "无法确认是否存在: {0}",
 	"Will open file: {0}": "将打开文件: {0}",
 	"Will open folder: {0}": "将打开目录: {0}",
-	"timed out": "超时",
-	"Cannot read the terminal selection: {0}": "无法读取终端选区: {0}",
-	"Failed to restore the clipboard.": "剪贴板恢复失败."
+	"timed out": "超时"
 }

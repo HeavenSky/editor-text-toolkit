@@ -8,11 +8,11 @@
 
 先用鼠标选中路径，再任选一个入口；三个入口打开选中文本的方式完全相同。
 
-| 入口             | 操作                                                                                         |
-| ---------------- | -------------------------------------------------------------------------------------------- |
-| 选区链接         | 按住链接修饰键，点击选中的文本                                                               |
-| 终端右键菜单     | 在选区上右键，选择 `将终端选中文本作为路径打开`，它位于复制和粘贴下方                        |
-| 命令面板或快捷键 | 执行 `文本工具箱: 将终端选中文本作为路径打开`，或[绑定快捷键](#绑定快捷键)；扩展不预设快捷键 |
+| 入口         | 操作                                                                               |
+| ------------ | ---------------------------------------------------------------------------------- |
+| 快捷键       | macOS 上在终端获得焦点时按 Cmd+U；Windows 和 Linux 上要先[绑定快捷键](#绑定快捷键) |
+| 终端右键菜单 | 在选区上右键，选择 `将终端选中文本作为路径打开`，它位于复制和粘贴下方              |
+| 命令面板     | 执行 `文本工具箱: 将终端选中文本作为路径打开`                                      |
 
 以下面这段编译输出为例，选中 `src/app.ts:12:5` 后会打开 `src/app.ts`，光标落在第 12 行第 5 列；即使 VS Code 自带的链接检测没把它认成完整路径，也能打开：
 
@@ -21,7 +21,7 @@ $ npm run build
 src/app.ts:12:5 - error TS2322: Type 'string' is not assignable to type 'number'.
 ```
 
-链接修饰键在 macOS 上是 Cmd，在 Windows 和 Linux 上是 Ctrl；`editor.multiCursorModifier` 为 `ctrlCmd` 时改为 Alt。选区链接只在有选中文本时出现，也只覆盖这段文本，点击别处的行为不变；这时点击选中的文本，走的是选区链接，而不是 VS Code 自带的链接。选中之后，要先把鼠标移出这一行再移回来，链接才会出现，见[已知限制](#已知限制)。
+Cmd+U 只在终端获得焦点时生效，在编辑器里仍是原来的作用。没有选中文本时它也会执行，因此能提供 Claude Code 这类全屏程序复制下来的路径，见[在 Claude Code 等全屏程序里选中](#在-claude-code-等全屏程序里选中)。按住 Cmd 点击选区默认关闭，见[开启选区链接](#开启选区链接)。
 
 打开终端后，命令面板里才会出现这条命令，它作用于当前活动的终端；右键菜单项只在有选中文本时出现，作用于你右键点击的那个终端。
 
@@ -53,13 +53,14 @@ src/app.ts:12:5 - error TS2322: Type 'string' is not assignable to type 'number'
 
 相对路径从终端的当前目录算起。按下面的顺序逐个尝试，用第一个实际存在的目录：
 
-1. shell 集成上报的目录，跟着每次 `cd` 变化。
-2. shell 进程的当前目录（macOS 和 Linux 上从操作系统读取），同样跟着 `cd` 变化；Windows 上和终端已退出时跳过这一级。
-3. 终端启动时的目录，不跟着 `cd` 变化。
-4. 第一个工作区文件夹。
-5. 都没有。这时只能打开绝对路径、`~` 路径和 `file://` 路径。
+1. 前台正在运行的程序（例如 Claude Code、vim）的当前目录，macOS 和 Linux 上从操作系统读取。只在有这样的程序运行时使用；像 `cd docs && claude` 这样写成一行时，shell 集成报的还是这行执行前的目录，这一级取到的才是对的。
+2. shell 集成上报的目录，跟着每次 `cd` 变化。
+3. shell 进程的当前目录（macOS 和 Linux 上从操作系统读取），同样跟着 `cd` 变化；Windows 上和终端已退出时跳过这一级。
+4. 终端启动时的目录，不跟着 `cd` 变化。
+5. 第一个工作区文件夹。
+6. 都没有。这时只能打开绝对路径、`~` 路径和 `file://` 路径。
 
-**只认 shell 自己的当前目录。** 在 vim 里执行 `:cd`，在 tmux、screen 会话或 `less` 这类分页器里，或在终端里 `ssh` 到另一台机器，扩展都感知不到目录变化。上报的目录在本机不存在时会被跳过，所以 `ssh` 会话通常会落到下一级来源。
+**感知不到 tmux、screen 和 ssh 里面的目录。** 这些程序报的是它们自己启动时的目录，而不是在它们里面运行的 shell 的目录。上报的目录在本机不存在时会被跳过。
 
 扩展能取到 shell 集成上报的目录时，选区链接的悬停提示会显示 `将选中文本作为路径打开(相对于 …)`。在 Remote-SSH、WSL 或 Dev Container 窗口里，目录、`~` 和绝对路径指的都是远端机器上的位置。
 
@@ -89,27 +90,37 @@ src/app.ts:12:5 - error TS2322: Type 'string' is not assignable to type 'number'
 
 点回终端时输入框不会关闭，方便对照原始输出。也可以直接输入绝对路径、`~` 路径或 `file://` URI。路径存在但读不了（没有权限，或文件系统 1.5 秒内没有响应）时，不弹输入框，而是提示 `无法访问 …: …`，见[故障排查](troubleshooting.md)。
 
+## 在 Claude Code 等全屏程序里选中
+
+Claude Code 全屏模式这类接管鼠标的程序会自己画拖选高亮，终端本身并没有选区：选区链接和右键菜单项都不出现，执行命令会提示没有选中文本。用下面任一办法：
+
+1. 按住 Option 拖动（Windows 和 Linux 上按住 Shift），得到真正的终端选区，再用任一入口打开。macOS 上需要 `"terminal.integrated.macOptionClickForcesSelection": true`，命令弹出的提示里有 `开启 Option+拖动选择` 按钮，点一下即可开启。
+2. 照常在程序里选中。Claude Code 松开鼠标时会把选中文本复制到剪贴板；这时按 Cmd+U，剪贴板里是存在的路径时，提示里会出现 `打开剪贴板中的路径` 按钮。相对路径按 Claude Code 启动时的目录解析。
+
 ## 绑定快捷键
 
-扩展默认不绑定快捷键。把绑定写进 `keybindings.json`（执行 `首选项: 打开键盘快捷方式(JSON)`）；`terminalTextSelected` 让快捷键在没有选中文本时不生效：
+macOS 上终端获得焦点时按 Cmd+U 即可执行；Windows 和 Linux 上不预设快捷键。想换成别的键，把绑定写进 `keybindings.json`（执行 `首选项: 打开键盘快捷方式(JSON)`）：
 
 ```jsonc
 // keybindings.json
 [
-	// macOS
+	// macOS：关掉默认的 Cmd+U，改用 Cmd+Alt+U
+	{ "key": "cmd+u", "command": "-textToolkit.terminal.openSelection" },
 	{
-		"key": "cmd+alt+o",
+		"key": "cmd+alt+u",
 		"command": "textToolkit.terminal.openSelection",
-		"when": "terminalFocus && terminalTextSelected",
+		"when": "terminalFocus",
 	},
 	// Windows / Linux
 	{
 		"key": "ctrl+alt+o",
 		"command": "textToolkit.terminal.openSelection",
-		"when": "terminalFocus && terminalTextSelected",
+		"when": "terminalFocus",
 	},
 ]
 ```
+
+`when` 里不要加 `terminalTextSelected`：Claude Code 这类全屏程序里终端没有选区，加了之后按键就不起作用。
 
 macOS 上带 `cmd` 的快捷键在终端里直接生效。其他快捷键（Windows 和 Linux 上就是全部快捷键）会被终端交给 shell，所以还要在 `settings.json` 里加上这条命令；不加的话按键被 shell 收走，什么也不会打开：
 
@@ -117,22 +128,23 @@ macOS 上带 `cmd` 的快捷键在终端里直接生效。其他快捷键（Wind
 { "terminal.integrated.commandsToSkipShell": ["textToolkit.terminal.openSelection"] }
 ```
 
-## 关闭选区链接
+## 开启选区链接
 
-想让 Cmd+点击（Windows 和 Linux 上是 Ctrl+点击）选中文本时仍走 VS Code 自带的链接，就关掉选区链接：
+开启后，按住链接修饰键点击选中的文本就能打开，不用按快捷键。它默认关闭，因为选中之后要把鼠标移到别的行再移回来，链接才会出现，见[已知限制](#已知限制)。开启方法：
 
 ```json
-{ "textToolkit.advanced": { "terminalOpen.selectionLink": false } }
+{ "textToolkit.advanced": { "terminalOpen.selectionLink": true } }
 ```
 
-修改立即生效。右键菜单项、命令和你绑定的快捷键照常可用。
+修改立即生效。链接修饰键在 macOS 上是 Cmd，在 Windows 和 Linux 上是 Ctrl；`editor.multiCursorModifier` 为 `ctrlCmd` 时改为 Alt。链接只覆盖选中的文本，点击别处的行为不变；点击选中的文本时，选区链接优先于 VS Code 自带的链接。
 
 ## 已知限制
 
-- 选中之后，要等鼠标移出这一行再移回来，链接才会出现，因为 VS Code 在鼠标进入某一行时才向扩展索取这一行的链接。右键菜单项和快捷键没有这个延迟。
+- 开启选区链接后，选中之后要等鼠标移到别的行再移回来，链接才会出现。VS Code 只在鼠标换到另一行时才向扩展索取这一行的链接，此前（还没选中时）取到的结果会一直沿用；移出终端再回到同一行，或在这一行里左右移动，都不算。右键菜单项和快捷键没有这个延迟。
 - 一行超过 2000 个字符时，VS Code 不向扩展索取链接，选区链接不会出现；改用右键菜单项或快捷键。
 - 选区从某个单词中间开始或结束时（例如从 `copyPath` 里只选了 `opyPath`），不会出现链接。
 - 有选中文本期间，屏幕上其他位置的相同文本也会变成链接，打开的是同一个路径。
+- Claude Code 在它自己的目录里执行命令：它的 Bash 工具执行过 `cd sub` 之后，后续命令输出里的相对路径是相对 `sub` 的，而扩展看到的仍是 Claude Code 启动时的目录。这样的路径会找不到，或打开启动目录下的同名文件；请选中绝对路径，或在输入框里改正路径。
 - 长行恰好在空格处折行显示时，终端会丢掉这个空格，路径因此找不到；在输入框里把空格补回去即可。
 - 读取选区依赖一个尚未定稿的 VS Code API。当前 VS Code 版本不提供它时，选区链接不会出现，右键菜单项和命令改为借助剪贴板复制选区，而且只对当前活动的终端有效。
 - 借助剪贴板时，事后会还原原来的剪贴板文本；但有选中文本时，剪贴板里的图片等非文本内容会丢失，剪贴板历史工具也会多记几条。

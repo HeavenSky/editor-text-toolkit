@@ -7,6 +7,8 @@ import {
 	isAbsolutePath,
 	joinCwd,
 	parseLsofCwd,
+	parseProcStatTpgid,
+	parsePsTpgid,
 	raceTimeout,
 	STAT_TIMEOUT_MS,
 	toUriPath,
@@ -15,6 +17,7 @@ import {
 } from "./core";
 
 export type CwdSource =
+	| "foregroundProcess"
 	| "shellIntegration"
 	| "process"
 	| "creationOptions"
@@ -30,6 +33,7 @@ export type ResolvedCwd =
 export const PROCESS_CWD_TIMEOUT_MS = 500;
 /** 写全路径: 扩展宿主的 PATH 里可能没有 /usr/sbin. */
 export const DARWIN_LSOF_PATH = "/usr/sbin/lsof";
+export const DARWIN_PS_PATH = "/bin/ps";
 
 const LSOF_MAX_BUFFER_BYTES = 64 * 1024;
 
@@ -58,6 +62,8 @@ export function cwdToPath(uri: vscode.Uri, flavor: PathFlavor): string {
 
 export function cwdSourceLabel(source: Exclude<CwdSource, "none">): string {
 	switch (source) {
+		case "foregroundProcess":
+			return vscode.l10n.t("Foreground program");
 		case "shellIntegration":
 			return vscode.l10n.t("Shell integration");
 		case "process":
@@ -96,11 +102,11 @@ async function isDirectory(uri: vscode.Uri): Promise<boolean> {
 	return (await statTarget(uri)).kind === "directory";
 }
 
-function runLsof(pid: number): Promise<string> {
+function run(file: string, args: readonly string[]): Promise<string> {
 	return new Promise((resolve, reject) => {
 		execFile(
-			DARWIN_LSOF_PATH,
-			["-a", "-d", "cwd", "-p", String(pid), "-Fn"],
+			file,
+			args,
 			{
 				timeout: PROCESS_CWD_TIMEOUT_MS,
 				maxBuffer: LSOF_MAX_BUFFER_BYTES,
@@ -111,19 +117,61 @@ function runLsof(pid: number): Promise<string> {
 	});
 }
 
+/** 读不到时抛错. */
+async function cwdOfPid(pid: number): Promise<string> {
+	if (process.platform === "darwin") {
+		const cwd = parseLsofCwd(
+			await run(DARWIN_LSOF_PATH, ["-a", "-d", "cwd", "-p", String(pid), "-Fn"])
+		);
+		if (cwd === undefined) {
+			throw new Error("no cwd");
+		}
+		return cwd;
+	}
+	return fs.promises.readlink(`/proc/${pid}/cwd`);
+}
+
 async function readProcessCwd(terminal: vscode.Terminal): Promise<string | undefined> {
+	try {
+		const pid = await terminal.processId;
+		return pid === undefined ? undefined : await cwdOfPid(pid);
+	} catch {
+		return undefined;
+	}
+}
+
+/**
+ * shell 正在运行前台程序(例如 Claude Code, vim)时取该程序进程组组长的 cwd.
+ * `cd dir && claude` 这类一行命令执行期间 shell 集成仍报告上一个提示符时的目录, 只有前台程序自己的 cwd 是对的.
+ */
+async function readForegroundCwd(terminal: vscode.Terminal): Promise<string | undefined> {
 	try {
 		const pid = await terminal.processId;
 		if (pid === undefined) {
 			return undefined;
 		}
-		if (process.platform === "darwin") {
-			return parseLsofCwd(await runLsof(pid));
-		}
-		return await fs.promises.readlink(`/proc/${pid}/cwd`);
+		const tpgid =
+			process.platform === "darwin"
+				? parsePsTpgid(await run(DARWIN_PS_PATH, ["-o", "tpgid=", "-p", String(pid)]))
+				: parseProcStatTpgid(await fs.promises.readFile(`/proc/${pid}/stat`, "utf8"));
+		return tpgid === undefined || tpgid === pid ? undefined : await cwdOfPid(tpgid);
 	} catch {
 		return undefined;
 	}
+}
+
+async function probeProcessCwd(
+	read: (terminal: vscode.Terminal) => Promise<string | undefined>,
+	terminal: vscode.Terminal,
+	flavor: PathFlavor
+): Promise<vscode.Uri | undefined> {
+	const raced = await raceTimeout(read(terminal), PROCESS_CWD_TIMEOUT_MS);
+	const cwd = raced.timedOut ? undefined : raced.value;
+	if (!cwd || !isAbsolutePath(cwd, flavor)) {
+		return undefined;
+	}
+	const uri = toUri(cwd, flavor);
+	return (await isDirectory(uri)) ? uri : undefined;
 }
 
 function creationOptionsCwd(terminal: vscode.Terminal, flavor: PathFlavor): vscode.Uri | undefined {
@@ -147,24 +195,29 @@ function creationOptionsCwd(terminal: vscode.Terminal, flavor: PathFlavor): vsco
 		: undefined;
 }
 
-/** 每次实时解析, 不缓存: 用户随时可能 cd. 前三级取到的目录必须真实存在才采纳. */
+/** 每次实时解析, 不缓存: 用户随时可能 cd. 前四级取到的目录必须真实存在才采纳. */
 export async function resolveTerminalCwd(terminal: vscode.Terminal): Promise<ResolvedCwd> {
 	const flavor = hostFlavor();
+	const probesProcess =
+		(process.platform === "darwin" || process.platform === "linux") &&
+		terminal.exitStatus === undefined;
+
+	if (probesProcess) {
+		const uri = await probeProcessCwd(readForegroundCwd, terminal, flavor);
+		if (uri) {
+			return { uri, source: "foregroundProcess" };
+		}
+	}
 
 	const shellCwd = terminal.shellIntegration?.cwd;
 	if (shellCwd && (await isDirectory(shellCwd))) {
 		return { uri: shellCwd, source: "shellIntegration" };
 	}
 
-	const probesProcess = process.platform === "darwin" || process.platform === "linux";
-	if (probesProcess && terminal.exitStatus === undefined) {
-		const raced = await raceTimeout(readProcessCwd(terminal), PROCESS_CWD_TIMEOUT_MS);
-		const processCwd = raced.timedOut ? undefined : raced.value;
-		if (processCwd && isAbsolutePath(processCwd, flavor)) {
-			const uri = toUri(processCwd, flavor);
-			if (await isDirectory(uri)) {
-				return { uri, source: "process" };
-			}
+	if (probesProcess) {
+		const uri = await probeProcessCwd(readProcessCwd, terminal, flavor);
+		if (uri) {
+			return { uri, source: "process" };
 		}
 	}
 

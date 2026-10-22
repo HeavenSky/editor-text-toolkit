@@ -2,17 +2,16 @@ import { describe, it } from "vitest";
 import * as assert from "node:assert";
 import {
 	buildVariants,
-	createSerialQueue,
 	decideDirectoryAction,
 	decideOpen,
 	dedupeCandidates,
 	fileUriToPath,
 	findSelectionLinkRanges,
 	formatPosSuffix,
-	interpretProbe,
 	isOpenable,
-	makeSentinel,
 	parseLsofCwd,
+	parseProcStatTpgid,
+	parsePsTpgid,
 	parseSelection,
 	prefillText,
 	raceTimeout,
@@ -301,6 +300,20 @@ describe("terminalOpen core", () => {
 			assert.strictEqual(parseLsofCwd(""), undefined);
 		});
 
+		it("#82 parsePsTpgid 取前台进程组号, 无控制终端时为 undefined", () => {
+			assert.strictEqual(parsePsTpgid(" 70973\n"), 70973);
+			assert.strictEqual(parsePsTpgid("   -1\n"), undefined);
+			assert.strictEqual(parsePsTpgid(""), undefined);
+		});
+
+		it("#83 parseProcStatTpgid 进程名含空格与括号", () => {
+			assert.strictEqual(
+				parseProcStatTpgid("4242 (my (odd) name) S 1 4242 4242 34816 5150 4194304 0"),
+				5150
+			);
+			assert.strictEqual(parseProcStatTpgid("1 (init) S 0 1 1 0 -1 4194560"), undefined);
+		});
+
 		it("#58 toUriPath win32", () => {
 			assert.strictEqual(toUriPath("C:\\work\\a.ts", "win32"), "/C:/work/a.ts");
 		});
@@ -516,62 +529,6 @@ describe("terminalOpen core", () => {
 
 		it("B-20 原 Promise 失败时透传错误", async () => {
 			await assert.rejects(raceTimeout(Promise.reject(new Error("x")), 50), { message: "x" });
-		});
-	});
-
-	describe("剪贴板降级判定 interpretProbe", () => {
-		const S = makeSentinel(1, "x");
-		const rows: [string, string, string, string, string | undefined, boolean][] = [
-			["C-1", "", "", "", undefined, false],
-			["C-2", "", "", "src/a.ts", "src/a.ts", true],
-			["C-3", "", "", "  \n", undefined, true],
-			["C-4", "abc", S, S, undefined, true],
-			["C-5", "abc", S, "abc", "abc", true],
-			["C-6", "abc", S, "src/a.ts", "src/a.ts", true],
-			["C-7", "abc", S, "", undefined, true],
-		];
-		for (const [no, original, probe, after, selection, restore] of rows) {
-			it(`${no} original=${JSON.stringify(original)} after=${JSON.stringify(after === S ? "S" : after)}`, () => {
-				assert.deepStrictEqual(interpretProbe(original, probe, after), {
-					selection,
-					restore,
-				});
-			});
-		}
-	});
-
-	describe("makeSentinel 与 createSerialQueue", () => {
-		it("C-8 哨兵以 U+2063 开头且带时间与随机串", () => {
-			const sentinel = makeSentinel(1, "x");
-			assert.ok(sentinel.startsWith("\u2063"));
-			assert.ok(sentinel.includes("1") && sentinel.includes("x"));
-		});
-
-		it("C-9 不同随机串得到不同哨兵", () => {
-			assert.notStrictEqual(makeSentinel(1, "x"), makeSentinel(1, "y"));
-		});
-
-		it("C-10 后提交的任务等前一个结束才开始", async () => {
-			const run = createSerialQueue();
-			const log: string[] = [];
-			await Promise.all([
-				run(async () => {
-					await new Promise(resolve => setTimeout(resolve, 20));
-					log.push("a");
-				}),
-				run(async () => {
-					log.push("b");
-				}),
-			]);
-			assert.deepStrictEqual(log, ["a", "b"]);
-		});
-
-		it("C-11 前一个任务失败不影响后续", async () => {
-			const run = createSerialQueue();
-			const a = run(() => Promise.reject(new Error("a")));
-			const b = run(() => Promise.resolve(2));
-			await assert.rejects(a, { message: "a" });
-			assert.strictEqual(await b, 2);
 		});
 	});
 });

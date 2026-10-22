@@ -27,7 +27,7 @@ describe("advanced (内置层增量覆盖)", () => {
 			assert.strictEqual(defaults.plainText.applyEditorSettings, true);
 			assert.strictEqual(defaults.plainText.disableLineNumbers, false);
 			assert.strictEqual(defaults.plainText.suppressLanguageActivation, true);
-			assert.strictEqual(defaults.terminalOpen.selectionLink, true);
+			assert.strictEqual(defaults.terminalOpen.selectionLink, false);
 			assert.deepStrictEqual(defaults.plainText.editorOverrides, {
 				...DEFAULT_EDITOR_OVERRIDES,
 			});
@@ -107,13 +107,14 @@ describe("advanced (内置层增量覆盖)", () => {
 			assert.strictEqual(resolved.changeCase.includeDotInCurrentWord, false);
 		});
 
-		it("终端选区链接开关可单独关闭", () => {
-			const resolved = resolveAdvanced({ [ADVANCED_KEYS.selectionLink]: false });
-			assert.strictEqual(resolved.terminalOpen.selectionLink, false);
+		it("终端选区链接开关可单独开启", () => {
+			const resolved = resolveAdvanced({ [ADVANCED_KEYS.selectionLink]: true });
+			assert.strictEqual(resolved.terminalOpen.selectionLink, true);
 			assert.strictEqual(resolved.alignByRegex.rememberLastInput, true);
 			assert.strictEqual(
-				resolveAdvanced({ [ADVANCED_KEYS.selectionLink]: "no" }).terminalOpen.selectionLink,
-				true
+				resolveAdvanced({ [ADVANCED_KEYS.selectionLink]: "yes" }).terminalOpen
+					.selectionLink,
+				false
 			);
 		});
 

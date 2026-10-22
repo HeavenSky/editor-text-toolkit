@@ -2,7 +2,7 @@
 
 **English** · [简体中文](../zh/docs/commands-and-keybindings.md)
 
-This page shows how to reach every editor action from one picker and how to bind keys to the ones you use; the extension binds no keys by default, so nothing collides with your existing bindings.
+This page shows how to reach every editor action from one picker and how to bind keys to the ones you use; the only key bound by default is Cmd+U in the macOS terminal, so nothing else collides with your existing bindings.
 
 ## Use the two-level picker
 
@@ -64,12 +64,12 @@ Add bindings to `keybindings.json` (`Preferences: Open Keyboard Shortcuts (JSON)
 	{
 		"key": "ctrl+alt+o",
 		"command": "textToolkit.terminal.openSelection",
-		"when": "terminalFocus && terminalTextSelected"
+		"when": "terminalFocus"
 	}
 ]
 ```
 
-The terminal passes keys to the shell unless they use Cmd on macOS, so a terminal binding such as `ctrl+alt+o` for `textToolkit.terminal.openSelection` also needs `terminal.integrated.commandsToSkipShell`; see [Bind a key](open-terminal-selection.md#bind-a-key).
+On macOS, Cmd+U already runs `textToolkit.terminal.openSelection` in the terminal. The terminal passes keys to the shell unless they use Cmd on macOS, so a terminal binding such as `ctrl+alt+o` for `textToolkit.terminal.openSelection` also needs `terminal.integrated.commandsToSkipShell`; see [Bind a key](open-terminal-selection.md#bind-a-key).
 
 ## Find the commands that are not in the Command Palette
 

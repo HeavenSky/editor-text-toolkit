@@ -34,7 +34,7 @@ import {
 	type ResolvedCwd,
 } from "./cwd";
 import { registerSelectionLinkProvider } from "./linkProvider";
-import { readTerminalSelection } from "./selection";
+import { peekTerminalSelection } from "./selection";
 
 export const OPEN_SELECTION_COMMAND = "textToolkit.terminal.openSelection";
 
@@ -392,30 +392,85 @@ function resolveTerminalArg(arg?: unknown, args?: unknown): vscode.Terminal | un
 	return known.find(terminal => passed.includes(terminal)) ?? vscode.window.activeTerminal;
 }
 
+/** 剪贴板文本能解析成唯一一个存在的路径时返回该文本; 只读剪贴板, 不写. */
+async function existingClipboardPath(terminal: vscode.Terminal): Promise<string | undefined> {
+	let text: string;
+	try {
+		text = (await vscode.env.clipboard.readText()).trim();
+	} catch {
+		return undefined;
+	}
+	if (text === "" || text.length > MAX_SELECTION_LENGTH) {
+		return undefined;
+	}
+	const parsed = parseSelection(text, { flavor: hostFlavor(), homeDir: os.homedir() });
+	if (parsed.candidates.length !== 1) {
+		return undefined;
+	}
+	const cwd = await resolveTerminalCwd(terminal);
+	const resolved = await resolveCandidate(parsed.candidates[0], cwd);
+	return isOpenable(resolved.kind) ? text : undefined;
+}
+
+const FORCE_SELECTION_SECTION = "terminal.integrated";
+const FORCE_SELECTION_KEY = "macOptionClickForcesSelection";
+
+/**
+ * 终端没有原生选区. Claude Code 全屏模式等开启了鼠标上报的程序会自绘拖选高亮, 终端选区始终为空;
+ * 这类程序多在松开鼠标时把选中文本复制到剪贴板, 所以剪贴板里是存在的路径时提供直接打开.
+ */
+async function handleNoSelection(terminal: vscode.Terminal): Promise<void> {
+	const clipboardPath = await existingClipboardPath(terminal);
+	const canEnableForce =
+		process.platform === "darwin" &&
+		vscode.workspace
+			.getConfiguration(FORCE_SELECTION_SECTION)
+			.get<boolean>(FORCE_SELECTION_KEY) !== true;
+	const openLabel = vscode.l10n.t("Open Clipboard Path");
+	const forceLabel = vscode.l10n.t("Enable Option+Drag Selection");
+	const actions = [
+		...(clipboardPath === undefined ? [] : [openLabel]),
+		...(canEnableForce ? [forceLabel] : []),
+	];
+	let message =
+		clipboardPath === undefined
+			? vscode.l10n.t("Select text in the terminal first.")
+			: vscode.l10n.t(
+					"No text is selected in the terminal. The clipboard holds a path: {0}",
+					clipboardPath
+				);
+	if (canEnableForce) {
+		message +=
+			" " +
+			vscode.l10n.t(
+				"In full-screen programs that capture the mouse, such as Claude Code, hold Option while dragging to select terminal text."
+			);
+	}
+	const choice = await vscode.window.showInformationMessage(message, ...actions);
+	if (choice === openLabel && clipboardPath !== undefined) {
+		await openTerminalText(terminal, clipboardPath);
+	} else if (choice === forceLabel) {
+		await vscode.workspace
+			.getConfiguration(FORCE_SELECTION_SECTION)
+			.update(FORCE_SELECTION_KEY, true, vscode.ConfigurationTarget.Global);
+		void vscode.window.showInformationMessage(
+			vscode.l10n.t("Enabled. Hold Option while dragging to select terminal text.")
+		);
+	}
+}
+
 async function openTerminalSelection(arg?: unknown, args?: unknown): Promise<void> {
 	const terminal = resolveTerminalArg(arg, args);
 	if (!terminal) {
 		void vscode.window.showInformationMessage(vscode.l10n.t("No active terminal."));
 		return;
 	}
-	const result = await readTerminalSelection(terminal);
-	switch (result.kind) {
-		case "text":
-			await openTerminalText(terminal, result.text);
-			return;
-		case "none":
-			if (!result.notified) {
-				void vscode.window.showInformationMessage(
-					vscode.l10n.t("Select text in the terminal first.")
-				);
-			}
-			return;
-		case "error":
-			void vscode.window.showWarningMessage(
-				vscode.l10n.t("Cannot read the terminal selection: {0}", result.message)
-			);
-			return;
+	const text = peekTerminalSelection(terminal);
+	if (text === undefined) {
+		await handleNoSelection(terminal);
+		return;
 	}
+	await openTerminalText(terminal, text);
 }
 
 export function registerTerminalOpenFeature(context: vscode.ExtensionContext): void {

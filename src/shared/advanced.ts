@@ -83,7 +83,7 @@ export function advancedDefaults(): AdvancedSettings {
 			suppressLanguageActivation: true,
 			editorOverrides: { ...DEFAULT_EDITOR_OVERRIDES },
 		},
-		terminalOpen: { selectionLink: true },
+		terminalOpen: { selectionLink: false },
 	};
 }
 

@@ -46,13 +46,13 @@ Find the message or symptom you see; each entry gives the cause and the fix. Mes
 
 ## No link appears when you hold Cmd or Ctrl over a terminal selection
 
-- **Cause:** the pointer has not left the line since you selected, the line is longer than 2000 characters, the selection starts or ends inside a word, `terminalOpen.selectionLink` is `false`, or your VS Code version does not let extensions read the terminal selection.
-- **Fix:** move the pointer off the line and back, or use `Open Terminal Selection as Path` from the terminal's right-click menu or a key. See [Known limits](open-terminal-selection.md#known-limits).
+- **Cause:** the pointer has not moved to another line since you selected, the line is longer than 2000 characters, the selection starts or ends inside a word, the selection link is off (`terminalOpen.selectionLink` is `false` by default), or your VS Code version does not let extensions read the terminal selection.
+- **Fix:** move the pointer to another line and back, or use `Open Terminal Selection as Path` from the terminal's right-click menu or a key. See [Known limits](open-terminal-selection.md#known-limits).
 
 ## Select text in the terminal first.
 
-- **Cause:** `Open Terminal Selection as Path` found no selected text. Right after you finish selecting, VS Code may not have passed the selection to the extension yet. When the extension falls back to the clipboard, VS Code reports the same case itself as `The terminal has no selection to copy`.
-- **Fix:** select the path and run the command again. A key bound with `"when": "terminalFocus && terminalTextSelected"` only fires while text is selected; see [Bind a key](open-terminal-selection.md#bind-a-key).
+- **Cause:** `Open Terminal Selection as Path` found no selected text. In a program that captures the mouse, such as Claude Code in full-screen mode, dragging highlights text inside the program but makes no terminal selection. Right after you finish selecting, VS Code may not have passed the selection to the extension yet. When the extension falls back to the clipboard, VS Code reports the same case itself as `The terminal has no selection to copy`.
+- **Fix:** select the path and run the command again. In full-screen programs, hold Option (Shift on Windows and Linux) while dragging, or use the notification's `Open Clipboard Path`; see [Select text in full-screen programs such as Claude Code](open-terminal-selection.md#select-text-in-full-screen-programs-such-as-claude-code).
 
 ## The selection is too long to be a path.
 

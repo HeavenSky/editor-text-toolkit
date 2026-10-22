@@ -2,7 +2,7 @@
 
 [English](../../docs/commands-and-keybindings.md) · **简体中文**
 
-本页说明怎样从一个选择器用到全部编辑器动作，以及怎样给常用动作绑定快捷键；扩展默认不绑定任何快捷键，不会与已有绑定冲突。
+本页说明怎样从一个选择器用到全部编辑器动作，以及怎样给常用动作绑定快捷键；扩展只在 macOS 的终端里预设了 Cmd+U 一个快捷键，其余不会与已有绑定冲突。
 
 ## 使用两级选择器
 
@@ -64,12 +64,12 @@
 	{
 		"key": "ctrl+alt+o",
 		"command": "textToolkit.terminal.openSelection",
-		"when": "terminalFocus && terminalTextSelected"
+		"when": "terminalFocus"
 	}
 ]
 ```
 
-终端会把按键交给 shell，macOS 上带 Cmd 的除外；所以给 `textToolkit.terminal.openSelection` 绑定 `ctrl+alt+o` 这类终端快捷键时，还要配置 `terminal.integrated.commandsToSkipShell`，见[绑定快捷键](open-terminal-selection.md#绑定快捷键)。
+macOS 上在终端里按 Cmd+U 已经会执行 `textToolkit.terminal.openSelection`。终端会把按键交给 shell，macOS 上带 Cmd 的除外；所以给 `textToolkit.terminal.openSelection` 绑定 `ctrl+alt+o` 这类终端快捷键时，还要配置 `terminal.integrated.commandsToSkipShell`，见[绑定快捷键](open-terminal-selection.md#绑定快捷键)。
 
 ## 找到不在命令面板里的命令
 

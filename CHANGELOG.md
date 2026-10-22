@@ -6,7 +6,8 @@
 
 ### Added
 
-- Open a path selected in the integrated terminal, resolved against the terminal's current folder and positioned at the line and column it names: hold Cmd or Ctrl and click the selection, or use `Open Terminal Selection as Path` from the terminal's right-click menu or the Command Palette. See [Open a terminal selection as a path](https://github.com/HeavenSky/editor-text-toolkit/blob/HEAD/docs/open-terminal-selection.md).
+- Open a path selected in the integrated terminal, resolved against the terminal's current folder and positioned at the line and column it names: press Cmd+U in the terminal on macOS, or use `Open Terminal Selection as Path` from the terminal's right-click menu or the Command Palette. Cmd+click on the selection is an opt-in setting. See [Open a terminal selection as a path](https://github.com/HeavenSky/editor-text-toolkit/blob/HEAD/docs/open-terminal-selection.md).
+- In programs that capture the mouse, such as Claude Code in full-screen mode, the command offers to open the path the program copied to the clipboard, resolved against the folder the program was started in, or to turn on Option+drag selection. See [Select text in full-screen programs such as Claude Code](https://github.com/HeavenSky/editor-text-toolkit/blob/HEAD/docs/open-terminal-selection.md#select-text-in-full-screen-programs-such-as-claude-code).
 
 ## v0.0.8 2026-10-16 Rewritten docs
 

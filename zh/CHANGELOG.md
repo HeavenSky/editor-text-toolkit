@@ -6,7 +6,8 @@
 
 ### 新增
 
-- 在集成终端里选中的路径可以直接打开：按终端当前目录解析，并定位到其中写明的行和列。按住 Cmd 或 Ctrl 点击选区即可，也可以从终端右键菜单或命令面板执行 `将终端选中文本作为路径打开`。详见[把终端选中文本作为路径打开](https://github.com/HeavenSky/editor-text-toolkit/blob/HEAD/zh/docs/open-terminal-selection.md)。
+- 在集成终端里选中的路径可以直接打开：按终端当前目录解析，并定位到其中写明的行和列。macOS 上在终端里按 Cmd+U 即可，也可以从终端右键菜单或命令面板执行 `将终端选中文本作为路径打开`；按住 Cmd 或 Ctrl 点击选区需要在设置里开启。详见[把终端选中文本作为路径打开](https://github.com/HeavenSky/editor-text-toolkit/blob/HEAD/zh/docs/open-terminal-selection.md)。
+- 在 Claude Code 全屏模式这类接管鼠标的程序里，命令会提供打开程序复制到剪贴板的路径（按程序启动时的目录解析），或开启 Option+拖动选择。详见[在 Claude Code 等全屏程序里选中](https://github.com/HeavenSky/editor-text-toolkit/blob/HEAD/zh/docs/open-terminal-selection.md#在-claude-code-等全屏程序里选中)。
 
 ## v0.0.8 2026-10-16 文档重写
 
