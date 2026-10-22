@@ -2,7 +2,7 @@
 
 [English](../CHANGELOG.md) · **简体中文**
 
-## Unreleased
+## v0.0.9 2026-10-22 终端选区作为路径打开
 
 ### 新增
 

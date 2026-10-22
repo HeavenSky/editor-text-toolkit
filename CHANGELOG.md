@@ -2,7 +2,7 @@
 
 **English** · [简体中文](./zh/CHANGELOG.md)
 
-## Unreleased
+## v0.0.9 2026-10-22 Open terminal selections as paths
 
 ### Added
 
