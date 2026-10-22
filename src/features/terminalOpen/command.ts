@@ -1,4 +1,4 @@
-// 把终端选中文本当作路径打开: 命令入口, 三个入口共用的打开流程, 多候选选择与路径不存在时的输入框.
+// 把终端选中文本或剪贴板文本当作路径打开: 命令入口, 各入口共用的打开流程, 多候选选择与路径不存在时的输入框.
 import * as fs from "fs";
 import * as os from "os";
 import * as vscode from "vscode";
@@ -37,6 +37,7 @@ import { registerSelectionLinkProvider } from "./linkProvider";
 import { peekTerminalSelection } from "./selection";
 
 export const OPEN_SELECTION_COMMAND = "textToolkit.terminal.openSelection";
+export const OPEN_CLIPBOARD_PATH_COMMAND = "textToolkit.terminal.openClipboardPath";
 
 /** 键是一次打开流程的 cwd 对象, 让同一流程内的候选共用一次 realpath. */
 const realCwdCache = new WeakMap<ResolvedCwd, Promise<string | undefined>>();
@@ -342,7 +343,7 @@ export async function promptMissing(
 	}
 }
 
-/** 三个入口共用. */
+/** 各入口共用. */
 export async function openTerminalText(terminal: vscode.Terminal, text: string): Promise<void> {
 	if (text.length > MAX_SELECTION_LENGTH) {
 		void vscode.window.showWarningMessage(
@@ -473,6 +474,39 @@ async function openTerminalSelection(arg?: unknown, args?: unknown): Promise<voi
 	await openTerminalText(terminal, text);
 }
 
+/** 相对路径按活动终端的当前目录解析, 没有终端就没有解析基准. */
+async function openClipboardPath(): Promise<void> {
+	const terminal = vscode.window.activeTerminal;
+	if (!terminal) {
+		void vscode.window.showInformationMessage(
+			vscode.l10n.t(
+				"Focus a terminal first: relative paths in the clipboard resolve against the terminal's current folder."
+			)
+		);
+		return;
+	}
+	let text: string;
+	try {
+		text = (await vscode.env.clipboard.readText()).trim();
+	} catch (error) {
+		void vscode.window.showWarningMessage(
+			vscode.l10n.t("Cannot read the clipboard: {0}", errorMessage(error))
+		);
+		return;
+	}
+	if (text === "") {
+		void vscode.window.showInformationMessage(vscode.l10n.t("The clipboard holds no text."));
+		return;
+	}
+	if (text.length > MAX_SELECTION_LENGTH) {
+		void vscode.window.showWarningMessage(
+			vscode.l10n.t("The clipboard text is too long to be a path.")
+		);
+		return;
+	}
+	await openTerminalText(terminal, text);
+}
+
 export function registerTerminalOpenFeature(context: vscode.ExtensionContext): void {
 	const report = (error: unknown): void => {
 		void vscode.window.showErrorMessage(
@@ -484,6 +518,9 @@ export function registerTerminalOpenFeature(context: vscode.ExtensionContext): v
 	context.subscriptions.push(
 		vscode.commands.registerCommand(OPEN_SELECTION_COMMAND, (arg?: unknown, args?: unknown) =>
 			openTerminalSelection(arg, args).catch(report)
+		),
+		vscode.commands.registerCommand(OPEN_CLIPBOARD_PATH_COMMAND, () =>
+			openClipboardPath().catch(report)
 		)
 	);
 	registerSelectionLinkProvider(context, open);

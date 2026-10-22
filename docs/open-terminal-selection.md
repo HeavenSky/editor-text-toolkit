@@ -21,7 +21,7 @@ $ npm run build
 src/app.ts:12:5 - error TS2322: Type 'string' is not assignable to type 'number'.
 ```
 
-Cmd+U acts only while the terminal has focus; in the editor it keeps its usual meaning. It runs even with nothing selected, so it can offer the path that a full-screen program such as Claude Code copied; see [Select text in full-screen programs such as Claude Code](#select-text-in-full-screen-programs-such-as-claude-code). Cmd+click on the selection is off by default; see [Turn on the selection link](#turn-on-the-selection-link).
+Cmd+U acts only while the terminal has focus; in the editor it keeps its usual meaning. It runs even with nothing selected, so it can offer the path that a full-screen program such as Claude Code copied; see [Select text in full-screen programs such as Claude Code](#select-text-in-full-screen-programs-such-as-claude-code). Cmd+Y opens the path in the clipboard instead of the selection. Cmd+click on the selection is off by default; see [Turn on the selection link](#turn-on-the-selection-link).
 
 The command appears in the Command Palette once a terminal is open and acts on the active terminal; the right-click entry appears only while text is selected and acts on the terminal you clicked.
 
@@ -95,19 +95,21 @@ The box stays open when you click back into the terminal, so you can check the o
 Programs that capture the mouse, such as Claude Code in full-screen mode, draw their own drag highlight, so the terminal itself has no selection: the selection link and the right-click entry do not appear, and the command reports that nothing is selected. Either of these works:
 
 1. Hold Option while dragging (Shift on Windows and Linux) to make a real terminal selection, then use any entry. On macOS this needs `"terminal.integrated.macOptionClickForcesSelection": true`; the command's notification offers `Enable Option+Drag Selection` to turn it on.
-2. Select inside the program as usual. Claude Code copies the selection to the clipboard when you release the mouse; press Cmd+U, and when the clipboard holds a path that exists, the notification offers `Open Clipboard Path`. Relative paths resolve against the folder Claude Code was started in.
+2. Select inside the program as usual. Claude Code copies the selection to the clipboard when you release the mouse; press Cmd+Y, or run `Text Toolkit: Open Clipboard as Path in Terminal Folder`, to open that path. Relative paths resolve against the active terminal's current folder, which for Claude Code is the folder it was started in. Cmd+U with nothing selected also offers `Open Clipboard Path` when the clipboard holds a path that exists.
+
+Clipboard text is read the same way as a selection: noise is stripped, line numbers are honored, several lines give a list, and a path that does not exist opens the input box. The relative paths need a terminal to start from, so with no terminal open the command shows `Focus a terminal first: relative paths in the clipboard resolve against the terminal's current folder.`
 
 ## Bind a key
 
-On macOS, Cmd+U runs the command while the terminal has focus; no key is bound on Windows and Linux. To use another key, add bindings to `keybindings.json` (`Preferences: Open Keyboard Shortcuts (JSON)`):
+On macOS, while the terminal has focus, Cmd+U opens the selection and Cmd+Y opens the clipboard; no key is bound on Windows and Linux. To use other keys, add bindings to `keybindings.json` (`Preferences: Open Keyboard Shortcuts (JSON)`):
 
 ```jsonc
 // keybindings.json
 [
-	// macOS: turn off the default Cmd+U and use Cmd+Alt+U instead
+	// macOS: turn off the default Cmd+U and use Ctrl+Cmd+U instead
 	{ "key": "cmd+u", "command": "-textToolkit.terminal.openSelection" },
 	{
-		"key": "cmd+alt+u",
+		"key": "ctrl+cmd+u",
 		"command": "textToolkit.terminal.openSelection",
 		"when": "terminalFocus",
 	},
@@ -117,15 +119,25 @@ On macOS, Cmd+U runs the command while the terminal has focus; no key is bound o
 		"command": "textToolkit.terminal.openSelection",
 		"when": "terminalFocus",
 	},
+	{
+		"key": "ctrl+alt+shift+o",
+		"command": "textToolkit.terminal.openClipboardPath",
+		"when": "terminalFocus",
+	},
 ]
 ```
 
 Leave `terminalTextSelected` out of `when`: a full-screen program such as Claude Code leaves the terminal without a selection, and the key would then do nothing.
 
-On macOS a key with `cmd` works in the terminal as is. Any other key, which means every key on Windows and Linux, goes to the shell instead, so also add the command to `settings.json`; without it the shell receives the key and nothing opens:
+On macOS a key with `cmd` works in the terminal as is. Any other key, which means every key on Windows and Linux, goes to the shell instead, so also add the commands to `settings.json`; without it the shell receives the key and nothing opens:
 
 ```json
-{ "terminal.integrated.commandsToSkipShell": ["textToolkit.terminal.openSelection"] }
+{
+	"terminal.integrated.commandsToSkipShell": [
+		"textToolkit.terminal.openSelection",
+		"textToolkit.terminal.openClipboardPath"
+	]
+}
 ```
 
 ## Turn on the selection link
@@ -146,5 +158,4 @@ The change takes effect immediately. The link modifier is Cmd on macOS and Ctrl 
 - While text is selected, the same text elsewhere on screen also becomes a link and opens the same path.
 - Claude Code runs its commands in a folder of its own: after its Bash tool runs `cd sub`, relative paths in later command output are relative to `sub`, but the extension still sees the folder Claude Code was started in. Such a path is not found, or opens a file of the same name in the start folder; select the absolute path, or fix the path in the input box.
 - When a line wraps on screen exactly at a space, the terminal drops that space, so the path is not found; restore the space in the input box.
-- Reading the selection relies on a VS Code API that is not finalized. If your VS Code version does not provide it, the selection link never appears, and the right-click entry and the command copy the selection through the clipboard instead, which only works for the active terminal.
-- That clipboard fallback puts your previous clipboard text back afterwards, but images and other non-text clipboard content are lost when text is selected, and clipboard history tools record the extra entries.
+- Reading the selection relies on a VS Code API that is not finalized. If your VS Code version does not provide it, the selection link never appears and the other entries report that nothing is selected; copy the path and run `Open Clipboard as Path in Terminal Folder` instead.

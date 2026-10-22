@@ -8,7 +8,7 @@ Copy `path:12-14` references, convert case, align columns by a regex, open large
 [![Installs](https://vsmarketplacebadges.dev/installs-short/HeavenSky.editor-text-toolkit.svg)](https://marketplace.visualstudio.com/items?itemName=HeavenSky.editor-text-toolkit)
 [![License](https://img.shields.io/badge/license-MIT-blue)](./LICENSE.txt)
 
-It is for people who paste code locations into reviews and chats, reshape identifiers, and diff snippets many times a day. Instead of one extension per task, you get one picker that lists every action the extension offers in the editor next to the settings in effect, so you never need to remember a command name. The only default key is Cmd+U in the macOS terminal; it has no runtime dependencies and sends no telemetry.
+It is for people who paste code locations into reviews and chats, reshape identifiers, and diff snippets many times a day. Instead of one extension per task, you get one picker that lists every action the extension offers in the editor next to the settings in effect, so you never need to remember a command name. The only default keys are Cmd+U and Cmd+Y in the macOS terminal; it has no runtime dependencies and sends no telemetry.
 
 ![The picker lists the five tools with the settings currently in effect](media/screenshots/commands.png)
 

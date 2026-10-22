@@ -19,6 +19,7 @@
 	"command.diffToggleNormalizationRules": "切换归一化规则",
 	"command.diffShowMenu": "显示比较菜单",
 	"command.terminalOpenSelection": "将终端选中文本作为路径打开",
+	"command.terminalOpenClipboardPath": "将剪贴板内容按终端目录作为路径打开",
 	"config.pathStyle": "复制路径与行号时使用的路径格式.",
 	"config.pathStyle.absolute": "绝对路径.",
 	"config.pathStyle.relative": "相对于工作区文件夹的路径; 没有打开工作区时回退为绝对路径.",

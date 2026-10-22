@@ -10,7 +10,7 @@
 [![Installs](https://vsmarketplacebadges.dev/installs-short/HeavenSky.editor-text-toolkit.svg)](https://marketplace.visualstudio.com/items?itemName=HeavenSky.editor-text-toolkit)
 [![License](https://img.shields.io/badge/license-MIT-blue)](../LICENSE.txt)
 
-如果你每天都要把代码位置贴进评审和聊天、改标识符写法、比对代码片段，这个扩展就是为你做的。不必为每件事各装一个扩展：一个选择器列出本扩展在编辑器里的全部动作，旁边标着当前生效的设置，不用记任何命令名。只在 macOS 的终端里预设 Cmd+U 一个快捷键，没有运行时依赖，也不收集遥测数据。
+如果你每天都要把代码位置贴进评审和聊天、改标识符写法、比对代码片段，这个扩展就是为你做的。不必为每件事各装一个扩展：一个选择器列出本扩展在编辑器里的全部动作，旁边标着当前生效的设置，不用记任何命令名。只在 macOS 的终端里预设 Cmd+U 和 Cmd+Y 两个快捷键，没有运行时依赖，也不收集遥测数据。
 
 ![选择器列出五个工具及当前生效的设置](../media/screenshots/commands.png)
 

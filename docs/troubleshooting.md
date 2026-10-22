@@ -51,23 +51,18 @@ Find the message or symptom you see; each entry gives the cause and the fix. Mes
 
 ## Select text in the terminal first.
 
-- **Cause:** `Open Terminal Selection as Path` found no selected text. In a program that captures the mouse, such as Claude Code in full-screen mode, dragging highlights text inside the program but makes no terminal selection. Right after you finish selecting, VS Code may not have passed the selection to the extension yet. When the extension falls back to the clipboard, VS Code reports the same case itself as `The terminal has no selection to copy`.
-- **Fix:** select the path and run the command again. In full-screen programs, hold Option (Shift on Windows and Linux) while dragging, or use the notification's `Open Clipboard Path`; see [Select text in full-screen programs such as Claude Code](open-terminal-selection.md#select-text-in-full-screen-programs-such-as-claude-code).
+- **Cause:** `Open Terminal Selection as Path` found no selected text. In a program that captures the mouse, such as Claude Code in full-screen mode, dragging highlights text inside the program but makes no terminal selection. Right after you finish selecting, VS Code may not have passed the selection to the extension yet.
+- **Fix:** select the path and run the command again. In full-screen programs, hold Option (Shift on Windows and Linux) while dragging, or let the program copy the path and press Cmd+Y; see [Select text in full-screen programs such as Claude Code](open-terminal-selection.md#select-text-in-full-screen-programs-such-as-claude-code).
 
 ## The selection is too long to be a path.
 
 - **Cause:** the selection is longer than 4096 characters, which no single path reaches.
 - **Fix:** select only the path, or just the lines that contain paths.
 
-## Cannot read the terminal selection: …
+## Focus a terminal first: relative paths in the clipboard resolve against the terminal's current folder.
 
-- **Cause:** your VS Code version does not let extensions read the terminal selection directly, so the extension copies it through the clipboard, and that copy failed or took longer than 2 seconds (`timed out`). The text after the colon is the reason.
-- **Fix:** click into the terminal so it is the active one, select the path again and retry.
-
-## Failed to restore the clipboard.
-
-- **Cause:** after copying the selection through the clipboard, the extension could not put your previous clipboard text back.
-- **Fix:** the clipboard now holds the selection or a temporary marker; copy what you need again.
+- **Cause:** `Open Clipboard as Path in Terminal Folder` ran while no terminal was open, so there is no folder to resolve relative paths against.
+- **Fix:** open a terminal or click into the one the path came from, then run the command again.
 
 ## Not found: …
 

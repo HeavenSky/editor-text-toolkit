@@ -164,12 +164,22 @@
 				"command": "textToolkit.terminal.openSelection",
 				"title": "%command.terminalOpenSelection%",
 				"category": "%category%"
+			},
+			{
+				"command": "textToolkit.terminal.openClipboardPath",
+				"title": "%command.terminalOpenClipboardPath%",
+				"category": "%category%"
 			}
 		],
 		"keybindings": [
 			{
 				"command": "textToolkit.terminal.openSelection",
 				"key": "cmd+u",
+				"when": "isMac && terminalFocus"
+			},
+			{
+				"command": "textToolkit.terminal.openClipboardPath",
+				"key": "cmd+y",
 				"when": "isMac && terminalFocus"
 			}
 		],

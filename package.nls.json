@@ -19,6 +19,7 @@
 	"command.diffToggleNormalizationRules": "Toggle Normalization Rules",
 	"command.diffShowMenu": "Show Compare Menu",
 	"command.terminalOpenSelection": "Open Terminal Selection as Path",
+	"command.terminalOpenClipboardPath": "Open Clipboard as Path in Terminal Folder",
 	"config.pathStyle": "Path format used when copying path with line numbers.",
 	"config.pathStyle.absolute": "Absolute path.",
 	"config.pathStyle.relative": "Path relative to the workspace folder; falls back to the absolute path when no workspace is open.",

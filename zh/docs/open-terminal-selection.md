@@ -21,7 +21,7 @@ $ npm run build
 src/app.ts:12:5 - error TS2322: Type 'string' is not assignable to type 'number'.
 ```
 
-Cmd+U 只在终端获得焦点时生效，在编辑器里仍是原来的作用。没有选中文本时它也会执行，因此能提供 Claude Code 这类全屏程序复制下来的路径，见[在 Claude Code 等全屏程序里选中](#在-claude-code-等全屏程序里选中)。按住 Cmd 点击选区默认关闭，见[开启选区链接](#开启选区链接)。
+Cmd+U 只在终端获得焦点时生效，在编辑器里仍是原来的作用。没有选中文本时它也会执行，因此能提供 Claude Code 这类全屏程序复制下来的路径，见[在 Claude Code 等全屏程序里选中](#在-claude-code-等全屏程序里选中)。Cmd+Y 打开的则是剪贴板里的路径，而不是选区。按住 Cmd 点击选区默认关闭，见[开启选区链接](#开启选区链接)。
 
 打开终端后，命令面板里才会出现这条命令，它作用于当前活动的终端；右键菜单项只在有选中文本时出现，作用于你右键点击的那个终端。
 
@@ -95,19 +95,21 @@ Cmd+U 只在终端获得焦点时生效，在编辑器里仍是原来的作用�
 Claude Code 全屏模式这类接管鼠标的程序会自己画拖选高亮，终端本身并没有选区：选区链接和右键菜单项都不出现，执行命令会提示没有选中文本。用下面任一办法：
 
 1. 按住 Option 拖动（Windows 和 Linux 上按住 Shift），得到真正的终端选区，再用任一入口打开。macOS 上需要 `"terminal.integrated.macOptionClickForcesSelection": true`，命令弹出的提示里有 `开启 Option+拖动选择` 按钮，点一下即可开启。
-2. 照常在程序里选中。Claude Code 松开鼠标时会把选中文本复制到剪贴板；这时按 Cmd+U，剪贴板里是存在的路径时，提示里会出现 `打开剪贴板中的路径` 按钮。相对路径按 Claude Code 启动时的目录解析。
+2. 照常在程序里选中。Claude Code 松开鼠标时会把选中文本复制到剪贴板；这时按 Cmd+Y，或执行 `文本工具箱: 将剪贴板内容按终端目录作为路径打开`，就能打开这个路径。相对路径按当前活动终端的当前目录解析，对 Claude Code 来说就是它启动时的目录。没有选中文本时按 Cmd+U，剪贴板里是存在的路径的话，提示里也会出现 `打开剪贴板中的路径` 按钮。
+
+剪贴板文本的处理方式和选区相同：去掉周围的杂项，识别行号，多行时列出供选择，路径不存在时弹出输入框。相对路径要以某个终端的目录为起点，所以没有打开终端时，命令会提示 `请先聚焦到终端: 剪贴板中的相对路径按终端当前目录解析.`
 
 ## 绑定快捷键
 
-macOS 上终端获得焦点时按 Cmd+U 即可执行；Windows 和 Linux 上不预设快捷键。想换成别的键，把绑定写进 `keybindings.json`（执行 `首选项: 打开键盘快捷方式(JSON)`）：
+macOS 上终端获得焦点时，按 Cmd+U 打开选区，按 Cmd+Y 打开剪贴板；Windows 和 Linux 上不预设快捷键。想换成别的键，把绑定写进 `keybindings.json`（执行 `首选项: 打开键盘快捷方式(JSON)`）：
 
 ```jsonc
 // keybindings.json
 [
-	// macOS：关掉默认的 Cmd+U，改用 Cmd+Alt+U
+	// macOS：关掉默认的 Cmd+U，改用 Ctrl+Cmd+U
 	{ "key": "cmd+u", "command": "-textToolkit.terminal.openSelection" },
 	{
-		"key": "cmd+alt+u",
+		"key": "ctrl+cmd+u",
 		"command": "textToolkit.terminal.openSelection",
 		"when": "terminalFocus",
 	},
@@ -117,15 +119,25 @@ macOS 上终端获得焦点时按 Cmd+U 即可执行；Windows 和 Linux 上不�
 		"command": "textToolkit.terminal.openSelection",
 		"when": "terminalFocus",
 	},
+	{
+		"key": "ctrl+alt+shift+o",
+		"command": "textToolkit.terminal.openClipboardPath",
+		"when": "terminalFocus",
+	},
 ]
 ```
 
 `when` 里不要加 `terminalTextSelected`：Claude Code 这类全屏程序里终端没有选区，加了之后按键就不起作用。
 
-macOS 上带 `cmd` 的快捷键在终端里直接生效。其他快捷键（Windows 和 Linux 上就是全部快捷键）会被终端交给 shell，所以还要在 `settings.json` 里加上这条命令；不加的话按键被 shell 收走，什么也不会打开：
+macOS 上带 `cmd` 的快捷键在终端里直接生效。其他快捷键（Windows 和 Linux 上就是全部快捷键）会被终端交给 shell，所以还要在 `settings.json` 里加上这两条命令；不加的话按键被 shell 收走，什么也不会打开：
 
 ```json
-{ "terminal.integrated.commandsToSkipShell": ["textToolkit.terminal.openSelection"] }
+{
+	"terminal.integrated.commandsToSkipShell": [
+		"textToolkit.terminal.openSelection",
+		"textToolkit.terminal.openClipboardPath"
+	]
+}
 ```
 
 ## 开启选区链接
@@ -146,5 +158,4 @@ macOS 上带 `cmd` 的快捷键在终端里直接生效。其他快捷键（Wind
 - 有选中文本期间，屏幕上其他位置的相同文本也会变成链接，打开的是同一个路径。
 - Claude Code 在它自己的目录里执行命令：它的 Bash 工具执行过 `cd sub` 之后，后续命令输出里的相对路径是相对 `sub` 的，而扩展看到的仍是 Claude Code 启动时的目录。这样的路径会找不到，或打开启动目录下的同名文件；请选中绝对路径，或在输入框里改正路径。
 - 长行恰好在空格处折行显示时，终端会丢掉这个空格，路径因此找不到；在输入框里把空格补回去即可。
-- 读取选区依赖一个尚未定稿的 VS Code API。当前 VS Code 版本不提供它时，选区链接不会出现，右键菜单项和命令改为借助剪贴板复制选区，而且只对当前活动的终端有效。
-- 借助剪贴板时，事后会还原原来的剪贴板文本；但有选中文本时，剪贴板里的图片等非文本内容会丢失，剪贴板历史工具也会多记几条。
+- 读取选区依赖一个尚未定稿的 VS Code API。当前 VS Code 版本不提供它时，选区链接不会出现，其他入口会提示没有选中文本；这时先复制路径，再执行 `将剪贴板内容按终端目录作为路径打开`。
