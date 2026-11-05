@@ -2,11 +2,21 @@
 
 **English** · [简体中文](./zh/CHANGELOG.md)
 
-## Unreleased
+## v0.0.10 2026-11-05 CLI formatting and editor fixes
+
+### Upgrade notes
+
+- If an older plain text settings backup has no workspace identity, open its original workspace and choose `Restore Backup to This Workspace` when prompted. Editor setting overrides stay paused until that backup is restored; switching the document language remains available. See [Recover an older settings backup](https://github.com/HeavenSky/editor-text-toolkit/blob/HEAD/docs/plain-text-mode.md#recover-an-older-settings-backup).
 
 ### Added
 
 - Format documents and format on save with an installed CLI through `commonFormatter.list`, with VS Code-style variables, platform overrides and cancellable execution. See [Format documents with an installed CLI](https://github.com/HeavenSky/editor-text-toolkit/blob/HEAD/docs/common-formatter.md).
+
+### Fixed
+
+- Plain text mode restores editor settings after the last mode document closes, or when a crashed session is recovered. Concurrent windows keep separate workspace backups and share User settings until the last window leaves the mode; settings added to the override table while the mode is active also retain their original values.
+- Case conversion keeps selections on the converted text when single-line and multiline selections share a line.
+- Regex alignment uses the editor's effective tab width and actual tab stops, and no longer misses matches on later lines after a zero-length match.
 
 ## v0.0.9 2026-10-22 Open terminal selections as paths
 

@@ -24,7 +24,15 @@ The extension writes 29 editor settings under the `[plaintext]` scope: word wrap
 
 ## Leave the mode and restore everything
 
-Leaving the mode restores the language the file would otherwise have had and every setting value it replaced, including values that were not set before. Settings go to Workspace settings when a folder is open, otherwise to User settings; the temporary `files.associations` entry always goes to User settings, so nothing is written to a repository's `.vscode/settings.json` for it. An entry left behind by a crashed window is removed the next time the extension starts.
+Leaving the mode restores the language the file would otherwise have had. Editor settings are shared by mode documents in the same settings scope, including those in other windows; their original values are restored when the last such document leaves the mode or closes, including values that were not set before. Starting another window keeps those overrides in place while an existing window still uses them.
+
+Settings go to Workspace settings when a folder is open, otherwise to User settings. On startup, the extension restores editor settings left by a crashed session if no active window still uses them. The temporary `files.associations` entry always goes to User settings, so nothing is written to a repository's `.vscode/settings.json` for it; an association left behind by a crashed window is removed the next time the extension starts.
+
+## Recover an older settings backup
+
+If a warning says an older plain text settings backup has no workspace identity, open the workspace where you originally enabled the mode and choose `Restore Backup to This Workspace`. The extension keeps the backup until you confirm its workspace, and pauses editor setting overrides to avoid replacing the original values. You can still switch document languages while the backup is unresolved.
+
+Older User settings backups recover automatically when the extension starts in a window without a folder open.
 
 ## What it cannot speed up
 

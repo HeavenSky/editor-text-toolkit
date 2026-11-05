@@ -6,15 +6,16 @@ This page shows how to reach every editor action from one picker and how to bind
 
 ## Use the two-level picker
 
-`Text Toolkit: Show All Commands` lists the five tools, each with the settings currently in effect. Picking one opens its actions:
+`Text Toolkit: Show All Commands` lists the tools and their current settings where applicable. Picking one opens its actions:
 
-| Tool                        | Actions                                                                                                                                                                  |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Copy Path With Line Numbers | Copy with the current setting, or with any of the four path styles as a one-off                                                                                          |
-| Change Case                 | The 16 styles, previewed when the selection is a single line                                                                                                             |
-| Align by RegEx              | `Enter a regular expression...`, plus every saved template with its pattern                                                                                              |
-| Plain Text Mode             | Enable or Disable, whichever applies, and re-enable the large file prompt                                                                                                |
-| Compare (Diff)              | Mark, compare with the mark, the clipboard, visible editors or two tabs, swap sides, edit as a copy, open the source file, toggle rules, clean up copies, clear the mark |
+| Tool                                    | Actions                                                                                                                                                                  |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [Common Formatter](common-formatter.md) | Format the document with a configured CLI, open formatter settings, or show formatter output                                                                             |
+| Copy Path With Line Numbers             | Copy with the current setting, or with any of the four path styles as a one-off                                                                                          |
+| Change Case                             | The 16 styles, previewed when the selection is a single line                                                                                                             |
+| Align by RegEx                          | `Enter a regular expression...`, plus every saved template with its pattern                                                                                              |
+| Plain Text Mode                         | Enable or Disable, whichever applies, and re-enable the large file prompt                                                                                                |
+| Compare (Diff)                          | Mark, compare with the mark, the clipboard, visible editors or two tabs, swap sides, edit as a copy, open the source file, toggle rules, clean up copies, clear the mark |
 
 The second level always starts with `← Back`, `Esc` cancels without changing anything, and the first level never runs an action by itself.
 
