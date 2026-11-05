@@ -1,22 +1,28 @@
 import * as vscode from "vscode";
+import { randomUUID } from "node:crypto";
 import { PLAIN_TEXT_LANGUAGE_ID } from "./core";
+import { overrideStorage, processIsAlive, type StoredEntry } from "./settingsStorage";
 
 const STORAGE_KEY = "textToolkit.plainText.previousOverrides";
 /** 无工作区窗口的备份作用域: 用户级设置被同一配置的全部窗口共享. */
 const USER_SCOPE = "";
 
-interface StoredEntry {
+interface LegacyEntry {
 	target: vscode.ConfigurationTarget;
-	/**
-	 * 覆盖前的 `[plaintext]` 语言作用域值.
-	 * `null` 表示"当时未设置", 还原时写回 undefined 以移除该覆盖 ——
-	 * globalState 按 JSON 持久化, 直接存 undefined 会让整个键消失.
-	 */
 	values: Record<string, unknown>;
 }
 
-/** 作用域 -> 备份. 各工作区窗口(含无工作区窗口)各占一格, 互不覆盖. */
-type StoredOverrides = Record<string, StoredEntry>;
+const owners = new WeakMap<vscode.ExtensionContext, string>();
+const warned = new WeakSet<vscode.ExtensionContext>();
+
+function ownerId(context: vscode.ExtensionContext): string {
+	let owner = owners.get(context);
+	if (!owner) {
+		owner = randomUUID();
+		owners.set(context, owner);
+	}
+	return owner;
+}
 
 export interface ApplyResult {
 	applied: number;
@@ -46,6 +52,7 @@ function readPreviousValue(
  * 与写入目标一致 —— 有工作区时覆盖写进 Workspace(工作区文件/文件夹设置), 否则写进用户设置.
  */
 function workspaceScopeId(): string {
+	if (!vscode.workspace.workspaceFolders?.length) return USER_SCOPE;
 	if (vscode.workspace.workspaceFile) {
 		return vscode.workspace.workspaceFile.toString();
 	}
@@ -53,18 +60,66 @@ function workspaceScopeId(): string {
 	return folder ? folder.uri.toString() : USER_SCOPE;
 }
 
-function readStored(context: vscode.ExtensionContext): StoredOverrides {
-	const stored = context.globalState.get<StoredOverrides>(STORAGE_KEY);
-	// v0.0.9 及更早版本只存单个 { target, values }, 没有作用域信息, 无法安全归属, 直接丢弃.
-	if (!stored || typeof stored !== "object" || Array.isArray(stored) || "target" in stored) {
-		return {};
+function storageFor(context: vscode.ExtensionContext, scope = workspaceScopeId()) {
+	return overrideStorage(context.globalStorageUri.fsPath, scope);
+}
+
+function legacyEntry(context: vscode.ExtensionContext, scope: string): LegacyEntry | undefined {
+	const stored = context.globalState.get<LegacyEntry | Record<string, LegacyEntry>>(STORAGE_KEY);
+	if (!stored) return undefined;
+	if (typeof stored.target === "number") {
+		return scope === USER_SCOPE && stored.target === vscode.ConfigurationTarget.Global
+			? (stored as LegacyEntry)
+			: undefined;
 	}
-	return stored;
+	return (stored as Record<string, LegacyEntry>)[scope];
+}
+
+function readEntry(context: vscode.ExtensionContext, scope: string): StoredEntry | undefined {
+	const entry = storageFor(context, scope).read();
+	if (entry !== undefined) return entry ?? undefined;
+	const legacy = legacyEntry(context, scope);
+	return legacy ? { ...legacy, values: { ...legacy.values }, owners: {} } : undefined;
+}
+
+async function resolveLegacyWorkspace(context: vscode.ExtensionContext): Promise<boolean> {
+	const old = context.globalState.get<LegacyEntry>(STORAGE_KEY);
+	if (old?.target !== vscode.ConfigurationTarget.Workspace) return true;
+	// 无身份的工作区备份不能自动归属, 也不能覆盖. 用户选择原工作区后才消费旧记录.
+	if (!vscode.workspace.workspaceFolders?.length || warned.has(context)) return false;
+	warned.add(context);
+	const restore = vscode.l10n.t("Restore Backup to This Workspace");
+	const choice = await vscode.window.showWarningMessage(
+		vscode.l10n.t(
+			"An older plain text settings backup has no workspace identity. Restore it here only if this is the original workspace. Editor setting overrides are paused until the backup is restored."
+		),
+		restore
+	);
+	warned.delete(context);
+	if (choice !== restore) return false;
+	const configuration = plainTextConfiguration();
+	for (const [key, value] of Object.entries(old.values)) {
+		await configuration.update(key, value === null ? undefined : value, old.target, true);
+	}
+	await context.globalState.update(STORAGE_KEY, undefined);
+	return true;
+}
+
+function reportError(error: unknown): void {
+	console.error("[Text Toolkit] plain text settings:", error);
+	void vscode.window.showErrorMessage(
+		vscode.l10n.t("Plain text settings could not be updated. The backup has been retained.")
+	);
 }
 
 /** 当前作用域是否留有未还原的备份. */
 export function isApplied(context: vscode.ExtensionContext): boolean {
-	return readStored(context)[workspaceScopeId()] !== undefined;
+	try {
+		return readEntry(context, workspaceScopeId()) !== undefined;
+	} catch (error) {
+		reportError(error);
+		return false;
+	}
 }
 
 /**
@@ -82,65 +137,77 @@ export async function applyOverrides(
 			: vscode.ConfigurationTarget.Global;
 
 	const scope = workspaceScopeId();
-	const stored = readStored(context);
-	const existing = stored[scope];
 	const configuration = plainTextConfiguration();
-	const previous: Record<string, unknown> = {};
-	const failed: string[] = [];
-	let applied = 0;
-
-	for (const [key, value] of Object.entries(overrides)) {
-		try {
-			previous[key] = readPreviousValue(configuration, key, target) ?? null;
-			await configuration.update(key, value, target, true);
-			applied += 1;
-		} catch {
-			delete previous[key];
-			failed.push(key);
-		}
-	}
-
-	if (applied > 0) {
-		// 已有备份时(同窗口重复进入, 或模式期间覆盖表新增了键)只合并尚未记录的键:
-		// 已记录键保留最早原值, 避免用"已被我们改过的值"覆盖真正的原值.
-		const values = { ...existing?.values };
-		for (const [key, value] of Object.entries(previous)) {
-			if (!(key in values)) {
-				values[key] = value;
+	const storage = storageFor(context, scope);
+	try {
+		if (!(await resolveLegacyWorkspace(context)))
+			return { applied: 0, failed: Object.keys(overrides) };
+		return await storage.exclusive(async () => {
+			const entry = readEntry(context, scope) ?? { target, values: {}, owners: {} };
+			entry.owners[ownerId(context)] = process.pid;
+			const failed: string[] = [];
+			let applied = 0;
+			for (const [key, value] of Object.entries(overrides)) {
+				try {
+					if (!Object.hasOwn(entry.values, key))
+						entry.values[key] = readPreviousValue(configuration, key, target) ?? null;
+					// 先持久化原值, 崩溃时也不会只留下设置覆盖而丢失备份.
+					storage.save(entry);
+					await configuration.update(key, value, target, true);
+					applied++;
+				} catch {
+					failed.push(key);
+				}
 			}
-		}
-		await context.globalState.update(STORAGE_KEY, { ...stored, [scope]: { target, values } });
+			return { applied, failed };
+		});
+	} catch (error) {
+		reportError(error);
+		return { applied: 0, failed: Object.keys(overrides) };
 	}
-
-	return { applied, failed };
 }
 
 /** 还原当前作用域的备份; 原值为 null(当时未设置)时移除该覆盖. 其他作用域的备份不受影响. */
-export async function restoreOverrides(context: vscode.ExtensionContext): Promise<number> {
+export async function restoreOverrides(
+	context: vscode.ExtensionContext,
+	releaseOwner = true
+): Promise<number> {
 	const scope = workspaceScopeId();
-	const stored = readStored(context);
-	const entry = stored[scope];
-	if (!entry) {
+	const configuration = plainTextConfiguration();
+	const storage = storageFor(context, scope);
+	try {
+		if (!(await resolveLegacyWorkspace(context))) return 0;
+		return await storage.exclusive(async () => {
+			const entry = readEntry(context, scope);
+			if (!entry) return 0;
+			if (releaseOwner) delete entry.owners[ownerId(context)];
+			for (const [owner, pid] of Object.entries(entry.owners)) {
+				if (!processIsAlive(pid)) delete entry.owners[owner];
+			}
+			if (Object.keys(entry.owners).length > 0) {
+				storage.save(entry);
+				return 0;
+			}
+			let restored = 0;
+			for (const [key, value] of Object.entries(entry.values)) {
+				try {
+					await configuration.update(
+						key,
+						value === null ? undefined : value,
+						entry.target,
+						true
+					);
+					delete entry.values[key];
+					restored++;
+				} catch {
+					// 保留失败键供下次恢复, 不把暂时写入失败当成已恢复.
+				}
+			}
+			storage.save(Object.keys(entry.values).length ? entry : null);
+			return restored;
+		});
+	} catch (error) {
+		reportError(error);
 		return 0;
 	}
-
-	const configuration = plainTextConfiguration();
-	let restored = 0;
-	for (const [key, value] of Object.entries(entry.values)) {
-		try {
-			await configuration.update(key, value === null ? undefined : value, entry.target, true);
-			restored += 1;
-		} catch {
-			/* 该键已不再可写(例如设置被重命名), 跳过 */
-		}
-	}
-
-	const remaining = { ...stored };
-	delete remaining[scope];
-	// 空表直接清键, 不留空对象.
-	await context.globalState.update(
-		STORAGE_KEY,
-		Object.keys(remaining).length > 0 ? remaining : undefined
-	);
-	return restored;
 }

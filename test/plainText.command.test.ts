@@ -1,5 +1,7 @@
 // 验证模式文档真正关闭时清理状态并还原覆盖, 语言切换的 close 事件不清理, 以及启动时恢复遗留备份.
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
+import * as path from "node:path";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const state = vi.hoisted(() => {
 	const settings = {
@@ -69,6 +71,8 @@ vi.mock("vscode", () => ({
 		}),
 		setStatusBarMessage: () => ({ dispose: () => {} }),
 		showInformationMessage: vi.fn(),
+		showWarningMessage: vi.fn(),
+		showErrorMessage: vi.fn(),
 		onDidChangeActiveTextEditor: (callback: (...args: any[]) => void) => {
 			state.events.set("active", callback);
 			return { dispose: () => {} };
@@ -101,12 +105,15 @@ vi.mock("../src/features/plainText/openFile", () => ({
 }));
 
 import { registerPlainTextMode } from "../src/features/plainText/command";
-import { applyOverrides } from "../src/features/plainText/settings";
+import { applyOverrides, isApplied } from "../src/features/plainText/settings";
 
 const STORAGE_KEY = "textToolkit.plainText.previousOverrides";
 
-const context = () =>
+let root: string;
+let currentContext: ReturnType<typeof makeContext> | undefined;
+const makeContext = () =>
 	({
+		globalStorageUri: { fsPath: root },
 		subscriptions: [],
 		globalState: {
 			get: (key: string) => state.storage.get(key),
@@ -119,6 +126,7 @@ const context = () =>
 			},
 		},
 	}) as never;
+const context = () => (currentContext ??= makeContext());
 
 const document = (uri: string, languageId: string) => ({
 	uri: { toString: () => uri },
@@ -137,13 +145,23 @@ const flush = async () => {
 	}
 };
 
-const hasBackup = () => state.storage.has(STORAGE_KEY);
+const hasBackup = () => isApplied(context());
 
-beforeEach(() => state.reset());
+beforeEach(() => {
+	state.reset();
+	state.textDocuments = [];
+	state.activeEditor = undefined;
+	currentContext = undefined;
+	const cache = path.resolve(".ai-ctx/cache/plain-text-tests");
+	mkdirSync(cache, { recursive: true });
+	root = mkdtempSync(path.join(cache, "command-"));
+});
+afterEach(() => rmSync(root, { recursive: true, force: true }));
 
 describe("纯文本模式文档关闭与启动恢复", () => {
 	it("启动时恢复上次会话遗留的备份", async () => {
-		await applyOverrides(context(), { "editor.wordWrap": "on" });
+		state.storage.set(STORAGE_KEY, { "": { target: 1, values: { "editor.wordWrap": null } } });
+		state.settings.globalLanguage["editor.wordWrap"] = "on";
 		expect(state.settings.globalLanguage["editor.wordWrap"]).toBe("on");
 
 		registerPlainTextMode(context());
@@ -151,6 +169,15 @@ describe("纯文本模式文档关闭与启动恢复", () => {
 
 		expect(hasBackup()).toBe(false);
 		expect(state.settings.globalLanguage["editor.wordWrap"]).toBeUndefined();
+	});
+
+	it("新窗口启动不会恢复另一活跃窗口的覆盖", async () => {
+		const first = makeContext();
+		await applyOverrides(first, { "editor.wordWrap": "on" });
+		registerPlainTextMode(context());
+		await flush();
+		expect(state.settings.globalLanguage["editor.wordWrap"]).toBe("on");
+		expect(hasBackup()).toBe(true);
 	});
 
 	it("最后一个模式文档真正关闭后清理状态并还原覆盖", async () => {

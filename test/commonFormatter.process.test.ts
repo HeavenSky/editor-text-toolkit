@@ -125,6 +125,51 @@ describe("格式化进程", () => {
 		);
 		expect(JSON.parse(result.text)).toEqual(args);
 	});
+	it.skipIf(process.platform === "win32").each(["timeout", "cancel"])(
+		"父进程先退出时仍清理忽略 SIGTERM 的后代: %s",
+		async reason => {
+			const descendant = "process.on('SIGTERM',()=>{}); setInterval(()=>{},1000)";
+			const script = `const {spawn}=require('node:child_process'); const child=spawn(process.execPath,['-e',${JSON.stringify(descendant)}],{stdio:'ignore'}); process.stderr.write(String(child.pid)); setInterval(()=>{},1000)`;
+			const controller = new AbortController();
+			let pid: number | undefined;
+			let timer: ReturnType<typeof setTimeout> | undefined;
+			try {
+				const result = runFormatter(
+					invocation(script, { timeout: reason === "timeout" ? 500 : 3000 }),
+					"",
+					controller.signal
+				);
+				if (reason === "cancel") timer = setTimeout(() => controller.abort(), 500);
+				try {
+					await result;
+					expect.fail("进程应该被停止");
+				} catch (error) {
+					expect(error).toBeInstanceOf(FormatterProcessError);
+					pid = Number((error as FormatterProcessError).stderr);
+					expect(pid).toBeGreaterThan(0);
+				}
+				let alive = true;
+				for (let i = 0; i < 30 && alive; i++) {
+					try {
+						process.kill(pid!, 0);
+						await new Promise(resolve => setTimeout(resolve, 20));
+					} catch {
+						alive = false;
+					}
+				}
+				expect(alive).toBe(false);
+			} finally {
+				clearTimeout(timer);
+				if (pid) {
+					try {
+						process.kill(pid, "SIGKILL");
+					} catch {
+						/* 已退出. */
+					}
+				}
+			}
+		}
+	);
 	it.skipIf(process.platform === "win32")(
 		"超时会清理进程组, 包括忽略 SIGTERM 的父进程和后代",
 		async () => {

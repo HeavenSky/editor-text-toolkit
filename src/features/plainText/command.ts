@@ -343,14 +343,28 @@ export interface PlainTextFeature {
 
 export function registerPlainTextMode(context: vscode.ExtensionContext): PlainTextFeature {
 	const manager = new PlainTextModeManager(context);
+	// 恢复必须先于任何自动/手动进入; 活跃的其他窗口仍持有共享覆盖时不还原.
+	const ready = restoreOverrides(context, false);
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand("textToolkit.plainText.toggle", () => manager.toggle()),
+		{
+			dispose: () => {
+				void ready.then(() => restoreOverrides(context));
+			},
+		},
+		vscode.commands.registerCommand("textToolkit.plainText.toggle", async () => {
+			await ready;
+			await manager.toggle();
+		}),
 		vscode.commands.registerCommand(
 			"textToolkit.plainText.open",
-			(uri?: vscode.Uri, uris?: vscode.Uri[]) => manager.openInPlainText(uri, uris)
+			async (uri?: vscode.Uri, uris?: vscode.Uri[]) => {
+				await ready;
+				await manager.openInPlainText(uri, uris);
+			}
 		),
 		vscode.window.onDidChangeActiveTextEditor(async editor => {
+			await ready;
 			manager.updateStatusBar();
 			if (editor) {
 				await manager.maybeOffer(editor);
@@ -359,7 +373,8 @@ export function registerPlainTextMode(context: vscode.ExtensionContext): PlainTe
 		vscode.window.tabGroups.onDidChangeTabs(event => {
 			for (const tab of event.opened) {
 				if (tab.input instanceof vscode.TabInputText) {
-					void manager.maybeOfferForTooLargeTab(tab.input.uri);
+					const uri = tab.input.uri;
+					void ready.then(() => manager.maybeOfferForTooLargeTab(uri));
 				}
 			}
 		}),
@@ -370,9 +385,7 @@ export function registerPlainTextMode(context: vscode.ExtensionContext): PlainTe
 
 	void cleanUpPendingAssociations(context);
 
-	// 崩溃或直接关窗口会跳过 exit, 留下未还原的设置覆盖; 启动时本窗口还没有任何模式文档,
-	// 先还原再处理自动进入, 避免把覆盖后的值当原值记进新备份.
-	void restoreOverrides(context).then(() => {
+	void ready.then(() => {
 		if (vscode.window.activeTextEditor) {
 			void manager.maybeOffer(vscode.window.activeTextEditor);
 		}
@@ -386,6 +399,7 @@ export function registerPlainTextMode(context: vscode.ExtensionContext): PlainTe
 
 	/** 二级菜单: 开关随当前状态变化, 外加重新启用大文件提示. */
 	const showPlainTextMenu = async (withBack = false): Promise<PickOutcome> => {
+		await ready;
 		const active = manager.isActiveForActiveEditor();
 		const items: MenuItem[] = [
 			{
@@ -414,7 +428,10 @@ export function registerPlainTextMode(context: vscode.ExtensionContext): PlainTe
 	};
 
 	return {
-		toggle: () => manager.toggle(),
+		toggle: async () => {
+			await ready;
+			await manager.toggle();
+		},
 		resetPrompt: () => manager.resetPrompt(),
 		isActiveForActiveEditor: () => manager.isActiveForActiveEditor(),
 		showMenu: showPlainTextMenu,

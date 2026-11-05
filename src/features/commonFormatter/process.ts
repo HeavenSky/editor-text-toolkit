@@ -38,7 +38,7 @@ export function runFormatter(
 		let stdoutBytes = 0;
 		let stderrBytes = 0;
 		let failure: Error | undefined;
-		let escalation: ReturnType<typeof setTimeout> | undefined;
+		let escalation: Promise<void> | undefined;
 		const diagnostics = (): string => Buffer.concat(stderr).toString("utf8");
 		const kill = (force: boolean): void => {
 			try {
@@ -65,11 +65,14 @@ export function runFormatter(
 			if (failure) return;
 			failure = new Error(message);
 			kill(false);
-			escalation = setTimeout(() => {
-				kill(true);
-				child.stdout?.destroy();
-				child.stderr?.destroy();
-			}, KILL_GRACE_MS);
+			escalation = new Promise(resolve => {
+				setTimeout(() => {
+					kill(true);
+					child.stdout?.destroy();
+					child.stderr?.destroy();
+					resolve();
+				}, KILL_GRACE_MS);
+			});
 		};
 		const timeout = setTimeout(
 			() => stop(`格式化超过 ${execution.timeout} 毫秒`),
@@ -93,10 +96,11 @@ export function runFormatter(
 		child.on("error", error => {
 			failure = error;
 		});
-		child.on("close", (code, exitSignal) => {
+		child.on("close", async (code, exitSignal) => {
 			clearTimeout(timeout);
-			if (escalation) clearTimeout(escalation);
 			signal.removeEventListener("abort", cancel);
+			// 父进程退出不代表进程组已经退出, 必须完成后代的强制清理再结束请求.
+			await escalation;
 			if (failure || code !== 0) {
 				reject(
 					new FormatterProcessError(
