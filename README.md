@@ -2,21 +2,25 @@
 
 **English** · [简体中文](./zh/README.md)
 
-Copy `path:12-14` references, convert case, align columns by a regex, open large files as plain text, and compare any two pieces of text.
+Copy `path:12-14` references, convert case, align columns by a regex, open large files as plain text, compare text, and format files using your installed CLI.
 
 [![VS Marketplace](https://vsmarketplacebadges.dev/version-short/HeavenSky.editor-text-toolkit.svg?label=VS%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=HeavenSky.editor-text-toolkit)
 [![Installs](https://vsmarketplacebadges.dev/installs-short/HeavenSky.editor-text-toolkit.svg)](https://marketplace.visualstudio.com/items?itemName=HeavenSky.editor-text-toolkit)
 [![License](https://img.shields.io/badge/license-MIT-blue)](./LICENSE.txt)
 
-It is for people who paste code locations into reviews and chats, reshape identifiers, and diff snippets many times a day. Instead of one extension per task, you get one picker that lists every action the extension offers in the editor next to the settings in effect, so you never need to remember a command name. The only default keys are Cmd+U and Cmd+Y in the macOS terminal; it has no runtime dependencies and sends no telemetry.
+It is for people who paste code locations into reviews and chats, reshape identifiers, and diff snippets many times a day. Instead of one extension per task, you get one picker that lists every action the extension offers in the editor next to the settings in effect, so you never need to remember a command name. The only default keys are Cmd+U and Cmd+Y in the macOS terminal; formatter CLIs are installed separately, and the extension sends no telemetry.
 
-![The picker lists the five tools with the settings currently in effect](media/screenshots/commands.png)
+![The picker lists tools with the settings currently in effect](media/screenshots/commands.png)
 
 ## Get started
 
 1. Run `code --install-extension HeavenSky.editor-text-toolkit`, or install from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=HeavenSky.editor-text-toolkit).
 2. Press `Ctrl+Shift+P` (`Cmd+Shift+P` on macOS) and run `Text Toolkit: Show All Commands`.
 3. Pick a tool, then an action. Once you know what you use, [bind a key to it](docs/commands-and-keybindings.md#bind-keys-with-arguments).
+
+## Format files with your own CLI
+
+Connect your installed formatter to VS Code's **Format Document** and format-on-save actions through `commonFormatter.list`. The CLI receives your current editor text, including unsaved changes. See [Format documents with an installed CLI](docs/common-formatter.md).
 
 ## Share an exact code location
 

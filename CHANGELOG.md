@@ -2,6 +2,12 @@
 
 **English** · [简体中文](./zh/CHANGELOG.md)
 
+## Unreleased
+
+### Added
+
+- Format documents and format on save with an installed CLI through `commonFormatter.list`, with VS Code-style variables, platform overrides and cancellable execution. See [Format documents with an installed CLI](https://github.com/HeavenSky/editor-text-toolkit/blob/HEAD/docs/common-formatter.md).
+
 ## v0.0.9 2026-10-22 Open terminal selections as paths
 
 ### Added

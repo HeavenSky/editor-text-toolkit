@@ -6,6 +6,7 @@ Find the page for what you want to do; each page assumes the extension is instal
 
 | I want to                                                                                 | Read                                                              |
 | ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Format documents using an installed command-line formatter                                | [Format documents with an installed CLI](common-formatter.md)     |
 | Control the path and line format that gets copied                                         | [Copy a path with line numbers](copy-path.md)                     |
 | Convert identifiers between `camelCase`, `snake_case` and other styles                    | [Convert case](change-case.md)                                    |
 | Line up assignments, tables or comments in columns                                        | [Align lines by a regular expression](align-by-regex.md)          |

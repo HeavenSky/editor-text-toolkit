@@ -4,21 +4,25 @@
 
 > 扩展市场页只显示英文版 README；扩展界面会跟随 VS Code 的显示语言切换为中文。
 
-复制 `path:12-14` 形式的位置引用，转换大小写风格，按正则对齐各列，以纯文本模式打开大文件，比较任意两段文本。
+复制 `path:12-14` 形式的位置引用，转换大小写风格，按正则对齐各列，以纯文本模式打开大文件，比较文本，并使用已安装的 CLI 格式化文件。
 
 [![VS Marketplace](https://vsmarketplacebadges.dev/version-short/HeavenSky.editor-text-toolkit.svg?label=VS%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=HeavenSky.editor-text-toolkit)
 [![Installs](https://vsmarketplacebadges.dev/installs-short/HeavenSky.editor-text-toolkit.svg)](https://marketplace.visualstudio.com/items?itemName=HeavenSky.editor-text-toolkit)
 [![License](https://img.shields.io/badge/license-MIT-blue)](../LICENSE.txt)
 
-如果你每天都要把代码位置贴进评审和聊天、改标识符写法、比对代码片段，这个扩展就是为你做的。不必为每件事各装一个扩展：一个选择器列出本扩展在编辑器里的全部动作，旁边标着当前生效的设置，不用记任何命令名。只在 macOS 的终端里预设 Cmd+U 和 Cmd+Y 两个快捷键，没有运行时依赖，也不收集遥测数据。
+如果你每天都要把代码位置贴进评审和聊天、改标识符写法、比对代码片段，这个扩展就是为你做的。不必为每件事各装一个扩展：一个选择器列出本扩展在编辑器里的全部动作，旁边标着当前生效的设置，不用记任何命令名。只在 macOS 的终端里预设 Cmd+U 和 Cmd+Y 两个快捷键；格式化 CLI 需要自行安装，扩展不收集遥测数据。
 
-![选择器列出五个工具及当前生效的设置](../media/screenshots/commands.png)
+![选择器列出工具及当前生效的设置](../media/screenshots/commands.png)
 
 ## 快速开始
 
 1. 执行 `code --install-extension HeavenSky.editor-text-toolkit`，或从 [VS Code 扩展市场](https://marketplace.visualstudio.com/items?itemName=HeavenSky.editor-text-toolkit)安装。
 2. 按 `Ctrl+Shift+P`（macOS 上是 `Cmd+Shift+P`），执行 `文本工具箱: 显示全部命令`。
 3. 先选工具，再选动作。用熟之后再给常用的动作[绑定快捷键](docs/commands-and-keybindings.md#带参数绑定快捷键)。
+
+## 使用自己的 CLI 格式化文件
+
+通过 `commonFormatter.list`，将已安装的格式化工具接入 VS Code 的 **格式化文档** 和保存时格式化流程。CLI 收到的是编辑器当前文本，包括尚未保存的修改。详见[使用已安装的 CLI 格式化文档](docs/common-formatter.md)。
 
 ## 分享精确的代码位置
 

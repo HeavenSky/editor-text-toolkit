@@ -2,6 +2,12 @@
 
 [English](../CHANGELOG.md) · **简体中文**
 
+## Unreleased
+
+### 新增
+
+- 通过 `commonFormatter.list` 使用已安装的 CLI 格式化文档，并接入保存时格式化；支持 VS Code 风格变量、平台覆盖和取消执行。详见[使用已安装的 CLI 格式化文档](https://github.com/HeavenSky/editor-text-toolkit/blob/HEAD/zh/docs/common-formatter.md)。
+
 ## v0.0.9 2026-10-22 终端选区作为路径打开
 
 ### 新增

@@ -1,4 +1,13 @@
 {
+	"Formatter \"{0}\" failed. See Common Formatter output for details.": "格式化器 \"{0}\" 执行失败. 请查看 Common Formatter 输出了解详情.",
+	"Show Formatter Output": "显示格式化输出",
+	"Trust the workspace to run formatter commands.": "请信任工作区后再运行格式化命令.",
+	"Common Formatter needs a document with a file path.": "通用格式化需要具有文件路径的文档.",
+	"No formatter configured for this language. Edit commonFormatter.list.": "当前语言尚未配置格式化器, 请编辑 commonFormatter.list.",
+	"Format Document with CLI": "使用 CLI 格式化文档",
+	"Configure Common Formatter": "配置通用格式化",
+	"Common Formatter": "通用格式化",
+	"Format documents using a configured CLI": "使用配置的 CLI 格式化文档",
 	"No active editor to copy from.": "没有可复制的活动编辑器.",
 	"Current document is not saved as a file.": "当前文档尚未保存为文件.",
 	"No selected lines to copy.": "没有选中任何行.",

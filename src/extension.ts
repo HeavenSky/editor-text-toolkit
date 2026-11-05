@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { registerAlignByRegexCommand } from "./features/alignByRegex/command";
 import { registerChangeCaseCommands } from "./features/changeCase/command";
 import { registerCopyPathCommand } from "./features/copyPath/command";
+import { registerCommonFormatter } from "./features/commonFormatter/provider";
 import { registerDiffFeature } from "./features/diff/command";
 import { registerMenuCommand } from "./features/menu/command";
 import { registerPlainTextMode } from "./features/plainText/command";
@@ -14,7 +15,8 @@ export function activate(context: vscode.ExtensionContext): void {
 	const plainText = registerPlainTextMode(context);
 	const diff = registerDiffFeature(context);
 	registerTerminalOpenFeature(context);
-	registerMenuCommand(context, plainText, diff);
+	const formatter = registerCommonFormatter(context);
+	registerMenuCommand(context, plainText, diff, formatter);
 }
 
 export function deactivate(): void {

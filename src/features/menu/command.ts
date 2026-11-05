@@ -6,6 +6,7 @@ import { showCaseStylePicker } from "../changeCase/command";
 import { copyPathWithLines, PATH_STYLES } from "../copyPath/command";
 import type { DiffFeature } from "../diff/command";
 import type { PlainTextFeature } from "../plainText/command";
+import type { CommonFormatterFeature } from "../commonFormatter/provider";
 import type { PathStyle } from "../../shared/config";
 
 /**
@@ -54,11 +55,17 @@ async function showCopyPathMenu(withBack: boolean): Promise<PickOutcome> {
 export function registerMenuCommand(
 	context: vscode.ExtensionContext,
 	plainText: PlainTextFeature,
-	diff: DiffFeature
+	diff: DiffFeature,
+	formatter: CommonFormatterFeature
 ): void {
 	const categories = (): MenuItem[] => {
 		const copyPath = getCopyPathConfig();
 		return [
+			{
+				id: "commonFormatter",
+				label: `$(code) ${vscode.l10n.t("Common Formatter")}`,
+				detail: vscode.l10n.t("Format documents using a configured CLI"),
+			},
 			{
 				id: "copyPath",
 				label: `$(clippy) ${vscode.l10n.t("Copy Path With Line Numbers")}`,
@@ -98,6 +105,8 @@ export function registerMenuCommand(
 
 	const runSecondLevel = async (id: string): Promise<PickOutcome> => {
 		switch (id) {
+			case "commonFormatter":
+				return formatter.showMenu(true);
 			case "copyPath":
 				return showCopyPathMenu(true);
 			case "changeCase":

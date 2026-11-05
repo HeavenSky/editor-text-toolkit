@@ -58,9 +58,11 @@
 		"shots": "node scripts/shoot.mjs --readme"
 	},
 	"devDependencies": {
+		"@types/cross-spawn": "^6.0.6",
 		"@types/node": "^26.6.5",
 		"@vscode/vsce": "^4.0.0",
 		"change-case": "^5.4.4",
+		"cross-spawn": "^7.0.6",
 		"esbuild": "^0.28.2",
 		"oxfmt": "^0.74.0",
 		"oxlint": "^1.89.0",
@@ -73,6 +75,16 @@
 	"l10n": "./l10n",
 	"contributes": {
 		"commands": [
+			{
+				"command": "textToolkit.commonFormatter.format",
+				"title": "%command.commonFormatter.format%",
+				"category": "%category%"
+			},
+			{
+				"command": "textToolkit.commonFormatter.showOutput",
+				"title": "%command.commonFormatter.showOutput%",
+				"category": "%category%"
+			},
 			{
 				"command": "textToolkit.commands",
 				"title": "%command.commands%",
@@ -269,6 +281,231 @@
 		"configuration": {
 			"title": "Editor Text Toolkit",
 			"properties": {
+				"commonFormatter.list": {
+					"type": "array",
+					"scope": "resource",
+					"default": [],
+					"markdownDescription": "%config.commonFormatter.list%",
+					"items": {
+						"type": "object",
+						"additionalProperties": false,
+						"required": [
+							"name",
+							"languages",
+							"command"
+						],
+						"properties": {
+							"name": {
+								"type": "string",
+								"minLength": 1,
+								"description": "%config.commonFormatter.name%"
+							},
+							"languages": {
+								"type": "array",
+								"minItems": 1,
+								"items": {
+									"type": "string",
+									"minLength": 1
+								},
+								"description": "%config.commonFormatter.languages%"
+							},
+							"enabled": {
+								"type": "boolean",
+								"default": true,
+								"description": "%config.commonFormatter.enabled%"
+							},
+							"command": {
+								"type": "string",
+								"minLength": 1,
+								"description": "%config.commonFormatter.command%"
+							},
+							"args": {
+								"type": "array",
+								"items": {
+									"type": "string"
+								},
+								"default": [],
+								"description": "%config.commonFormatter.args%"
+							},
+							"cwd": {
+								"type": "string",
+								"minLength": 1,
+								"default": "${fileDirname}",
+								"description": "%config.commonFormatter.cwd%"
+							},
+							"env": {
+								"type": "object",
+								"additionalProperties": {
+									"type": [
+										"string",
+										"null"
+									]
+								},
+								"default": {},
+								"description": "%config.commonFormatter.env%"
+							},
+							"timeout": {
+								"type": "integer",
+								"minimum": 1,
+								"maximum": 2147483647,
+								"default": 5000,
+								"description": "%config.commonFormatter.timeout%"
+							},
+							"windows": {
+								"type": "object",
+								"additionalProperties": false,
+								"description": "%config.commonFormatter.platform%",
+								"properties": {
+									"command": {
+										"type": "string",
+										"minLength": 1,
+										"description": "%config.commonFormatter.command%"
+									},
+									"args": {
+										"type": "array",
+										"items": {
+											"type": "string"
+										},
+										"default": [],
+										"description": "%config.commonFormatter.args%"
+									},
+									"cwd": {
+										"type": "string",
+										"minLength": 1,
+										"default": "${fileDirname}",
+										"description": "%config.commonFormatter.cwd%"
+									},
+									"env": {
+										"type": "object",
+										"additionalProperties": {
+											"type": [
+												"string",
+												"null"
+											]
+										},
+										"default": {},
+										"description": "%config.commonFormatter.env%"
+									},
+									"timeout": {
+										"type": "integer",
+										"minimum": 1,
+										"maximum": 2147483647,
+										"default": 5000,
+										"description": "%config.commonFormatter.timeout%"
+									}
+								}
+							},
+							"linux": {
+								"type": "object",
+								"additionalProperties": false,
+								"description": "%config.commonFormatter.platform%",
+								"properties": {
+									"command": {
+										"type": "string",
+										"minLength": 1,
+										"description": "%config.commonFormatter.command%"
+									},
+									"args": {
+										"type": "array",
+										"items": {
+											"type": "string"
+										},
+										"default": [],
+										"description": "%config.commonFormatter.args%"
+									},
+									"cwd": {
+										"type": "string",
+										"minLength": 1,
+										"default": "${fileDirname}",
+										"description": "%config.commonFormatter.cwd%"
+									},
+									"env": {
+										"type": "object",
+										"additionalProperties": {
+											"type": [
+												"string",
+												"null"
+											]
+										},
+										"default": {},
+										"description": "%config.commonFormatter.env%"
+									},
+									"timeout": {
+										"type": "integer",
+										"minimum": 1,
+										"maximum": 2147483647,
+										"default": 5000,
+										"description": "%config.commonFormatter.timeout%"
+									}
+								}
+							},
+							"osx": {
+								"type": "object",
+								"additionalProperties": false,
+								"description": "%config.commonFormatter.platform%",
+								"properties": {
+									"command": {
+										"type": "string",
+										"minLength": 1,
+										"description": "%config.commonFormatter.command%"
+									},
+									"args": {
+										"type": "array",
+										"items": {
+											"type": "string"
+										},
+										"default": [],
+										"description": "%config.commonFormatter.args%"
+									},
+									"cwd": {
+										"type": "string",
+										"minLength": 1,
+										"default": "${fileDirname}",
+										"description": "%config.commonFormatter.cwd%"
+									},
+									"env": {
+										"type": "object",
+										"additionalProperties": {
+											"type": [
+												"string",
+												"null"
+											]
+										},
+										"default": {},
+										"description": "%config.commonFormatter.env%"
+									},
+									"timeout": {
+										"type": "integer",
+										"minimum": 1,
+										"maximum": 2147483647,
+										"default": 5000,
+										"description": "%config.commonFormatter.timeout%"
+									}
+								}
+							}
+						}
+					},
+					"defaultSnippets": [
+						{
+							"label": "Prettier",
+							"body": [
+								{
+									"name": "Prettier",
+									"languages": [
+										"javascript",
+										"typescript",
+										"json"
+									],
+									"command": "prettier",
+									"args": [
+										"--stdin-filepath",
+										"${file}"
+									]
+								}
+							]
+						}
+					]
+				},
 				"textToolkit.copyPath.pathStyle": {
 					"type": "string",
 					"default": "absolute",
@@ -551,9 +788,21 @@
 	"activationEvents": [
 		"onStartupFinished"
 	],
+	"extensionKind": [
+		"workspace"
+	],
 	"icon": "media/icon.png",
 	"engines": {
 		"node": ">=22.15.1",
 		"vscode": "^1.101.0"
+	},
+	"capabilities": {
+		"untrustedWorkspaces": {
+			"supported": "limited",
+			"description": "%config.commonFormatter.trust%",
+			"restrictedConfigurations": [
+				"commonFormatter.list"
+			]
+		}
 	}
 }
