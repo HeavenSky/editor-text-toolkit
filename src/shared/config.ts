@@ -82,10 +82,19 @@ export function getAdvanced(): AdvancedSettings {
 /**
  * 对齐所用的制表符宽度. 与上游 align-by-regex 一致: 配置缺失或 < 1 时回退为 1,
  * 因为 tabAwareLength 用它换算列宽, 取 0 会让含 tab 的行宽度计算失真.
+ * 编辑器实例上的 tabSize 覆盖(含"自动检测缩进")优先; 否则按目标文档解析
+ * 语言作用域与工作区作用域的 `editor.tabSize`, 而不是全局默认值.
  */
-export function getEditorTabSize(): number {
-	const tabSize = vscode.workspace.getConfiguration("editor", null).get<number>("tabSize");
-	if (tabSize === undefined || tabSize < 1) {
+export function getEditorTabSize(resource?: vscode.Uri): number {
+	const editor = resource
+		? vscode.window.visibleTextEditors.find(
+				candidate => candidate.document.uri.toString() === resource.toString()
+			)
+		: vscode.window.activeTextEditor;
+	const tabSize =
+		editor?.options.tabSize ??
+		vscode.workspace.getConfiguration("editor", resource ?? null).get<number>("tabSize");
+	if (typeof tabSize !== "number" || tabSize < 1) {
 		console.log(
 			'Error [Align by Regex]: Invalid tab size setting "editor.tabSize" for alignment.'
 		);

@@ -26,7 +26,7 @@ async function alignSelection(textEditor: vscode.TextEditor, regexInput: string)
 	const eol: Eol = document.eol === vscode.EndOfLine.CRLF ? "\r\n" : "\n";
 	const block = new Block(document.getText(range), regexInput, selection.start.line, eol)
 		.trim()
-		.align(getEditorTabSize());
+		.align(getEditorTabSize(document.uri));
 
 	await textEditor.edit(editBuilder => {
 		for (const line of block.lines) {

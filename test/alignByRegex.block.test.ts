@@ -100,6 +100,19 @@ describe("alignByRegex Block", () => {
 			]);
 		});
 
+		it("行中 tab 按制表位折算可视列, 不再按固定 tabSize 列", () => {
+			// "a\tb" 的可视宽度是 5(1 + 跳到制表位 4 + 1), 与 "aaaaab" 等宽后等号对齐.
+			assert.deepStrictEqual(render("a\tb=1\naaaaab=2", "="), ["a\tb =1", "aaaaab=2"]);
+		});
+
+		it("多列对齐时后续 part 的制表位从实际起始列起算", () => {
+			// 第一列补齐到 5 列后, 第二个文本 part 从第 6 列起算制表位: " a\tb" 可视宽 7.
+			assert.deepStrictEqual(render("x = a\tb, 1\nyyyy = z, 22", "=|,"), [
+				"x    = a\tb, 1",
+				"yyyy = z     , 22",
+			]);
+		});
+
 		it("Markdown table", () => {
 			assert.deepStrictEqual(render("I|have|a|table\nIt|is|not|aligned", "\\|"), [
 				"I |have|a  |table",
@@ -116,6 +129,13 @@ describe("alignByRegex Block", () => {
 				"I|have|a|table",
 				"It|is|not|aligned",
 			]);
+		});
+
+		it("混合非空与 0 长度匹配时 lastIndex 不泄漏到下一行", () => {
+			// 上一行以 0 长度的 "$" 匹配收尾, 归零前下一行会整行漏配(此前返回 [1, 0]).
+			const block = new Block("a=1\nb=2", "=|$", 0, "\n");
+			assert.deepStrictEqual(block.lines.map(Block.matchCount), [1, 1]);
+			assert.deepStrictEqual(render("a=1\nb=2", "=|$"), ["a=1", "b=2"]);
 		});
 
 		it("Unexpected Alignment 2", () => {

@@ -33,6 +33,9 @@ export class Block {
 			const lineText = textLines[i];
 			const lineObject: Line = { number: startLine + i, parts: [] as Part[] };
 
+			// 全局正则的 lastIndex 跨行残留: 上一行以 0 长度匹配收尾时没有经过一次失败的
+			// exec 来重置, 下一行会从残留位置起匹配而整行漏配; 每行切分前显式归零.
+			regex.lastIndex = 0;
 			let textStartPosition = 0;
 			let result: RegExpExecArray | null;
 			while ((result = regex.exec(lineText))) {
@@ -102,19 +105,27 @@ export class Block {
 				continue;
 			}
 
+			// 活跃行的前序 part 已在更早的列对齐步骤里补到同一宽度, 本列起始列按任一活跃行
+			// 累计即得; tab 的制表位从绝对可视列起算, 起始列不同会算出不同宽度.
+			let column = 0;
+			for (let partIndex = 0; partIndex < 2 * matchIndex; partIndex++) {
+				column += tabAwareLength(active[0].parts[partIndex].value, tabSize, column);
+			}
 			for (const partIndex of [2 * matchIndex, 2 * matchIndex + 1]) {
 				const columnWidth = active.reduce(
 					(max, line) =>
-						Math.max(max, tabAwareLength(line.parts[partIndex].value, tabSize)),
+						Math.max(max, tabAwareLength(line.parts[partIndex].value, tabSize, column)),
 					0
 				);
 				for (const line of active) {
 					line.parts[partIndex].value = extendToLength(
 						line.parts[partIndex].value,
 						columnWidth,
-						tabSize
+						tabSize,
+						column
 					);
 				}
+				column += columnWidth;
 			}
 		}
 		return this;

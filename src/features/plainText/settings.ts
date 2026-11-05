@@ -2,8 +2,10 @@ import * as vscode from "vscode";
 import { PLAIN_TEXT_LANGUAGE_ID } from "./core";
 
 const STORAGE_KEY = "textToolkit.plainText.previousOverrides";
+/** 无工作区窗口的备份作用域: 用户级设置被同一配置的全部窗口共享. */
+const USER_SCOPE = "";
 
-interface StoredOverrides {
+interface StoredEntry {
 	target: vscode.ConfigurationTarget;
 	/**
 	 * 覆盖前的 `[plaintext]` 语言作用域值.
@@ -12,6 +14,9 @@ interface StoredOverrides {
 	 */
 	values: Record<string, unknown>;
 }
+
+/** 作用域 -> 备份. 各工作区窗口(含无工作区窗口)各占一格, 互不覆盖. */
+type StoredOverrides = Record<string, StoredEntry>;
 
 export interface ApplyResult {
 	applied: number;
@@ -36,8 +41,30 @@ function readPreviousValue(
 		: inspected.globalLanguageValue;
 }
 
+/**
+ * 备份所属作用域: .code-workspace 文件或多根工作区的首个文件夹; 无工作区窗口共用 USER_SCOPE.
+ * 与写入目标一致 —— 有工作区时覆盖写进 Workspace(工作区文件/文件夹设置), 否则写进用户设置.
+ */
+function workspaceScopeId(): string {
+	if (vscode.workspace.workspaceFile) {
+		return vscode.workspace.workspaceFile.toString();
+	}
+	const folder = vscode.workspace.workspaceFolders?.[0];
+	return folder ? folder.uri.toString() : USER_SCOPE;
+}
+
+function readStored(context: vscode.ExtensionContext): StoredOverrides {
+	const stored = context.globalState.get<StoredOverrides>(STORAGE_KEY);
+	// v0.0.9 及更早版本只存单个 { target, values }, 没有作用域信息, 无法安全归属, 直接丢弃.
+	if (!stored || typeof stored !== "object" || Array.isArray(stored) || "target" in stored) {
+		return {};
+	}
+	return stored;
+}
+
+/** 当前作用域是否留有未还原的备份. */
 export function isApplied(context: vscode.ExtensionContext): boolean {
-	return context.globalState.get<StoredOverrides>(STORAGE_KEY) !== undefined;
+	return readStored(context)[workspaceScopeId()] !== undefined;
 }
 
 /**
@@ -54,6 +81,9 @@ export async function applyOverrides(
 			? vscode.ConfigurationTarget.Workspace
 			: vscode.ConfigurationTarget.Global;
 
+	const scope = workspaceScopeId();
+	const stored = readStored(context);
+	const existing = stored[scope];
 	const configuration = plainTextConfiguration();
 	const previous: Record<string, unknown> = {};
 	const failed: string[] = [];
@@ -70,37 +100,47 @@ export async function applyOverrides(
 		}
 	}
 
-	// 重复进入时保留最早记录的原值, 避免用"已被我们改过的值"覆盖真正的原值.
-	if (!isApplied(context) && applied > 0) {
-		await context.globalState.update(STORAGE_KEY, { target, values: previous });
+	if (applied > 0) {
+		// 已有备份时(同窗口重复进入, 或模式期间覆盖表新增了键)只合并尚未记录的键:
+		// 已记录键保留最早原值, 避免用"已被我们改过的值"覆盖真正的原值.
+		const values = { ...existing?.values };
+		for (const [key, value] of Object.entries(previous)) {
+			if (!(key in values)) {
+				values[key] = value;
+			}
+		}
+		await context.globalState.update(STORAGE_KEY, { ...stored, [scope]: { target, values } });
 	}
 
 	return { applied, failed };
 }
 
-/** 还原 applyOverrides 记录的原值; 原值为 null(当时未设置)时移除该覆盖. */
+/** 还原当前作用域的备份; 原值为 null(当时未设置)时移除该覆盖. 其他作用域的备份不受影响. */
 export async function restoreOverrides(context: vscode.ExtensionContext): Promise<number> {
-	const stored = context.globalState.get<StoredOverrides>(STORAGE_KEY);
-	if (!stored) {
+	const scope = workspaceScopeId();
+	const stored = readStored(context);
+	const entry = stored[scope];
+	if (!entry) {
 		return 0;
 	}
 
 	const configuration = plainTextConfiguration();
 	let restored = 0;
-	for (const [key, value] of Object.entries(stored.values)) {
+	for (const [key, value] of Object.entries(entry.values)) {
 		try {
-			await configuration.update(
-				key,
-				value === null ? undefined : value,
-				stored.target,
-				true
-			);
+			await configuration.update(key, value === null ? undefined : value, entry.target, true);
 			restored += 1;
 		} catch {
 			/* 该键已不再可写(例如设置被重命名), 跳过 */
 		}
 	}
 
-	await context.globalState.update(STORAGE_KEY, undefined);
+	const remaining = { ...stored };
+	delete remaining[scope];
+	// 空表直接清键, 不留空对象.
+	await context.globalState.update(
+		STORAGE_KEY,
+		Object.keys(remaining).length > 0 ? remaining : undefined
+	);
 	return restored;
 }

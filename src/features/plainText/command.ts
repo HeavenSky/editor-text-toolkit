@@ -143,6 +143,30 @@ class PlainTextModeManager {
 	}
 
 	/**
+	 * 文档真正关闭时移除其模式状态, 最后一个模式文档消失后还原设置覆盖.
+	 * `setTextDocumentLanguage` 会引发一对 close+open 事件, 延后到事件循环清空后再看:
+	 * 同 uri 的文档仍在则视为语言切换, 不清理.
+	 */
+	handleDocumentClosed(uri: vscode.Uri): void {
+		const key = uri.toString();
+		if (!this.previousLanguages.has(key)) {
+			return;
+		}
+		setTimeout(() => {
+			if (vscode.workspace.textDocuments.some(document => document.uri.toString() === key)) {
+				return;
+			}
+			this.previousLanguages.delete(key);
+			this.previousLineNumbers.delete(key);
+			// 设置是全局/工作区级的, 只要没有别的文档还处于纯文本模式就还原.
+			if (this.previousLanguages.size === 0 && isApplied(this.context)) {
+				void restoreOverrides(this.context);
+			}
+			this.updateStatusBar();
+		}, 0);
+	}
+
+	/**
 	 * 资源管理器右键"以纯文本模式打开": 支持单个文件与多选, 目录被跳过.
 	 * 打开前先把 uri 标记为已询问, 否则 onDidChangeActiveTextEditor 会先弹一次大文件提示.
 	 *
@@ -338,20 +362,27 @@ export function registerPlainTextMode(context: vscode.ExtensionContext): PlainTe
 					void manager.maybeOfferForTooLargeTab(tab.input.uri);
 				}
 			}
-		})
+		}),
+		vscode.workspace.onDidCloseTextDocument(document =>
+			manager.handleDocumentClosed(document.uri)
+		)
 	);
 
 	void cleanUpPendingAssociations(context);
 
-	if (vscode.window.activeTextEditor) {
-		void manager.maybeOffer(vscode.window.activeTextEditor);
-	}
+	// 崩溃或直接关窗口会跳过 exit, 留下未还原的设置覆盖; 启动时本窗口还没有任何模式文档,
+	// 先还原再处理自动进入, 避免把覆盖后的值当原值记进新备份.
+	void restoreOverrides(context).then(() => {
+		if (vscode.window.activeTextEditor) {
+			void manager.maybeOffer(vscode.window.activeTextEditor);
+		}
 
-	// 上次会话遗留的"文件过大"标签页在启动时不会产生 opened 事件, 单独看一眼当前这个.
-	const activeTab = vscode.window.tabGroups.activeTabGroup.activeTab;
-	if (activeTab?.input instanceof vscode.TabInputText) {
-		void manager.maybeOfferForTooLargeTab(activeTab.input.uri);
-	}
+		// 上次会话遗留的"文件过大"标签页在启动时不会产生 opened 事件, 单独看一眼当前这个.
+		const activeTab = vscode.window.tabGroups.activeTabGroup.activeTab;
+		if (activeTab?.input instanceof vscode.TabInputText) {
+			void manager.maybeOfferForTooLargeTab(activeTab.input.uri);
+		}
+	});
 
 	/** 二级菜单: 开关随当前状态变化, 外加重新启用大文件提示. */
 	const showPlainTextMenu = async (withBack = false): Promise<PickOutcome> => {

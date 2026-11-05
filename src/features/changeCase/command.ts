@@ -7,9 +7,8 @@ interface ReplacementAction {
 	text: string;
 	range: vscode.Range;
 	replacement: string;
-	/** 替换文本与原文本在最后一行的长度差, 用于重算同一行后续选区的位置. */
+	/** 替换文本与原文本在最后一行的长度差; 行号不变时只有它会移动末行内的后续位置. */
 	offset: number;
-	newRange: vscode.Range;
 }
 
 /** 光标(空选区)作用于所在的词, 非空选区作用于选区本身. */
@@ -66,20 +65,7 @@ function buildAction(
 			replacementLines[replacementLines.length - 1].length - lines[lines.length - 1].length;
 	}
 
-	return {
-		text,
-		range,
-		replacement,
-		offset,
-		newRange: isRangeSimplyCursorPosition(range)
-			? range
-			: new vscode.Range(
-					range.start.line,
-					range.start.character,
-					range.end.line,
-					range.end.character + offset
-				),
-	};
+	return { text, range, replacement, offset };
 }
 
 export async function runCaseCommand(commandLabel: string): Promise<void> {
@@ -114,31 +100,32 @@ export async function runCaseCommand(commandLabel: string): Promise<void> {
 		return;
 	}
 
-	// 替换会改变文本长度, 因此按结束位置从前到后累加同一行的偏移量, 重建选区.
-	const runningOffsets = new Map<number, number>();
-	const adjustedRanges = [...actions]
-		.sort((a, b) => compareByEndPosition(a.newRange, b.newRange))
-		.map(action => {
-			const line = action.range.end.line;
-			const runningOffset = runningOffsets.get(line) ?? 0;
-			runningOffsets.set(line, runningOffset + action.offset);
-			return new vscode.Range(
-				action.newRange.start.line,
-				action.newRange.start.character + runningOffset,
-				action.newRange.end.line,
-				action.newRange.end.character + runningOffset
-			);
-		});
+	// 替换按原始坐标重建选区. 转换不增删行, 行号不变: 某位置的移位只来自同一行内
+	// 结束位置不晚于它的编辑的末行长度差, 起点与终点分行取值, 混合单行与多行选区时
+	// (起点行 != 终点行)才能把起始行里更早的单行编辑算进去, 也不会把前行编辑的偏移
+	// 错算到后行位置上.
+	const sorted = [...actions].sort((a, b) => compareByEndPosition(a.range, b.range));
+	const offsetBefore = (line: number, character: number): number => {
+		let shift = 0;
+		for (const action of sorted) {
+			const end = action.range.end;
+			if (end.line === line && end.character <= character) {
+				shift += action.offset;
+			}
+		}
+		return shift;
+	};
 
-	editor.selections = adjustedRanges.map(
-		range =>
-			new vscode.Selection(
-				range.start.line,
-				range.start.character,
-				range.end.line,
-				range.end.character
-			)
-	);
+	editor.selections = actions.map(action => {
+		const startShift = offsetBefore(action.range.start.line, action.range.start.character);
+		const endShift = offsetBefore(action.range.end.line, action.range.end.character);
+		return new vscode.Selection(
+			action.range.start.line,
+			action.range.start.character + startShift,
+			action.range.end.line,
+			action.range.end.character + endShift
+		);
+	});
 }
 
 /** 二级菜单: 16 种大小写风格, 单选区单行时用转换结果做预览. */
