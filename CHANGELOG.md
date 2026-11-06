@@ -2,6 +2,12 @@
 
 **English** · [简体中文](./zh/CHANGELOG.md)
 
+## v0.0.11 2026-11-06 Older settings backup can be deleted
+
+### Added
+
+- The warning about an older plain text settings backup without workspace identity now offers `Delete Backup` alongside `Restore Backup to This Workspace`. Deleting discards the recorded original values and resumes editor setting overrides; restoring still writes them back in the original workspace. Dismissing the warning only silences the current window, and overrides stay paused until the backup is restored or deleted. See [Recover an older settings backup](https://github.com/HeavenSky/editor-text-toolkit/blob/HEAD/docs/plain-text-mode.md#recover-an-older-settings-backup).
+
 ## v0.0.10 2026-11-05 CLI formatting and editor fixes
 
 ### Upgrade notes

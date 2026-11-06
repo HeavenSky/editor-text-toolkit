@@ -85,17 +85,24 @@ function readEntry(context: vscode.ExtensionContext, scope: string): StoredEntry
 async function resolveLegacyWorkspace(context: vscode.ExtensionContext): Promise<boolean> {
 	const old = context.globalState.get<LegacyEntry>(STORAGE_KEY);
 	if (old?.target !== vscode.ConfigurationTarget.Workspace) return true;
-	// 无身份的工作区备份不能自动归属, 也不能覆盖. 用户选择原工作区后才消费旧记录.
+	// 无身份的工作区备份不能自动归属, 也不能覆盖. 用户选择恢复或删除后才消费旧记录.
 	if (!vscode.workspace.workspaceFolders?.length || warned.has(context)) return false;
 	warned.add(context);
 	const restore = vscode.l10n.t("Restore Backup to This Workspace");
+	const remove = vscode.l10n.t("Delete Backup");
 	const choice = await vscode.window.showWarningMessage(
 		vscode.l10n.t(
-			"An older plain text settings backup has no workspace identity. Restore it here only if this is the original workspace. Editor setting overrides are paused until the backup is restored."
+			"An older plain text settings backup has no workspace identity. Restore it here only if this is the original workspace. Editor setting overrides are paused until the backup is restored or deleted."
 		),
-		restore
+		restore,
+		remove
 	);
 	warned.delete(context);
+	// 删除等同放弃备份: 原值不再还原, 需要时用户自行重设.
+	if (choice === remove) {
+		await context.globalState.update(STORAGE_KEY, undefined);
+		return true;
+	}
 	if (choice !== restore) return false;
 	const configuration = plainTextConfiguration();
 	for (const [key, value] of Object.entries(old.values)) {

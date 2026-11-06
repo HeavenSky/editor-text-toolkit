@@ -182,6 +182,19 @@ describe("纯文本设置备份的作用域隔离", () => {
 		expect(state.settings.workspaceLanguage["editor.wordWrap"]).toBe("off");
 	});
 
+	it("选择删除备份后清掉旧记录, 覆盖与恢复照常工作", async () => {
+		enterWorkspace("file:///wA");
+		state.settings.workspaceLanguage["editor.wordWrap"] = "bounded";
+		state.storage.set(STORAGE_KEY, { target: 2, values: { "editor.wordWrap": "off" } });
+		vi.mocked(vscode.window.showWarningMessage).mockResolvedValue("Delete Backup" as never);
+		const result = await applyOverrides(context(), { "editor.wordWrap": "on" });
+		expect(result.applied).toBe(1);
+		expect(state.storage.get(STORAGE_KEY)).toBeUndefined();
+		expect(state.settings.workspaceLanguage["editor.wordWrap"]).toBe("on");
+		await restoreOverrides(context());
+		expect(state.settings.workspaceLanguage["editor.wordWrap"]).toBe("bounded");
+	});
+
 	it("旧版用户级备份可自动恢复, 墓碑阻止旧缓存再次导入", async () => {
 		state.storage.set(STORAGE_KEY, { target: 1, values: { "editor.wordWrap": "off" } });
 		state.settings.globalLanguage["editor.wordWrap"] = "on";

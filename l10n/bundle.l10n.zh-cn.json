@@ -1,6 +1,7 @@
 {
 	"Restore Backup to This Workspace": "将备份恢复到此工作区",
-	"An older plain text settings backup has no workspace identity. Restore it here only if this is the original workspace. Editor setting overrides are paused until the backup is restored.": "旧版纯文本设置备份没有工作区标识. 请仅在原工作区中选择恢复. 恢复前暂停应用编辑器设置覆盖.",
+	"Delete Backup": "删除备份",
+	"An older plain text settings backup has no workspace identity. Restore it here only if this is the original workspace. Editor setting overrides are paused until the backup is restored or deleted.": "旧版纯文本设置备份没有工作区标识. 请仅在原工作区中选择恢复; 不需要原值时可删除备份. 恢复或删除前暂停应用编辑器设置覆盖.",
 	"Plain text settings could not be updated. The backup has been retained.": "无法更新纯文本设置. 备份已保留.",
 	"Formatter \"{0}\" failed. See Common Formatter output for details.": "格式化器 \"{0}\" 执行失败. 请查看 Common Formatter 输出了解详情.",
 	"Show Formatter Output": "显示格式化输出",

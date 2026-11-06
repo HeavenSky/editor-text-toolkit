@@ -30,7 +30,7 @@ Settings go to Workspace settings when a folder is open, otherwise to User setti
 
 ## Recover an older settings backup
 
-If a warning says an older plain text settings backup has no workspace identity, open the workspace where you originally enabled the mode and choose `Restore Backup to This Workspace`. The extension keeps the backup until you confirm its workspace, and pauses editor setting overrides to avoid replacing the original values. You can still switch document languages while the backup is unresolved.
+If a warning says an older plain text settings backup has no workspace identity, open the workspace where you originally enabled the mode and choose `Restore Backup to This Workspace`, or choose `Delete Backup` to discard it when the original values are no longer needed — deleting the backup loses the recorded values, so re-apply those settings by hand if the workspace still has the overrides. The extension keeps the backup until you restore, delete or dismiss it, and pauses editor setting overrides until it is resolved. You can still switch document languages while the backup is unresolved. Dismissing only silences the current window; the warning reappears in the next window until the backup is restored or deleted.
 
 Older User settings backups recover automatically when the extension starts in a window without a folder open.
 
