@@ -69,7 +69,10 @@ export function registerSelectionLinkProvider(
 	apply();
 	context.subscriptions.push(
 		vscode.workspace.onDidChangeConfiguration(event => {
-			if (event.affectsConfiguration("textToolkit.advanced")) {
+			if (
+				event.affectsConfiguration("textToolkit.advanced") ||
+				event.affectsConfiguration("textToolkit.terminalOpen.selectionLink")
+			) {
 				apply();
 			}
 		}),

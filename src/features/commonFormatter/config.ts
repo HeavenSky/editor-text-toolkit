@@ -1,5 +1,16 @@
 // 校验通用格式化配置, 应用平台覆盖并读取扩展宿主环境.
-export const DEFAULT_TIMEOUT_MS = 5000;
+// 字段默认值来自 schema default 的生成模块, 与 package.json 保持单一来源.
+import { COMMON_FORMATTER_ITEM_DEFAULTS } from "../../shared/config-defaults.generated";
+
+function itemDefault<T>(key: string, fallback: T): T {
+	const value = COMMON_FORMATTER_ITEM_DEFAULTS[key];
+	return value === undefined ? fallback : (value as T);
+}
+
+const DEFAULT_ARGS = itemDefault<string[]>("args", []);
+const DEFAULT_CWD = itemDefault("cwd", "${fileDirname}");
+const DEFAULT_TIMEOUT_MS = itemDefault("timeout", 5000);
+const DEFAULT_ENABLED = itemDefault("enabled", true);
 
 export interface FormatterExecution {
 	command: string;
@@ -116,10 +127,10 @@ export function loadFormatterRules(raw: unknown, platform: NodeJS.Platform): For
 		return {
 			name,
 			languages: value.languages as string[],
-			enabled: value.enabled === undefined ? true : (value.enabled as boolean),
+			enabled: value.enabled === undefined ? DEFAULT_ENABLED : (value.enabled as boolean),
 			command: merged.command as string,
-			args: (merged.args as string[] | undefined) ?? [],
-			cwd: (merged.cwd as string | undefined) ?? "${fileDirname}",
+			args: (merged.args as string[] | undefined) ?? DEFAULT_ARGS,
+			cwd: (merged.cwd as string | undefined) ?? DEFAULT_CWD,
 			env: { ...(value.env as FormatterExecution["env"] | undefined), ...override?.env },
 			timeout: (merged.timeout as number | undefined) ?? DEFAULT_TIMEOUT_MS,
 		};

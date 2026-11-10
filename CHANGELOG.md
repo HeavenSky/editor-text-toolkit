@@ -2,11 +2,20 @@
 
 **English** · [简体中文](./zh/CHANGELOG.md)
 
-## v0.0.11 2026-11-06 Older settings backup can be deleted
+## v0.0.11 2026-11-06 Older settings backup can be deleted; every setting shows its real default
+
+### Upgrade notes
+
+- The eight settings that used to be keys inside the single `textToolkit.advanced` object are now their own top-level settings, for example `copyPath.useLineCountSyntax` becomes `textToolkit.copyPath.useLineCountSyntax`. The old object is deprecated but still honored: existing configurations keep working, unknown keys and wrong types are ignored, and when both are set the top-level setting wins. Migration is optional. See [Adjust settings](https://github.com/HeavenSky/editor-text-toolkit/blob/HEAD/docs/settings.md).
 
 ### Added
 
 - The warning about an older plain text settings backup without workspace identity now offers `Delete Backup` alongside `Restore Backup to This Workspace`. Deleting discards the recorded original values and resumes editor setting overrides; restoring still writes them back in the original workspace. Dismissing the warning only silences the current window, and overrides stay paused until the backup is restored or deleted. See [Recover an older settings backup](https://github.com/HeavenSky/editor-text-toolkit/blob/HEAD/docs/plain-text-mode.md#recover-an-older-settings-backup).
+
+### Changed
+
+- `textToolkit.plainText.editorOverrides` now declares the full 29-entry built-in override table as its default value, instead of an empty object; the Settings UI and `settings.json` show every entry with its built-in value.
+- Setting descriptions no longer repeat default values in prose; each setting shows its actual default directly in the Settings UI. The `textToolkit.advanced` object keeps an empty default and is documented as a deprecated compatibility layer.
 
 ## v0.0.10 2026-11-05 CLI formatting and editor fixes
 

@@ -34,7 +34,7 @@ Line numbers come from every cursor and selection; they are deduplicated, sorted
 To write a fragment as a start line plus a count, turn on the `a+n` form. The same selection then copies as `path:3+2,8,12+3`; single lines stay `a`, and `list` and `perLine` are unaffected because they never produce fragments.
 
 ```json
-{ "textToolkit.advanced": { "copyPath.useLineCountSyntax": true } }
+{ "textToolkit.copyPath.useLineCountSyntax": true }
 ```
 
 ## Change the separator

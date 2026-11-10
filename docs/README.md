@@ -14,7 +14,7 @@ Find the page for what you want to do; each page assumes the extension is instal
 | Diff selections, the clipboard or open tabs                                               | [Compare two pieces of text](compare.md)                          |
 | Open a path selected in the terminal, resolving relative paths against its current folder | [Open a terminal selection as a path](open-terminal-selection.md) |
 | Run every editor action from one picker, or bind keys                                     | [Find commands and bind keys](commands-and-keybindings.md)        |
-| Change a built-in default that has no entry in the Settings UI                            | [Adjust settings](settings.md)                                    |
+| See how settings are organized, or migrate an old `textToolkit.advanced` object           | [Adjust settings](settings.md)                                    |
 | Understand a message or a result that looks wrong                                         | [Troubleshooting](troubleshooting.md)                             |
 | Build, test or package the extension from source                                          | [Develop the extension](development.md)                           |
 

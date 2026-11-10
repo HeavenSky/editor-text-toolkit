@@ -5,6 +5,7 @@ import {
 	mergeEnvironment,
 	selectFormatter,
 } from "../src/features/commonFormatter/config";
+import { COMMON_FORMATTER_ITEM_DEFAULTS } from "../src/shared/config-defaults.generated";
 
 const base = { name: "CLI", languages: ["typescript"], command: "formatter" };
 
@@ -16,11 +17,11 @@ describe("通用格式化配置", () => {
 		);
 		expect(selectFormatter(rules, "typescript")).toEqual({
 			...base,
-			enabled: true,
-			args: [],
-			cwd: "${fileDirname}",
-			env: {},
-			timeout: 5000,
+			enabled: COMMON_FORMATTER_ITEM_DEFAULTS.enabled,
+			args: COMMON_FORMATTER_ITEM_DEFAULTS.args,
+			cwd: COMMON_FORMATTER_ITEM_DEFAULTS.cwd,
+			env: COMMON_FORMATTER_ITEM_DEFAULTS.env,
+			timeout: COMMON_FORMATTER_ITEM_DEFAULTS.timeout,
 		});
 		expect(selectFormatter(rules, "javascript")).toBeUndefined();
 		expect(loadFormatterRules([], "linux")).toEqual([]);

@@ -34,7 +34,7 @@ src/features/diff/core.ts:112-118
 想把片段写成「起始行 + 行数」，打开 `a+n` 写法。同样的选区会复制成 `path:3+2,8,12+3`；单行仍写作 `a`，`list` 与 `perLine` 不受影响，因为它们不产生片段。
 
 ```json
-{ "textToolkit.advanced": { "copyPath.useLineCountSyntax": true } }
+{ "textToolkit.copyPath.useLineCountSyntax": true }
 ```
 
 ## 修改分隔符

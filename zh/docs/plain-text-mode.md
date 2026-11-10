@@ -20,7 +20,7 @@
 
 **从资源管理器命令打开时，语言扩展不会被唤醒。**VS Code 在打开某种语言的文件时就会激活对应的语言扩展，所以正常打开一个大 `.ts` 会启动 TypeScript 服务。扩展会临时往用户设置里加一条只匹配该文件的 `files.associations`，以 `plaintext` 打开文件后立即删掉这一条。你原本为同一路径模式写的条目保持原样。
 
-扩展会在 `[plaintext]` 作用域下写入 29 项编辑器设置：打开自动换行，关闭 minimap、折叠、粘性滚动、括号着色、参考线、悬停提示、自动补全、CodeLens、链接和 Unicode 扫描等。这些设置限定在语言作用域内，代码文件不受影响。完整清单见 [29 项内置覆盖](#29-项内置覆盖)。
+扩展会在 `[plaintext]` 作用域下写入 29 项编辑器设置：打开自动换行，关闭 minimap、折叠、粘性滚动、括号着色、参考线、悬停提示、自动补全、CodeLens、链接和 Unicode 扫描等。这些设置限定在语言作用域内，代码文件不受影响。完整清单就是 `textToolkit.plainText.editorOverrides` 的默认值，在设置界面或 `settings.json` 中可见。
 
 ## 退出模式并还原
 
@@ -42,16 +42,15 @@
 
 ## 调整覆盖项
 
-`textToolkit.advanced` 里有四个键控制本模式：
+三个设置控制本模式，`textToolkit.plainText.editorOverrides` 负责改覆盖表：
 
-| 键                                     | 默认值  | 作用                                                  |
-| -------------------------------------- | ------- | ----------------------------------------------------- |
-| `plainText.applyEditorSettings`        | `true`  | 设为 `false` 时只切换语言，29 项覆盖一项都不写        |
-| `plainText.disableLineNumbers`         | `false` | 设为 `true` 时模式开启期间同时隐藏行号                |
-| `plainText.suppressLanguageActivation` | `true`  | 设为 `false` 时资源管理器照常打开文件，之后再切换语言 |
-| `plainText.editorOverrides`            | `{}`    | 修改、移除或追加覆盖表中的条目                        |
+| 设置 id                                            | 作用                                                  |
+| -------------------------------------------------- | ----------------------------------------------------- |
+| `textToolkit.plainText.applyEditorSettings`        | 设为 `false` 时只切换语言，29 项覆盖一项都不写        |
+| `textToolkit.plainText.disableLineNumbers`         | 设为 `true` 时模式开启期间同时隐藏行号                |
+| `textToolkit.plainText.suppressLanguageActivation` | 设为 `false` 时资源管理器照常打开文件，之后再切换语言 |
 
-`plainText.editorOverrides` 叠加在内置表之上，而不是替换它：
+`textToolkit.plainText.editorOverrides` 叠加在内置表之上，而不是替换它：
 
 - 设置 id 配一个值：修改该项，例如 `"editor.minimap.enabled": true` 保留 minimap；
 - 设置 id 配 `null`：移除该项，沿用你自己的全局设置；
@@ -59,48 +58,14 @@
 
 ```json
 {
-	"textToolkit.advanced": {
-		"plainText.disableLineNumbers": true,
-		"plainText.editorOverrides": {
-			"editor.minimap.enabled": true,
-			"editor.hover.enabled": null
-		}
+	"textToolkit.plainText.disableLineNumbers": true,
+	"textToolkit.plainText.editorOverrides": {
+		"editor.minimap.enabled": true,
+		"editor.hover.enabled": null
 	}
 }
 ```
 
-在 `settings.json` 里编辑 `plainText.editorOverrides` 的值时，有一个代码片段能写出整张表，直接改即可。
-
 ## 29 项内置覆盖
 
-| 设置 id                                       | 内置值                                                    |
-| --------------------------------------------- | --------------------------------------------------------- |
-| `editor.minimap.enabled`                      | `false`                                                   |
-| `editor.wordWrap`                             | `"on"`                                                    |
-| `editor.folding`                              | `false`                                                   |
-| `editor.stickyScroll.enabled`                 | `false`                                                   |
-| `editor.bracketPairColorization.enabled`      | `false`                                                   |
-| `editor.guides.indentation`                   | `false`                                                   |
-| `editor.guides.bracketPairs`                  | `false`                                                   |
-| `editor.matchBrackets`                        | `"never"`                                                 |
-| `editor.occurrencesHighlight`                 | `"off"`                                                   |
-| `editor.selectionHighlight`                   | `false`                                                   |
-| `editor.renderWhitespace`                     | `"none"`                                                  |
-| `editor.renderControlCharacters`              | `false`                                                   |
-| `editor.codeLens`                             | `false`                                                   |
-| `editor.colorDecorators`                      | `false`                                                   |
-| `editor.links`                                | `false`                                                   |
-| `editor.hover.enabled`                        | `false`                                                   |
-| `editor.parameterHints.enabled`               | `false`                                                   |
-| `editor.suggestOnTriggerCharacters`           | `false`                                                   |
-| `editor.wordBasedSuggestions`                 | `"off"`                                                   |
-| `editor.quickSuggestions`                     | `{ "other": false, "comments": false, "strings": false }` |
-| `editor.formatOnType`                         | `false`                                                   |
-| `editor.formatOnPaste`                        | `false`                                                   |
-| `editor.autoClosingBrackets`                  | `"never"`                                                 |
-| `editor.autoClosingQuotes`                    | `"never"`                                                 |
-| `editor.trimAutoWhitespace`                   | `false`                                                   |
-| `editor.semanticHighlighting.enabled`         | `false`                                                   |
-| `editor.unicodeHighlight.nonBasicASCII`       | `false`                                                   |
-| `editor.unicodeHighlight.invisibleCharacters` | `false`                                                   |
-| `editor.unicodeHighlight.ambiguousCharacters` | `false`                                                   |
+`textToolkit.plainText.editorOverrides` 的默认值就是完整表格 —— 在设置界面或 `settings.json` 里打开它，即可看到每一项及其内置值。修改方式同上：改某个值、把某项设为 `null`，或追加新的 `editor.*` 设置 id。

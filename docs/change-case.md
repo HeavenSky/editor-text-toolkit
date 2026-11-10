@@ -40,7 +40,7 @@ Applied to the input `fooBar baz-qux`:
 With no selection, the word under the cursor is converted, and it is wider than the editor's own word: `_`, `-`, `/` and `$` always count as word characters, so `foo_bar-baz` converts as one unit. The `.` does not count by default; turn it on and a cursor inside `foo_bar.baz` converts the whole thing instead of just `baz`:
 
 ```json
-{ "textToolkit.advanced": { "changeCase.includeDotInCurrentWord": true } }
+{ "textToolkit.changeCase.includeDotInCurrentWord": true }
 ```
 
 Multi-line selections are split on the document's own line ending, so an LF file on Windows keeps its lines.

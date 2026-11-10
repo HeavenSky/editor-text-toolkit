@@ -17,7 +17,7 @@ Whole lines covered by the primary selection are aligned; a selection that ends 
 The input box pre-fills with the last expression used in this window. To start empty every time:
 
 ```json
-{ "textToolkit.advanced": { "alignByRegex.rememberLastInput": false } }
+{ "textToolkit.alignByRegex.rememberLastInput": false }
 ```
 
 ## Save templates

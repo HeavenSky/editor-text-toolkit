@@ -40,7 +40,7 @@
 没有选区时转换光标所在的词，而且这个词比编辑器自己的定义更宽：`_`、`-`、`/` 和 `$` 始终算作词字符，所以 `foo_bar-baz` 会整体转换。`.` 默认不算；打开下面这项后，光标停在 `foo_bar.baz` 里会转换整串，而不只是 `baz`：
 
 ```json
-{ "textToolkit.advanced": { "changeCase.includeDotInCurrentWord": true } }
+{ "textToolkit.changeCase.includeDotInCurrentWord": true }
 ```
 
 多行选区按文档自身的换行符切分，所以 Windows 上的 LF 文件也不会被并成一行。

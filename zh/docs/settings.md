@@ -2,15 +2,15 @@
 
 [English](../../docs/settings.md) · **简体中文**
 
-本页说明扩展的设置怎样分层，以及怎样修改设置界面里没有单独条目的内置默认值。
+本页说明扩展的设置怎样组织，以及 v0.0.11 之前写入的旧配置如何继续生效。
 
-## 找到对应的设置层
+## 找到你想调的设置
 
-设置分两层，让设置界面保持简短。十项顶层 `textToolkit.*` 设置覆盖最可能要调的选项，它们出现在设置界面和扩展市场页的 **Feature Contributions** 标签页里，取值含义见各功能页。其余选项都是 `textToolkit.advanced` 这一个对象里的键。
+每个可调选项都是设置界面与扩展市场页 **Feature Contributions** 标签页里的独立顶层设置：`textToolkit.copyPath.*`、`textToolkit.changeCase.*`、`textToolkit.alignByRegex.*`、`textToolkit.plainText.*`、`textToolkit.terminalOpen.*`、`textToolkit.diff.*` 与 `commonFormatter.list`。取值含义见各功能页；每项设置都会在设置界面直接显示自己的实际默认值，`textToolkit.plainText.editorOverrides` 的默认值就是完整的内置覆盖表。
 
-## 覆盖内置默认值
+## 旧版 `textToolkit.advanced` 配置
 
-只把想改的键写进 `textToolkit.advanced`；没写的键保持内置默认值：
+v0.0.11 之前的版本把上述设置藏在一个 `textToolkit.advanced` 对象里作为键。该对象已弃用但仍然生效：只把想改的键写进去，没写的键保持内置默认值，未知的键和类型不符的值会被忽略：
 
 ```json
 {
@@ -21,15 +21,4 @@
 }
 ```
 
-| 键                                     | 内置默认值 | 说明见                                                  |
-| -------------------------------------- | ---------- | ------------------------------------------------------- |
-| `copyPath.useLineCountSyntax`          | `false`    | [选择行号的写法](copy-path.md#选择行号的写法)           |
-| `changeCase.includeDotInCurrentWord`   | `false`    | [怎样算光标所在的词](change-case.md#怎样算光标所在的词) |
-| `alignByRegex.rememberLastInput`       | `true`     | [对齐选中的行](align-by-regex.md#对齐选中的行)          |
-| `plainText.applyEditorSettings`        | `true`     | [调整覆盖项](plain-text-mode.md#调整覆盖项)             |
-| `plainText.disableLineNumbers`         | `false`    | [调整覆盖项](plain-text-mode.md#调整覆盖项)             |
-| `plainText.suppressLanguageActivation` | `true`     | [调整覆盖项](plain-text-mode.md#调整覆盖项)             |
-| `plainText.editorOverrides`            | `{}`       | [调整覆盖项](plain-text-mode.md#调整覆盖项)             |
-| `terminalOpen.selectionLink`           | `false`    | [开启选区链接](open-terminal-selection.md#开启选区链接) |
-
-在 `settings.json` 里输入时，每个键都会补全类型和默认值；编辑 `textToolkit.advanced` 的值时，还有一个代码片段能写出全部内置默认值。未知的键和类型不符的值会被忽略并保留内置默认值，写错一处也不会让扩展失灵。
+迁移是可选且无损的：把每个键移到对应的顶层设置（例如 `copyPath.useLineCountSyntax` 变成 `textToolkit.copyPath.useLineCountSyntax`），再删掉 `textToolkit.advanced` 对象。两边都设置时顶层设置优先。

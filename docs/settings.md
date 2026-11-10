@@ -2,15 +2,15 @@
 
 **English** · [简体中文](../zh/docs/settings.md)
 
-This page explains how the extension's settings are split and how to change a built-in default that has no entry of its own in the Settings UI.
+This page explains how the extension's settings are organized and what happens to configurations written for versions before v0.0.11.
 
-## Find the right layer
+## Find the setting you want
 
-Settings come in two layers so the Settings UI stays short. Ten top-level `textToolkit.*` settings cover what you are likely to tune; they appear in the Settings UI and on the marketplace page's **Feature Contributions** tab, and each feature page explains their values. Everything else is a key inside the single `textToolkit.advanced` object.
+Every tunable option is its own top-level setting in the Settings UI and on the marketplace page's **Feature Contributions** tab: `textToolkit.copyPath.*`, `textToolkit.changeCase.*`, `textToolkit.alignByRegex.*`, `textToolkit.plainText.*`, `textToolkit.terminalOpen.*`, `textToolkit.diff.*` and `commonFormatter.list`. Each feature page explains what its settings do; every setting shows its actual default value right in the Settings UI, and `textToolkit.plainText.editorOverrides` lists the full built-in override table as its default.
 
-## Override built-in defaults
+## Old `textToolkit.advanced` configurations
 
-Write only the keys you want to change into `textToolkit.advanced`; every key you leave out keeps its built-in default:
+Versions before v0.0.11 hid those settings as keys inside a single `textToolkit.advanced` object. That object is deprecated but still honored: write only the keys you want to change into it, every key you leave out keeps its built-in default, and unknown keys and values of the wrong type are ignored:
 
 ```json
 {
@@ -21,15 +21,4 @@ Write only the keys you want to change into `textToolkit.advanced`; every key yo
 }
 ```
 
-| Key                                    | Built-in default | Explained in                                                                                        |
-| -------------------------------------- | ---------------- | --------------------------------------------------------------------------------------------------- |
-| `copyPath.useLineCountSyntax`          | `false`          | [Choose how lines are written](copy-path.md#choose-how-lines-are-written)                           |
-| `changeCase.includeDotInCurrentWord`   | `false`          | [What counts as the word under the cursor](change-case.md#what-counts-as-the-word-under-the-cursor) |
-| `alignByRegex.rememberLastInput`       | `true`           | [Align a selection](align-by-regex.md#align-a-selection)                                            |
-| `plainText.applyEditorSettings`        | `true`           | [Tune the overrides](plain-text-mode.md#tune-the-overrides)                                         |
-| `plainText.disableLineNumbers`         | `false`          | [Tune the overrides](plain-text-mode.md#tune-the-overrides)                                         |
-| `plainText.suppressLanguageActivation` | `true`           | [Tune the overrides](plain-text-mode.md#tune-the-overrides)                                         |
-| `plainText.editorOverrides`            | `{}`             | [Tune the overrides](plain-text-mode.md#tune-the-overrides)                                         |
-| `terminalOpen.selectionLink`           | `false`          | [Turn on the selection link](open-terminal-selection.md#turn-on-the-selection-link)                 |
-
-`settings.json` completes every key with its type and default, and the value of `textToolkit.advanced` offers a snippet that writes out all built-in defaults. Unknown keys and values of the wrong type are ignored and the built-in default is kept, so a typo never leaves the extension broken.
+Migration is optional and lossless: move each key to its top-level setting (for example `copyPath.useLineCountSyntax` becomes `textToolkit.copyPath.useLineCountSyntax`) and delete the `textToolkit.advanced` object. When both are set, the top-level setting wins.

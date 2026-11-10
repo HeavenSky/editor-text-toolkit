@@ -33,7 +33,7 @@ It does not run the formatter with a write-in-place flag.
 
 The toolkit picker also has a **Common Formatter** menu with actions to format the document, open its settings, and show formatter output.
 An empty list disables the formatter Provider.
-The complete field definitions and defaults are available in the Settings editor under `commonFormatter.list`.
+The complete field definitions and defaults are shown in the Settings editor under `commonFormatter.list`, and `settings.json` completes every field as you type.
 
 ## Choose which command runs
 

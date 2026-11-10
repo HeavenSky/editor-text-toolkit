@@ -145,7 +145,7 @@ macOS 上带 `cmd` 的快捷键在终端里直接生效。其他快捷键（Wind
 开启后，按住链接修饰键点击选中的文本就能打开，不用按快捷键。它默认关闭，因为选中之后要把鼠标移到别的行再移回来，链接才会出现，见[已知限制](#已知限制)。开启方法：
 
 ```json
-{ "textToolkit.advanced": { "terminalOpen.selectionLink": true } }
+{ "textToolkit.terminalOpen.selectionLink": true }
 ```
 
 修改立即生效。链接修饰键在 macOS 上是 Cmd，在 Windows 和 Linux 上是 Ctrl；`editor.multiCursorModifier` 为 `ctrlCmd` 时改为 Alt。链接只覆盖选中的文本，点击别处的行为不变；点击选中的文本时，选区链接优先于 VS Code 自带的链接。

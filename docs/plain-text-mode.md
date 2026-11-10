@@ -20,7 +20,7 @@ The document language becomes `plaintext`, which stops tokenization, semantic hi
 
 **Language extensions never wake up** when you open a file from the Explorer command. VS Code activates a language extension the moment a file of that language is opened, so a large `.ts` would otherwise start the TypeScript server. The extension briefly adds a `files.associations` entry for exactly that file to your User settings, opens the file as `plaintext`, and removes the entry again. An entry you already had for the same pattern is left alone.
 
-The extension writes 29 editor settings under the `[plaintext]` scope: word wrap turns on, and minimap, folding, sticky scroll, bracket colorization, guides, hovers, suggestions, code lens, links and the Unicode scanners turn off. Because they are language-scoped, your code files are unaffected. The full list is in [The 29 built-in overrides](#the-29-built-in-overrides).
+The extension writes 29 editor settings under the `[plaintext]` scope: word wrap turns on, and minimap, folding, sticky scroll, bracket colorization, guides, hovers, suggestions, code lens, links and the Unicode scanners turn off. Because they are language-scoped, your code files are unaffected. The full list is the default value of `textToolkit.plainText.editorOverrides`, visible in the Settings UI and in `settings.json`.
 
 ## Leave the mode and restore everything
 
@@ -42,16 +42,15 @@ The `workbench.editorLargeFileConfirmation` limit does not apply, but `files.max
 
 ## Tune the overrides
 
-Four keys in `textToolkit.advanced` control the mode:
+Three settings control the mode, and `textToolkit.plainText.editorOverrides` changes the table:
 
-| Key                                    | Default | Effect                                                                     |
-| -------------------------------------- | ------- | -------------------------------------------------------------------------- |
-| `plainText.applyEditorSettings`        | `true`  | `false` only switches the language and writes none of the 29 overrides     |
-| `plainText.disableLineNumbers`         | `false` | `true` also hides line numbers while the mode is on                        |
-| `plainText.suppressLanguageActivation` | `true`  | `false` opens Explorer files normally and switches the language afterwards |
-| `plainText.editorOverrides`            | `{}`    | Changes, removes or adds entries in the override table                     |
+| Setting id                                         | Effect                                                                     |
+| -------------------------------------------------- | -------------------------------------------------------------------------- |
+| `textToolkit.plainText.applyEditorSettings`        | `false` only switches the language and writes none of the 29 overrides     |
+| `textToolkit.plainText.disableLineNumbers`         | `true` also hides line numbers while the mode is on                        |
+| `textToolkit.plainText.suppressLanguageActivation` | `false` opens Explorer files normally and switches the language afterwards |
 
-`plainText.editorOverrides` is merged into the built-in table, not used instead of it:
+`textToolkit.plainText.editorOverrides` is merged into the built-in table, not used instead of it:
 
 - a setting id with a value changes that entry: `"editor.minimap.enabled": true` keeps the minimap;
 - a setting id with `null` removes the entry, so your own global value applies;
@@ -59,48 +58,14 @@ Four keys in `textToolkit.advanced` control the mode:
 
 ```json
 {
-	"textToolkit.advanced": {
-		"plainText.disableLineNumbers": true,
-		"plainText.editorOverrides": {
-			"editor.minimap.enabled": true,
-			"editor.hover.enabled": null
-		}
+	"textToolkit.plainText.disableLineNumbers": true,
+	"textToolkit.plainText.editorOverrides": {
+		"editor.minimap.enabled": true,
+		"editor.hover.enabled": null
 	}
 }
 ```
 
-In `settings.json`, the value of `plainText.editorOverrides` offers a snippet that writes out the whole table, ready to edit.
-
 ## The 29 built-in overrides
 
-| Setting id                                    | Built-in value                                            |
-| --------------------------------------------- | --------------------------------------------------------- |
-| `editor.minimap.enabled`                      | `false`                                                   |
-| `editor.wordWrap`                             | `"on"`                                                    |
-| `editor.folding`                              | `false`                                                   |
-| `editor.stickyScroll.enabled`                 | `false`                                                   |
-| `editor.bracketPairColorization.enabled`      | `false`                                                   |
-| `editor.guides.indentation`                   | `false`                                                   |
-| `editor.guides.bracketPairs`                  | `false`                                                   |
-| `editor.matchBrackets`                        | `"never"`                                                 |
-| `editor.occurrencesHighlight`                 | `"off"`                                                   |
-| `editor.selectionHighlight`                   | `false`                                                   |
-| `editor.renderWhitespace`                     | `"none"`                                                  |
-| `editor.renderControlCharacters`              | `false`                                                   |
-| `editor.codeLens`                             | `false`                                                   |
-| `editor.colorDecorators`                      | `false`                                                   |
-| `editor.links`                                | `false`                                                   |
-| `editor.hover.enabled`                        | `false`                                                   |
-| `editor.parameterHints.enabled`               | `false`                                                   |
-| `editor.suggestOnTriggerCharacters`           | `false`                                                   |
-| `editor.wordBasedSuggestions`                 | `"off"`                                                   |
-| `editor.quickSuggestions`                     | `{ "other": false, "comments": false, "strings": false }` |
-| `editor.formatOnType`                         | `false`                                                   |
-| `editor.formatOnPaste`                        | `false`                                                   |
-| `editor.autoClosingBrackets`                  | `"never"`                                                 |
-| `editor.autoClosingQuotes`                    | `"never"`                                                 |
-| `editor.trimAutoWhitespace`                   | `false`                                                   |
-| `editor.semanticHighlighting.enabled`         | `false`                                                   |
-| `editor.unicodeHighlight.nonBasicASCII`       | `false`                                                   |
-| `editor.unicodeHighlight.invisibleCharacters` | `false`                                                   |
-| `editor.unicodeHighlight.ambiguousCharacters` | `false`                                                   |
+The default value of `textToolkit.plainText.editorOverrides` is the full table — open it in the Settings UI or in `settings.json` to see every entry with its built-in value. Edit entries the same way: change a value, set one to `null`, or add a new `editor.*` id.

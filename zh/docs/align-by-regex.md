@@ -17,7 +17,7 @@
 输入框会预填本窗口上一次用过的表达式。想每次都从空白开始：
 
 ```json
-{ "textToolkit.advanced": { "alignByRegex.rememberLastInput": false } }
+{ "textToolkit.alignByRegex.rememberLastInput": false }
 ```
 
 ## 保存模板

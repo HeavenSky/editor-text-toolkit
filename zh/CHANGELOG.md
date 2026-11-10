@@ -2,11 +2,20 @@
 
 [English](../CHANGELOG.md) · **简体中文**
 
-## v0.0.11 2026-11-06 旧版设置备份可删除
+## v0.0.11 2026-11-06 旧版设置备份可删除；每项设置都显示真实默认值
+
+### 升级注意
+
+- 早期藏在 `textToolkit.advanced` 一个对象里的八个设置现在是独立顶层设置，例如 `copyPath.useLineCountSyntax` 变成 `textToolkit.copyPath.useLineCountSyntax`。旧对象已弃用但仍然生效：已有配置继续工作，未知的键与类型不符的值会被忽略，两边都设置时顶层设置优先。迁移是可选的。见[调整设置](https://github.com/HeavenSky/editor-text-toolkit/blob/HEAD/zh/docs/settings.md)。
 
 ### 新增
 
 - 旧版纯文本设置备份没有工作区标识的提示，在 `将备份恢复到此工作区` 旁新增 `删除备份` 选项。删除会丢弃备份中记录的原值并恢复应用编辑器设置覆盖；恢复仍在原工作区写回原值。仅关闭提示只对当前窗口生效，备份被恢复或删除前覆盖保持暂停。详见[恢复旧版设置备份](https://github.com/HeavenSky/editor-text-toolkit/blob/HEAD/zh/docs/plain-text-mode.md#恢复旧版设置备份)。
+
+### 变更
+
+- `textToolkit.plainText.editorOverrides` 的默认值改为完整的 29 项内置覆盖表，不再是空对象；设置界面与 `settings.json` 直接显示每一项及其内置值。
+- 设置说明不再用文字复述默认值；每项设置在设置界面直接显示自己的实际默认值。`textToolkit.advanced` 保持空默认值，说明中标注为已弃用的兼容层。
 
 ## v0.0.10 2026-11-05 CLI 格式化与编辑器修复
 

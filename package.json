@@ -53,6 +53,7 @@
 		"fmt:check": "oxfmt --check",
 		"check": "node scripts/check.mjs",
 		"gen:icon": "node scripts/gen-icon.mjs",
+		"gen:config": "node scripts/gen-config-defaults.mjs --write",
 		"package": "node scripts/package.mjs",
 		"vscode:prepublish": "npm run build",
 		"shots": "node scripts/shoot.mjs --readme"
@@ -543,6 +544,16 @@
 					],
 					"description": "%config.multiLineFormat%"
 				},
+				"textToolkit.copyPath.useLineCountSyntax": {
+					"type": "boolean",
+					"default": false,
+					"markdownDescription": "%config.useLineCountSyntax%"
+				},
+				"textToolkit.changeCase.includeDotInCurrentWord": {
+					"type": "boolean",
+					"default": false,
+					"markdownDescription": "%config.includeDotInCurrentWord%"
+				},
 				"textToolkit.alignByRegex.templates": {
 					"type": "object",
 					"default": {},
@@ -550,6 +561,11 @@
 						"type": "string"
 					},
 					"description": "%config.alignTemplates%"
+				},
+				"textToolkit.alignByRegex.rememberLastInput": {
+					"type": "boolean",
+					"default": true,
+					"markdownDescription": "%config.rememberLastInput%"
 				},
 				"textToolkit.plainText.promptSizeMB": {
 					"type": "number",
@@ -564,6 +580,76 @@
 					},
 					"default": [],
 					"description": "%config.autoApplyExtensions%"
+				},
+				"textToolkit.plainText.applyEditorSettings": {
+					"type": "boolean",
+					"default": true,
+					"markdownDescription": "%config.applyEditorSettings%"
+				},
+				"textToolkit.plainText.disableLineNumbers": {
+					"type": "boolean",
+					"default": false,
+					"markdownDescription": "%config.disableLineNumbers%"
+				},
+				"textToolkit.plainText.suppressLanguageActivation": {
+					"type": "boolean",
+					"default": true,
+					"markdownDescription": "%config.suppressLanguageActivation%"
+				},
+				"textToolkit.plainText.editorOverrides": {
+					"type": "object",
+					"default": {
+						"editor.minimap.enabled": false,
+						"editor.wordWrap": "on",
+						"editor.folding": false,
+						"editor.stickyScroll.enabled": false,
+						"editor.bracketPairColorization.enabled": false,
+						"editor.guides.indentation": false,
+						"editor.guides.bracketPairs": false,
+						"editor.matchBrackets": "never",
+						"editor.occurrencesHighlight": "off",
+						"editor.selectionHighlight": false,
+						"editor.renderWhitespace": "none",
+						"editor.renderControlCharacters": false,
+						"editor.codeLens": false,
+						"editor.colorDecorators": false,
+						"editor.links": false,
+						"editor.hover.enabled": false,
+						"editor.parameterHints.enabled": false,
+						"editor.suggestOnTriggerCharacters": false,
+						"editor.wordBasedSuggestions": "off",
+						"editor.quickSuggestions": {
+							"other": false,
+							"comments": false,
+							"strings": false
+						},
+						"editor.formatOnType": false,
+						"editor.formatOnPaste": false,
+						"editor.autoClosingBrackets": "never",
+						"editor.autoClosingQuotes": "never",
+						"editor.trimAutoWhitespace": false,
+						"editor.semanticHighlighting.enabled": false,
+						"editor.unicodeHighlight.nonBasicASCII": false,
+						"editor.unicodeHighlight.invisibleCharacters": false,
+						"editor.unicodeHighlight.ambiguousCharacters": false
+					},
+					"additionalProperties": true,
+					"markdownDescription": "%config.editorOverrides%",
+					"defaultSnippets": [
+						{
+							"label": "%snippet.editorOverrides.restore%",
+							"description": "%snippet.editorOverrides.restoreDetail%",
+							"body": {
+								"editor.wordWrap": "off",
+								"editor.minimap.enabled": null
+							}
+						}
+					]
+				},
+				"textToolkit.terminalOpen.selectionLink": {
+					"type": "boolean",
+					"default": false,
+					"markdownDescription": "%config.selectionLink%"
 				},
 				"textToolkit.diff.normalizationRules": {
 					"type": "array",
@@ -671,116 +757,8 @@
 				"textToolkit.advanced": {
 					"type": "object",
 					"default": {},
-					"additionalProperties": false,
-					"properties": {
-						"copyPath.useLineCountSyntax": {
-							"type": "boolean",
-							"default": false,
-							"markdownDescription": "%advanced.useLineCountSyntax%"
-						},
-						"changeCase.includeDotInCurrentWord": {
-							"type": "boolean",
-							"default": false,
-							"markdownDescription": "%advanced.includeDotInCurrentWord%"
-						},
-						"alignByRegex.rememberLastInput": {
-							"type": "boolean",
-							"default": true,
-							"markdownDescription": "%advanced.rememberLastInput%"
-						},
-						"plainText.applyEditorSettings": {
-							"type": "boolean",
-							"default": true,
-							"markdownDescription": "%advanced.applyEditorSettings%"
-						},
-						"plainText.disableLineNumbers": {
-							"type": "boolean",
-							"default": false,
-							"markdownDescription": "%advanced.disableLineNumbers%"
-						},
-						"plainText.suppressLanguageActivation": {
-							"type": "boolean",
-							"default": true,
-							"markdownDescription": "%advanced.suppressLanguageActivation%"
-						},
-						"plainText.editorOverrides": {
-							"type": "object",
-							"default": {},
-							"additionalProperties": true,
-							"markdownDescription": "%advanced.editorOverrides%",
-							"defaultSnippets": [
-								{
-									"label": "%snippet.editorOverrides.builtin%",
-									"description": "%snippet.editorOverrides.builtinDetail%",
-									"body": {
-										"editor.minimap.enabled": false,
-										"editor.wordWrap": "on",
-										"editor.folding": false,
-										"editor.stickyScroll.enabled": false,
-										"editor.bracketPairColorization.enabled": false,
-										"editor.guides.indentation": false,
-										"editor.guides.bracketPairs": false,
-										"editor.matchBrackets": "never",
-										"editor.occurrencesHighlight": "off",
-										"editor.selectionHighlight": false,
-										"editor.renderWhitespace": "none",
-										"editor.renderControlCharacters": false,
-										"editor.codeLens": false,
-										"editor.colorDecorators": false,
-										"editor.links": false,
-										"editor.hover.enabled": false,
-										"editor.parameterHints.enabled": false,
-										"editor.suggestOnTriggerCharacters": false,
-										"editor.wordBasedSuggestions": "off",
-										"editor.quickSuggestions": {
-											"other": false,
-											"comments": false,
-											"strings": false
-										},
-										"editor.formatOnType": false,
-										"editor.formatOnPaste": false,
-										"editor.autoClosingBrackets": "never",
-										"editor.autoClosingQuotes": "never",
-										"editor.trimAutoWhitespace": false,
-										"editor.semanticHighlighting.enabled": false,
-										"editor.unicodeHighlight.nonBasicASCII": false,
-										"editor.unicodeHighlight.invisibleCharacters": false,
-										"editor.unicodeHighlight.ambiguousCharacters": false
-									}
-								},
-								{
-									"label": "%snippet.editorOverrides.restore%",
-									"description": "%snippet.editorOverrides.restoreDetail%",
-									"body": {
-										"editor.wordWrap": "off",
-										"editor.minimap.enabled": null
-									}
-								}
-							]
-						},
-						"terminalOpen.selectionLink": {
-							"type": "boolean",
-							"default": false,
-							"markdownDescription": "%advanced.selectionLink%"
-						}
-					},
-					"markdownDescription": "%config.advanced%",
-					"defaultSnippets": [
-						{
-							"label": "%snippet.advanced.allDefaults%",
-							"description": "%snippet.advanced.allDefaultsDetail%",
-							"body": {
-								"copyPath.useLineCountSyntax": false,
-								"changeCase.includeDotInCurrentWord": false,
-								"alignByRegex.rememberLastInput": true,
-								"plainText.applyEditorSettings": true,
-								"plainText.disableLineNumbers": false,
-								"plainText.suppressLanguageActivation": true,
-								"plainText.editorOverrides": {},
-								"terminalOpen.selectionLink": false
-							}
-						}
-					]
+					"additionalProperties": true,
+					"markdownDescription": "%config.advanced%"
 				}
 			}
 		}

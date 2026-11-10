@@ -145,7 +145,7 @@ On macOS a key with `cmd` works in the terminal as is. Any other key, which mean
 The selection link lets you hold the link modifier and click the selected text instead of pressing a key. It is off by default because it appears only after the pointer has moved to another line and back; see [Known limits](#known-limits). To turn it on:
 
 ```json
-{ "textToolkit.advanced": { "terminalOpen.selectionLink": true } }
+{ "textToolkit.terminalOpen.selectionLink": true }
 ```
 
 The change takes effect immediately. The link modifier is Cmd on macOS and Ctrl on Windows and Linux, or Alt when `editor.multiCursorModifier` is `ctrlCmd`. The link covers only the selected text, so clicking anything else behaves as before; on the selected text it takes priority over VS Code's own link.
